@@ -4,6 +4,16 @@ Aplikacja ma dwie części:
 - **skaner** (`/`, `templates/index.html`) — jedna strona z trzema ekranami przełączanymi bez zmiany adresu i czterema oknami modalnymi; dostępny bez logowania,
 - **panel administratora** (`/admin`, `templates/admin.html`) — logowanie, jedna strona z 11 zakładkami i trzema oknami modalnymi.
 
+## Jak to wygląda
+
+| Skaner — ekran pracownika (2) | Panel — Live (5.2) |
+|---|---|
+| ![Ekran pracownika](screenshots/skaner-pracownik.png) | ![Panel Live](screenshots/panel-live.png) |
+
+Porównanie grafiku z obecnością (5.10):
+
+![Porównanie grafiku](screenshots/panel-grafik.png)
+
 ## Mapa
 
 ```mermaid
