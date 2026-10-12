@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>TimeApp</title>
+<style>
+/* ── THEMES ── */
+[data-theme="dark"] {
+  --bg:       #0f1923;
+  --card:     #1a2535;
+  --card2:    #212f42;
+  --border:   #2d3f56;
+  --text:     #e8edf3;
+  --muted:    #7a90a8;
+  --blue:     #185FA5;
+  --green:    #1e8c45;
+  --red:      #c0392b;
+  --orange:   #d35400;
+  --yellow:   #f39c12;
+  --shadow:   rgba(0,0,0,.4);
+  --confirm-bg: #162030;
+}
+[data-theme="light"] {
+  --bg:       #f0f4f9;
+  --card:     #ffffff;
+  --card2:    #f4f7fb;
+  --border:   #d0dce8;
+  --text:     #1a2535;
+  --muted:    #6b7a8d;
+  --blue:     #185FA5;
+  --green:    #1a7a3c;
+  --red:      #b03020;
+  --orange:   #c04800;
+  --yellow:   #d4890a;
+  --shadow:   rgba(0,0,0,.12);
+  --confirm-bg: #e8f0fa;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; transition: background .2s, color .2s;
+  user-select: none;
+}
+
+/* HEADER */
+header {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 10;
+}
+header h1 { font-size: .95rem; font-weight: 700; }
+.header-right { display: flex; gap: 10px; align-items: center; }
+#clock { font-size: .9rem; color: var(--muted); font-family: monospace; font-variant-numeric: tabular-nums; }
+.btn-theme {
+  background: none; border: 1px solid var(--border);
+  color: var(--muted); padding: 4px 9px; border-radius: 6px;
+  font-size: .8rem; cursor: pointer;
+}
+
+/* ══ IDLE ══ */
+#stateIdle {
+  min-height: calc(100vh - 47px);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 24px; padding: 32px 20px;
+}
+.idle-icon { font-size: 4.5rem; opacity: .4; }
+.idle-title { font-size: 1.6rem; font-weight: 700; text-align: center; }
+.idle-sub   { font-size: .95rem; color: var(--muted); text-align: center; }
+.scan-wrap  { width: 100%; max-width: 380px; position: relative; }
+#scanInput {
+  width: 100%; padding: 14px 48px 14px 16px;
+  font-size: 1rem; background: var(--card);
+  border: 2px solid var(--border); border-radius: 10px;
+  color: var(--text); outline: none; font-family: monospace;
+  letter-spacing: 1.5px; transition: border-color .2s;
+}
+#scanInput:focus { border-color: var(--blue); }
+#scanInput::placeholder { font-family: 'Segoe UI',sans-serif; letter-spacing: normal; color: var(--muted); }
+.scan-ic { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 1.3rem; }
+.btn-korekta-link {
+  font-size: .78rem; color: var(--muted);
+  text-decoration: underline; cursor: pointer;
+  background: none; border: none;
+}
+
+/* ══ WORKER ══ */
+#stateWorker { display: none; flex-direction: column; height: calc(100vh - 47px); }
+
+.worker-bar {
+  background: var(--card); border-bottom: 1px solid var(--border);
+  padding: 11px 16px; display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+}
+.w-avatar {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: var(--blue); color: #fff;
+  font-weight: 700; font-size: 1rem;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.w-info { flex: 1; min-width: 0; }
+.w-name { font-weight: 700; font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.w-sub  { font-size: .72rem; color: var(--muted); font-family: monospace; margin-top: 1px; }
+.w-loc  {
+  font-size: .72rem; padding: 3px 9px; border-radius: 16px;
+  background: rgba(24,95,165,.2); border: 1px solid rgba(24,95,165,.4);
+  color: #7ab4e8; white-space: nowrap; font-family: monospace;
+}
+.w-loc.przerwa { background: rgba(211,84,0,.2); border-color: rgba(211,84,0,.4); color: #f09050; }
+.btn-cancel {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  padding: 5px 10px; border-radius: 6px; font-size: .75rem; cursor: pointer; flex-shrink: 0;
+}
+
+/* STREFY */
+.strefy-area { flex: 1; overflow-y: auto; padding: 18px 14px 14px; }
+.area-label { font-size: .65rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 14px; }
+.strefy-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px; margin-bottom: 0;
+}
+.btn-strefa {
+  padding: 26px 14px; border-radius: 15px; border: none;
+  cursor: pointer; font-weight: 700; color: #fff;
+  text-align: center; line-height: 1.25;
+  transition: transform .1s, filter .1s, box-shadow .1s;
+  box-shadow: 0 3px 14px var(--shadow);
+  position: relative;
+  min-height: 114px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.btn-strefa:active { transform: scale(.96); }
+.btn-strefa.ring {
+  outline: 3px solid #fff; outline-offset: 2px; filter: brightness(1.2);
+}
+.btn-strefa .sn-prefix { display: block; font-size: .72rem; opacity: .75; letter-spacing: 1px; }
+.btn-strefa .sn-main   { display: block; font-size: 1.1rem; }
+.btn-strefa .ph { display: block; font-size: .82rem; opacity: .75; margin-top: 6px; }
+.koniec-wrap {
+  flex-shrink: 0; padding: 12px 14px 20px;
+  background: var(--bg); border-top: 1px solid var(--border);
+}
+.btn-koniec {
+  width: 100%; padding: 18px;
+  background: transparent; border: 2px solid var(--red); color: var(--red);
+  border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer;
+  transition: all .15s;
+}
+.btn-koniec:active { background: var(--red); color: #fff; }
+
+/* ══ MODAL PODSTREF ══ */
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.65); z-index: 200;
+  align-items: flex-end; justify-content: center;
+}
+.overlay.show { display: flex; }
+.sheet {
+  background: var(--card); border-radius: 16px 16px 0 0;
+  padding: 18px 14px 30px; width: 100%; max-width: 520px;
+  max-height: 72vh; overflow-y: auto;
+  animation: up .2s ease;
+}
+@keyframes up { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.sheet-title { font-weight: 700; font-size: .95rem; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.sheet-sub   { font-size: .75rem; color: var(--muted); margin-bottom: 14px; }
+.sdot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+.pods-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-bottom: 10px; }
+.btn-pod {
+  padding: 11px 8px; border-radius: 8px;
+  border: 1.5px solid var(--border); background: var(--card2);
+  color: var(--text); font-size: .78rem; font-weight: 600;
+  cursor: pointer; text-align: center; transition: all .12s;
+}
+.btn-pod:active, .btn-pod.sel { background: var(--blue); border-color: var(--blue); color: #fff; }
+.btn-sheet-cancel { width: 100%; padding: 9px; background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 8px; font-size: .8rem; cursor: pointer; margin-top: 6px; }
+
+/* ══ MODAL OSTRZEŻENIA ══ */
+.warn-sheet { max-height: 50vh; }
+.warn-icon  { font-size: 2.5rem; margin-bottom: 8px; }
+.warn-msg   { font-size: .9rem; line-height: 1.5; margin-bottom: 16px; }
+.warn-btns  { display: flex; gap: 8px; }
+.btn-wyes { flex:1; padding:11px; background:var(--orange); border:none; color:#fff; border-radius:8px; font-weight:700; cursor:pointer; }
+.btn-wno  { flex:1; padding:11px; background:none; border:1px solid var(--border); color:var(--muted); border-radius:8px; font-weight:700; cursor:pointer; }
+
+/* ══ CONFIRM MODAL ══ */
+.cbar {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.7); z-index: 100;
+  align-items: center; justify-content: center;
+  padding: 20px;
+}
+.cbar.show { display: flex; }
+.cbar-box {
+  background: var(--card); border-radius: 16px;
+  padding: 28px 24px; width: 100%; max-width: 380px;
+  text-align: center;
+  box-shadow: 0 8px 40px rgba(0,0,0,.6);
+  animation: popIn .18s ease;
+}
+@keyframes popIn { from{transform:scale(.92);opacity:0} to{transform:scale(1);opacity:1} }
+.cbar-icon { font-size: 2.2rem; margin-bottom: 10px; }
+.cbar-label { font-weight: 700; font-size: 1.1rem; line-height: 1.4; margin-bottom: 6px; }
+.cbar-sub   { font-size: .8rem; color: var(--muted); margin-bottom: 22px; }
+.cbar-btns  { display: flex; gap: 10px; }
+.btn-go {
+  flex: 1; padding: 13px; background: var(--green); border: none;
+  border-radius: 10px; color: #fff; font-size: 1rem; font-weight: 700;
+  cursor: pointer;
+}
+.btn-back {
+  padding: 13px 16px; background: none; border: 1.5px solid var(--border);
+  border-radius: 10px; color: var(--muted); font-size: .85rem;
+  cursor: pointer; white-space: nowrap;
+}
+
+/* ══ CONFIRM SCREEN (po zapisie) ══ */
+#stateConfirm {
+  display: none; min-height: calc(100vh - 47px);
+  flex-direction: column; align-items: center; justify-content: center;
+  gap: 20px; padding: 32px 20px; text-align: center;
+}
+.confirm-icon { font-size: 4rem; }
+.confirm-title { font-size: 1.4rem; font-weight: 700; }
+.confirm-detail { font-size: .9rem; color: var(--muted); line-height: 1.6; }
+.confirm-alert {
+  background: rgba(211,84,0,.12); border: 1px solid rgba(211,84,0,.4);
+  border-radius: 8px; padding: 10px 14px; font-size: .82rem; color: var(--orange);
+  max-width: 400px; width: 100%;
+}
+.btn-ok {
+  padding: 14px 40px; background: var(--blue); border: none;
+  border-radius: 10px; color: #fff; font-size: 1.1rem; font-weight: 700;
+  cursor: pointer; margin-top: 8px;
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+/* ══ KOREKTA MODAL ══ */
+#korektaOverlay .sheet { max-height: 60vh; }
+#korektaInput {
+  width: 100%; padding: 9px 11px; margin-top: 6px;
+  background: var(--card2); border: 1.5px solid var(--border);
+  border-radius: 6px; color: var(--text); font-size: .85rem;
+  resize: vertical; min-height: 70px; font-family: inherit; outline: none;
+}
+#korektaInput:focus { border-color: var(--blue); }
+.btn-send { width:100%; padding:11px; margin-top:8px; background:var(--blue); border:none; border-radius:8px; color:#fff; font-weight:700; cursor:pointer; font-size:.9rem; }
+
+/* TOAST */
+.toast {
+  position: fixed; top: 58px; left: 50%; transform: translateX(-50%);
+  padding: 9px 18px; border-radius: 8px; font-size: .83rem; font-weight: 600;
+  z-index: 500; display: none; max-width: 92vw; text-align: center;
+  box-shadow: 0 4px 20px var(--shadow);
+}
+.toast.show { display: block; }
+.toast.ok  { background: var(--green); color: #fff; }
+.toast.err { background: var(--red);   color: #fff; }
+
+@media (max-width: 520px) {
+  .strefy-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>📦 TimeApp</h1>
+  <div class="header-right">
+    <span id="clock">00:00:00</span>
+    <button class="btn-theme" onclick="toggleTheme()" id="themeBtn">🌙</button>
+  </div>
+</header>
+
+<!-- ══ IDLE ══ -->
+<div id="stateIdle">
+  <div class="idle-icon">📷</div>
+  <div>
+    <div class="idle-title">Zeskanuj kod QR</div>
+    <div class="idle-sub">aby zarejestrować wejście do strefy</div>
+  </div>
+  <div class="scan-wrap">
+    <input type="text" id="scanInput" placeholder="Skanuj lub wpisz kod..."
+      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <span class="scan-ic">🔍</span>
+  </div>
+  <button class="btn-korekta-link" onclick="openKorektaIdle()">📝 Zgłoś korektę wpisu</button>
+</div>
+
+<!-- ══ WORKER ══ -->
+<div id="stateWorker">
+  <div class="worker-bar">
+    <div class="w-avatar" id="wAvatar">?</div>
+    <div class="w-info">
+      <div class="w-name" id="wName">—</div>
+      <div class="w-sub"  id="wSub"></div>
+    </div>
+    <div class="w-loc" id="wLoc" style="display:none"></div>
+    <button class="btn-cancel" onclick="resetIdle()">✕</button>
+  </div>
+  <div class="strefy-area">
+    <div class="area-label">Wybierz strefę docelową</div>
+    <div class="strefy-grid" id="strefyGrid"></div>
+  </div>
+  <div class="koniec-wrap">
+    <button class="btn-koniec" onclick="selKoniec()">🏁 Koniec zmiany</button>
+  </div>
+</div>
+
+<!-- ══ CONFIRM SCREEN ══ -->
+<div id="stateConfirm">
+  <div class="confirm-icon" id="cfIcon">✅</div>
+  <div class="confirm-title" id="cfTitle">—</div>
+  <div class="confirm-detail" id="cfDetail"></div>
+  <div class="confirm-alert" id="cfAlert" style="display:none"></div>
+  <button class="btn-ok" onclick="resetIdle()">OK — Gotowe</button>
+</div>
+
+<!-- ══ MODAL PODSTREF ══ -->
+<div class="overlay" id="podOverlay" onclick="closePod(event)">
+  <div class="sheet">
+    <div class="sheet-title"><span class="sdot" id="sdot"></span><span id="podTitle">Podstrefy</span></div>
+    <div class="sheet-sub">Wybierz podstrefę lub zatwierdź bez podstrefy</div>
+    <div class="pods-grid" id="podsGrid"></div>
+    <button class="btn-sheet-cancel" onclick="closePodFull()">↩ Wróć</button>
+  </div>
+</div>
+
+<!-- ══ MODAL OSTRZEŻENIA ══ -->
+<div class="overlay" id="warnOverlay">
+  <div class="sheet warn-sheet">
+    <div class="warn-icon">⚠️</div>
+    <div class="warn-msg" id="warnMsg"></div>
+    <div class="warn-btns">
+      <button class="btn-wno"  onclick="closeWarn()">↩ Zostań</button>
+      <button class="btn-wyes" onclick="forceConfirm()">Tak, zmień strefę</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ KOREKTA MODAL ══ -->
+<div class="overlay" id="korektaOverlay" onclick="closeKorekta(event)">
+  <div class="sheet">
+    <div class="sheet-title">📝 Zgłoś korektę wpisu</div>
+    <div class="sheet-sub">Opis problemu — admin zatwierdzi korektę</div>
+    <input type="hidden" id="korektaPracownik">
+    <textarea id="korektaInput" placeholder="Opisz co wymaga korekty (np. błędna strefa, zły czas wejścia)..."></textarea>
+    <button class="btn-send" onclick="sendKorekta()">📤 Wyślij zgłoszenie</button>
+    <button class="btn-sheet-cancel" onclick="closeKorektaFull()">Anuluj</button>
+  </div>
+</div>
+
+<!-- ══ CONFIRM MODAL ══ -->
+<div class="cbar" id="cbar" onclick="cbarBgClick(event)">
+  <div class="cbar-box">
+    <div class="cbar-icon" id="cbarIcon">➜</div>
+    <div class="cbar-label" id="cbarLabel">—</div>
+    <div class="cbar-sub"   id="cbarSub"></div>
+    <div class="cbar-btns">
+      <button class="btn-back" onclick="hideCbar()">↩ Wróć</button>
+      <button class="btn-go"   onclick="doConfirm()">✅ Potwierdź</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── THEME ─────────────────────────────────────────────────────────────────
+function toggleTheme() {
+  const html = document.documentElement;
+  const next = html.dataset.theme === 'dark' ? 'light' : 'dark';
+  html.dataset.theme = next;
+  document.getElementById('themeBtn').textContent = next === 'dark' ? '🌙' : '☀️';
+  localStorage.setItem('theme', next);
+}
+(function(){
+  const t = localStorage.getItem('theme') || 'dark';
+  document.documentElement.dataset.theme = t;
+  document.getElementById('themeBtn').textContent = t === 'dark' ? '🌙' : '☀️';
+})();
+
+// ── CLOCK ─────────────────────────────────────────────────────────────────
+const p2 = n => String(n).padStart(2,'0');
+function fmtDur(secs) {
+  secs = Math.max(0, Math.floor(secs));
+  return `${p2(Math.floor(secs/3600))}:${p2(Math.floor(secs%3600/60))}:${p2(secs%60)}`;
+}
+setInterval(() => {
+  const d = new Date();
+  document.getElementById('clock').textContent = `${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`;
+  if (S.sesjaTs) {
+    const diff = (Date.now() - S.sesjaTs) / 1000;
+    const el = document.getElementById('wSub');
+    if (el) el.textContent = `W strefie: ${fmtDur(diff)}  |  Dziś: ${S.dzienFmt}`;
+  }
+}, 1000);
+
+// ── APP STATE ─────────────────────────────────────────────────────────────
+const S = {
+  pracownik: null, imie: null, dozwolone: [],
+  selStrefa: null, selPod: null,
+  pendingForce: false,
+  sesjaTs: null, dzienFmt: '00:00:00',
+};
+
+// ── SCAN ──────────────────────────────────────────────────────────────────
+const scanInput = document.getElementById('scanInput');
+let scanTimer;
+scanInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); doScan(scanInput.value.trim()); }
+});
+scanInput.addEventListener('input', () => {
+  clearTimeout(scanTimer);
+  const v = scanInput.value.trim();
+  if (v.length > 5) scanTimer = setTimeout(() => doScan(v), 700);
+});
+
+async function doScan(kod) {
+  if (!kod) return;
+  scanInput.value = '';
+  try {
+    const r = await fetch('/api/scan', { method:'POST',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify({kod}) });
+    const d = await r.json();
+    if (!d.ok) { showToast(d.error, 'err'); return; }
+    loadWorker(d);
+  } catch { showToast('Błąd połączenia', 'err'); }
+}
+
+function loadWorker(d) {
+  S.pracownik = d.pracownik; S.imie = d.imie_nazwisko;
+  S.dozwolone = d.dozwolone; S.selStrefa = null; S.selPod = null;
+  S.dzienFmt  = d.dzien_fmt;
+  S.sesjaTs   = d.ts_wejscia ? new Date(d.ts_wejscia).getTime() : null;
+
+  const init = d.imie_nazwisko.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('wAvatar').textContent = init;
+  document.getElementById('wName').textContent   = d.imie_nazwisko;
+
+  const sub = document.getElementById('wSub');
+  if (d.aktywna_strefa) {
+    sub.textContent = `W strefie: ${d.aktywna_fmt}  |  Dziś: ${d.dzien_fmt}`;
+  } else {
+    sub.textContent = `Dziś: ${d.dzien_fmt}`;
+    S.sesjaTs = null;
+  }
+
+  const loc = document.getElementById('wLoc');
+  if (d.aktywna_strefa) {
+    loc.textContent = `📍 ${d.aktywna_strefa}${d.aktywna_podstrefa ? '/'+d.aktywna_podstrefa : ''}`;
+    loc.className   = 'w-loc' + (d.aktywna_strefa === 'PRZERWA' ? ' przerwa' : '');
+    loc.style.display = 'block';
+  } else { loc.style.display = 'none'; }
+
+  renderStrefy(d.dozwolone, d.aktywna_strefa);
+  show('stateWorker');
+  hideCbar();
+}
+
+// ── STREFY ────────────────────────────────────────────────────────────────
+function renderStrefy(list, aktywna) {
+  const g = document.getElementById('strefyGrid');
+  g.innerHTML = '';
+  list.forEach(str => {
+    const btn = document.createElement('button');
+    btn.className = 'btn-strefa' + (str.nazwa === aktywna ? ' ring' : '');
+    btn.style.background = str.kolor;
+    btn.dataset.nazwa = str.nazwa;
+    const hasPod = str.podstrefy && str.podstrefy.length > 0;
+    const idx = str.nazwa.indexOf('_');
+    const prefix = idx !== -1 ? str.nazwa.slice(0, idx + 1) : '';
+    const main   = idx !== -1 ? str.nazwa.slice(idx + 1)    : str.nazwa;
+    btn.innerHTML = (prefix ? `<span class="sn-prefix">${prefix}</span>` : '')
+      + `<span class="sn-main">${main}</span>`
+      + (hasPod ? `<span class="ph">▼ podstrefy (${str.podstrefy.length})</span>` : '');
+    btn.onclick = () => onStrefa(btn, str);
+    g.appendChild(btn);
+  });
+}
+
+function onStrefa(btn, str) {
+  document.querySelectorAll('.btn-strefa').forEach(b => b.classList.remove('ring'));
+  btn.classList.add('ring');
+  S.selStrefa = str.nazwa; S.selPod = null;
+  if (str.podstrefy && str.podstrefy.length > 0) openPod(str);
+  else showCbar(str.nazwa, null);
+}
+
+function selKoniec() {
+  document.querySelectorAll('.btn-strefa').forEach(b => b.classList.remove('ring'));
+  S.selStrefa = 'KONIEC_ZMIANY'; S.selPod = null;
+  showCbar('KONIEC_ZMIANY', null);
+}
+
+// ── MODAL PODSTREF ────────────────────────────────────────────────────────
+function openPod(str) {
+  document.getElementById('sdot').style.background = str.kolor;
+  document.getElementById('podTitle').textContent  = str.nazwa;
+  const g = document.getElementById('podsGrid');
+  g.innerHTML = '';
+  str.podstrefy.forEach(p => {
+    const b = document.createElement('button');
+    b.className = 'btn-pod'; b.textContent = p;
+    b.onclick = () => { S.selPod = p; closePodFull(); showCbar(str.nazwa, p); };
+    g.appendChild(b);
+  });
+  const bez = document.createElement('button');
+  bez.className = 'btn-pod'; bez.textContent = '— Bez podstrefy —';
+  bez.onclick = () => { S.selPod = null; closePodFull(); showCbar(str.nazwa, null); };
+  g.appendChild(bez);
+  document.getElementById('podOverlay').classList.add('show');
+}
+function closePod(e)    { if (e.target.id === 'podOverlay') closePodFull(); }
+function closePodFull() { document.getElementById('podOverlay').classList.remove('show'); }
+
+// ── CONFIRM BAR ───────────────────────────────────────────────────────────
+function showCbar(strefa, pod) {
+  const isKoniec = strefa === 'KONIEC_ZMIANY';
+  document.getElementById('cbarIcon').textContent  = isKoniec ? '🏁' : '➜';
+  document.getElementById('cbarLabel').textContent = isKoniec
+    ? 'Zakończ zmianę'
+    : `Potwierdź przejście do strefy\n${strefa.replace('STREFA_','')}${pod ? ' / '+pod.replace(/_/g,' ') : ''}`;
+  document.getElementById('cbarSub').textContent = isKoniec
+    ? 'Potwierdź zakończenie pracy'
+    : 'Kliknij Potwierdź aby zapisać';
+  document.getElementById('cbar').classList.add('show');
+}
+function hideCbar() {
+  document.getElementById('cbar').classList.remove('show');
+}
+function resetSelStrefa() {
+  document.querySelectorAll('.btn-strefa').forEach(b => b.classList.remove('ring'));
+  S.selStrefa = null; S.selPod = null;
+}
+function cbarBgClick(e) { if (e.target.id === 'cbar') hideCbar(); }
+
+// ── CONFIRM ───────────────────────────────────────────────────────────────
+async function doConfirm(force=false) {
+  if (!S.pracownik || !S.selStrefa) return;
+  hideCbar();
+  try {
+    const r = await fetch('/api/rejestruj', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        pracownik: S.pracownik, strefa: S.selStrefa,
+        podstrefa: S.selPod || '', force: force,
+      })
+    });
+    const d = await r.json();
+
+    // Ostrzeżenie szybka zmiana
+    if (r.status === 409 && d.wymaga_potwierdzenia) {
+      document.getElementById('warnMsg').textContent = d.error;
+      S.pendingForce = true;
+      document.getElementById('warnOverlay').classList.add('show');
+      showCbar(S.selStrefa, S.selPod); // przywróć cbar
+      return;
+    }
+
+    if (!d.ok) { showToast(d.error, 'err'); showCbar(S.selStrefa, S.selPod); return; }
+    showConfirmScreen(d);
+
+  } catch { showToast('Błąd połączenia', 'err'); }
+}
+
+function forceConfirm() {
+  closeWarn();
+  doConfirm(true);
+}
+function closeWarn() { document.getElementById('warnOverlay').classList.remove('show'); }
+
+// ── CONFIRM SCREEN ────────────────────────────────────────────────────────
+function showConfirmScreen(d) {
+  S.sesjaTs = null;
+  const isKoniec = d.akcja === 'koniec_zmiany';
+  document.getElementById('cfIcon').textContent  = isKoniec ? '🏁' : '✅';
+  document.getElementById('cfTitle').textContent = isKoniec
+    ? `Zmiana zakończona`
+    : `${d.imie_nazwisko}`;
+  document.getElementById('cfDetail').innerHTML  = isKoniec
+    ? `<strong>${d.imie_nazwisko}</strong><br>Łączny czas: <strong>${d.dzien_fmt}</strong>`
+    : `➜ <strong>${d.nowa_strefa}${d.podstrefa ? ' / '+d.podstrefa : ''}</strong><br>Dziś przepracowano: <strong>${d.dzien_fmt || '—'}</strong>`;
+
+  const alertEl = document.getElementById('cfAlert');
+  const alerty  = (d.alerts||[]).filter(a => a.typ !== 'PRZEKROCZENIE_ZMIANY');
+  if (alerty.length) {
+    alertEl.textContent = alerty.map(a=>a.opis).join('\n');
+    alertEl.style.display = 'block';
+  } else { alertEl.style.display = 'none'; }
+
+  show('stateConfirm');
+}
+
+// ── KOREKTA ───────────────────────────────────────────────────────────────
+function openKorektaIdle() {
+  document.getElementById('korektaPracownik').value = '';
+  document.getElementById('korektaInput').value = '';
+  document.getElementById('korektaOverlay').classList.add('show');
+}
+function closeKorekta(e) { if (e.target.id==='korektaOverlay') closeKorektaFull(); }
+function closeKorektaFull() { document.getElementById('korektaOverlay').classList.remove('show'); }
+
+async function sendKorekta() {
+  const opis = document.getElementById('korektaInput').value.trim();
+  if (!opis) { showToast('Opisz problem', 'err'); return; }
+  const kod = S.pracownik || prompt('Wpisz swój kod (HU_...):') || '';
+  if (!kod) return;
+  await fetch('/api/korekta', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({pracownik: kod.toUpperCase(), opis})
+  });
+  closeKorektaFull();
+  showToast('Zgłoszenie wysłane — admin zatwierdzi korektę', 'ok');
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────
+function show(id) {
+  ['stateIdle','stateWorker','stateConfirm'].forEach(s => {
+    const el = document.getElementById(s);
+    el.style.display = s === id ? (id==='stateWorker' ? 'flex' : 'flex') : 'none';
+  });
+}
+
+function resetIdle() {
+  S.pracownik = null; S.sesjaTs = null;
+  resetSelStrefa();
+  hideCbar(); closeWarn();
+  document.getElementById('korektaInput').value = '';
+  show('stateIdle');
+  setTimeout(() => scanInput.focus(), 100);
+}
+
+let toastT;
+function showToast(msg, type='ok', ms=3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast show ${type}`;
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms);
+}
+
+window.addEventListener('load', () => { show('stateIdle'); scanInput.focus(); });
+</script>
+</body>
+</html>

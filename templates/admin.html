@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TimeApp — Admin</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#0f1923;--card:#1a2535;--card2:#212f42;--border:#2d3f56;
+  --text:#e8edf3;--muted:#7a90a8;
+  --blue:#185FA5;--green:#1e8c45;--red:#c0392b;--orange:#d35400;--yellow:#f39c12;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);}
+
+header{background:var(--card);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+header h1{font-size:1rem;font-weight:700;}
+.hr{display:flex;align-items:center;gap:10px;}
+.user-chip{font-size:.75rem;color:var(--muted);}
+.user-chip strong{color:var(--text);}
+a.btn,button.btn{display:inline-block;padding:6px 12px;border:none;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;text-decoration:none;transition:filter .15s;white-space:nowrap;}
+.btn:hover{filter:brightness(1.1);}
+.btn-blue{background:var(--blue);color:#fff;}
+.btn-green{background:var(--green);color:#fff;}
+.btn-red{background:var(--red);color:#fff;}
+.btn-grey{background:var(--card2);color:var(--text);border:1px solid var(--border);}
+
+/* ALERT BANNER */
+#alertBanner{display:none;background:rgba(192,57,43,.15);border-bottom:2px solid var(--red);padding:10px 20px;font-size:.85rem;color:#f08080;animation:pulse 1s infinite alternate;}
+@keyframes pulse{from{background:rgba(192,57,43,.1)}to{background:rgba(192,57,43,.25)}}
+#alertBanner button{margin-left:12px;background:var(--red);color:#fff;border:none;border-radius:5px;padding:3px 10px;cursor:pointer;font-size:.75rem;}
+
+/* TABS */
+.tabs{background:var(--card);border-bottom:1px solid var(--border);padding:0 20px;display:flex;gap:0;overflow-x:auto;}
+.tab{padding:11px 16px;background:none;border:none;color:var(--muted);font-size:.83rem;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;white-space:nowrap;}
+.tab.on{color:var(--text);border-bottom-color:var(--blue);}
+
+.panel{display:none;padding:18px 20px;max-width:1300px;margin:0 auto;}
+.panel.on{display:block;}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+@media(max-width:900px){.g2{grid-template-columns:1fr}.g3{grid-template-columns:1fr 1fr}.g4{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.g3,.g4{grid-template-columns:1fr}}
+
+/* CARD */
+.c{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px;}
+.ct{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;}
+
+/* KPI */
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-align:center;}
+.kpi-val{font-size:2rem;font-weight:700;line-height:1;}
+.kpi-lbl{font-size:.72rem;color:var(--muted);margin-top:4px;}
+.kpi.alert-kpi{border-color:rgba(192,57,43,.5);background:rgba(192,57,43,.08);}
+.kpi.alert-kpi .kpi-val{color:var(--red);}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:.8rem;}
+th{text-align:left;padding:7px 9px;background:#162030;border-bottom:2px solid var(--border);font-size:.67rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);}
+td{padding:8px 9px;border-bottom:1px solid #1e2d3e;vertical-align:middle;}
+tr:hover td{background:#1e2d3e;}
+tr.arow td{background:rgba(192,57,43,.08);}
+tr.arow:hover td{background:rgba(192,57,43,.14);}
+tr.dyzur-row td{background:rgba(139,0,0,.18);}
+tr.dyzur-row:hover td{background:rgba(139,0,0,.28);}
+
+.pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:600;background:rgba(24,95,165,.2);color:#8bbde8;}
+.pill.prz{background:rgba(211,84,0,.2);color:#f09050;}
+.pill.ok{background:rgba(30,140,69,.2);color:#6ecf94;}
+.pill.wait{background:rgba(243,156,18,.2);color:#f5c842;}
+.pill.rej{background:rgba(192,57,43,.2);color:#f08080;}
+
+.badge-alert{background:var(--red);color:#fff;font-size:.62rem;font-weight:700;padding:2px 6px;border-radius:8px;margin-left:4px;}
+.mono{font-family:monospace;font-variant-numeric:tabular-nums;}
+.t-alert{color:var(--red);font-weight:700;}
+.t-warn{color:var(--orange);}
+.t-muted{color:var(--muted);}
+
+/* INPUTS */
+input[type=text],input[type=password],input[type=date],input[type=number],select{
+  padding:7px 10px;background:var(--card2);border:1.5px solid var(--border);
+  border-radius:6px;color:var(--text);font-size:.8rem;outline:none;}
+input:focus,select:focus{border-color:var(--blue);}
+input[type=color]{padding:2px 4px;height:32px;width:42px;cursor:pointer;border-radius:4px;}
+select option{background:var(--card2);}
+
+.row{display:flex;gap:7px;margin-bottom:9px;flex-wrap:wrap;align-items:center;}
+.row input,.row select{flex:1;min-width:100px;}
+
+/* SUMMARY CHIPS */
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px;}
+.chip{background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:.76rem;display:flex;align-items:center;gap:5px;}
+.chip .cn{background:var(--blue);color:#fff;border-radius:10px;padding:1px 7px;font-size:.68rem;font-weight:700;}
+.chip.ha .cn{background:var(--red);}
+
+/* LIST */
+.li{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #1e2d3e;font-size:.8rem;}
+.li:last-child{border:none;}
+.li .nm{flex:1;}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+
+/* TOGGLES */
+.toggles{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;}
+.tog{padding:4px 11px;border-radius:16px;border:1.5px solid var(--border);background:var(--card2);color:var(--muted);font-size:.73rem;font-weight:600;cursor:pointer;transition:all .12s;}
+.tog.on{background:var(--blue);border-color:var(--blue);color:#fff;}
+
+/* POD CHIPS */
+.pods{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;}
+.pch{display:flex;align-items:center;gap:3px;background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:2px 4px 2px 9px;font-size:.7rem;}
+.pch button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.72rem;padding:1px 4px;border-radius:50%;}
+.pch button:hover{color:var(--red);}
+
+/* HISTORIA FILTERS */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
+.filters input,.filters select{min-width:130px;}
+
+/* TOAST */
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);padding:9px 18px;border-radius:8px;font-size:.83rem;font-weight:600;z-index:999;display:none;max-width:92vw;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.5);}
+.toast.show{display:block;}
+.toast.ok{background:var(--green);color:#fff;}
+.toast.err{background:var(--red);color:#fff;}
+.ri{font-size:.7rem;color:var(--muted);text-align:right;margin-top:5px;}
+
+/* MACIERZ */
+.mx-wrap{overflow:auto;max-height:calc(100vh - 160px);border:1px solid var(--border);border-radius:8px;}
+.mx-table{border-collapse:collapse;font-size:.68rem;}
+.mx-table thead th{position:sticky;top:0;z-index:20;background:#0f1923;padding:0;border-right:1px solid var(--border);border-bottom:2px solid var(--border);}
+.mx-table thead th.mx-wcol{position:sticky;left:0;z-index:30;background:#0f1923;min-width:170px;max-width:170px;padding:7px 10px;text-align:left;font-size:.6rem;letter-spacing:1px;color:var(--muted);border-right:2px solid var(--blue);}
+.mx-thi{writing-mode:vertical-rl;transform:rotate(180deg);padding:8px 4px;font-size:.6rem;color:var(--text);white-space:nowrap;min-height:90px;display:flex;align-items:center;justify-content:center;}
+.mx-thi.pod{color:#5a9fd4;font-style:italic;}
+.mx-table tbody tr:hover td{background:rgba(24,95,165,.06);}
+.mx-table tbody tr.mx-fout{display:none;}
+.mx-table td{border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;padding:0;}
+.mx-table td.mx-wc{position:sticky;left:0;z-index:10;background:var(--card);text-align:left;padding:4px 10px;white-space:nowrap;border-right:2px solid var(--blue);font-size:.67rem;}
+.mx-table td.mx-wc .mk{color:var(--muted);font-size:.57rem;display:block;}
+.mx-table td.mx-wc .mn{color:var(--text);}
+.mx-cb{width:24px;height:24px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:0 auto;border-radius:2px;transition:background .1s;font-size:.78rem;}
+.mx-cb:hover{background:rgba(24,95,165,.15);}
+.mx-cb.on{color:#00c853;}
+.mx-cb.off{color:transparent;}
+.mx-cb.off:hover{color:rgba(24,95,165,.4);}
+.mx-sar td{background:#0f1923;border-bottom:2px solid var(--border);padding:1px 0;}
+.mx-sar td.mx-wc{font-size:.57rem;color:var(--muted);}
+.mx-sab{width:24px;height:16px;border:1px solid var(--border);background:transparent;cursor:pointer;border-radius:2px;color:var(--muted);font-size:.55rem;display:flex;align-items:center;justify-content:center;margin:0 auto;transition:all .1s;}
+.mx-sab:hover{border-color:var(--blue);color:var(--blue);}
+.mx-sep{border-left:2px solid var(--blue)!important;min-width:5px;}
+.mx-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+.mx-toolbar input{padding:6px 10px;background:var(--card2);border:1.5px solid var(--border);border-radius:6px;color:var(--text);font-family:inherit;font-size:.78rem;width:220px;outline:none;}
+.mx-toolbar input:focus{border-color:var(--blue);}
+.mx-saved{font-size:.72rem;color:var(--green);margin-left:auto;}
+.eoverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:center;justify-content:center;}
+.eoverlay.show{display:flex;}
+.esheet{background:var(--card);border-radius:12px;padding:20px;width:100%;max-width:440px;max-height:85vh;overflow-y:auto;}
+.etitle{font-weight:700;font-size:1rem;margin-bottom:14px;}
+</style>
+</head>
+<body>
+
+<div id="alertBanner">
+  <span id="alertBannerMsg">⚠ Nowy alert</span>
+  <button onclick="dismissBanner()">OK</button>
+</div>
+
+<header>
+  <h1>📦 TimeApp — Admin</h1>
+  <div class="hr">
+    <span class="user-chip">👤 <strong>{{ admin_user }}</strong></span>
+    <a href="/admin/export/dzien"   class="btn btn-grey">⬇ CSV dziś</a>
+    <a href="/admin/export/miesiac" class="btn btn-grey">⬇ CSV mies.</a>
+    <a href="/admin/export/alerty"  class="btn btn-grey">⬇ Alerty</a>
+    <a href="/admin/logout"         class="btn btn-red">Wyloguj</a>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab on"  onclick="tab('dashboard',this)">📊 Dashboard</button>
+  <button class="tab"     onclick="tab('podglad',this)">📍 Live</button>
+  <button class="tab"     onclick="tab('przerwy',this)">⏱ Przerwy <span id="przeTab"></span></button>
+  <button class="tab"     onclick="tab('historia',this)">📋 Historia</button>
+  <button class="tab"     onclick="tab('korekty',this)">✏️ Korekty <span id="korTab"></span></button>
+  <button class="tab"     onclick="tab('pracownicy',this)">👷 Pracownicy</button>
+  <button class="tab"     onclick="tab('strefy',this)">🗂 Strefy</button>
+  <button class="tab"     onclick="tab('admins',this)">🔐 Admini</button>
+  <button class="tab"     onclick="tab('config',this)">⚙️ Config</button>
+  <button class="tab"     onclick="tab('grafik',this)">📅 Grafik</button>
+  <button class="tab"     onclick="tab('macierz',this)">🔲 Macierz uprawnień</button>
+</div>
+
+<!-- ══ DASHBOARD ══ -->
+<div class="panel on" id="p-dashboard">
+  <div class="filters" style="margin-bottom:14px;">
+    <label style="font-size:.78rem;color:var(--muted)">Data:</label>
+    <input type="date" id="dashDate">
+    <button class="btn btn-blue" onclick="loadDashboard()">Pokaż</button>
+  </div>
+  <div class="g4" id="kpiRow">
+    <div class="kpi"><div class="kpi-val" id="kpiAktywne">—</div><div class="kpi-lbl">Aktywne sesje</div></div>
+    <div class="kpi"><div class="kpi-val" id="kpiPrzerwa">—</div><div class="kpi-lbl">Na przerwie</div></div>
+    <div class="kpi alert-kpi"><div class="kpi-val" id="kpiAlerty">—</div><div class="kpi-lbl">Alerty przerw</div></div>
+    <div class="kpi"><div class="kpi-val" id="kpiWpisy">—</div><div class="kpi-lbl">Wpisów dziś</div></div>
+  </div>
+  <div style="margin-top:18px;">
+    <div class="ct" style="margin-bottom:12px;">Strefy — teraz i dziś</div>
+    <div id="strefyKafelki" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;"></div>
+  </div>
+</div>
+
+<!-- ══ LIVE ══ -->
+<div class="panel" id="p-podglad">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+    <div>Aktywne: <strong id="liveCount">—</strong> &nbsp;<span id="liveAlertBadge" style="display:none" class="badge-alert"></span></div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="btn btn-grey" onclick="loadLive()">🔄 Odśwież</button>
+      <button class="btn btn-green" onclick="openStartModal()">➕ Dodaj ręcznie</button>
+    </div>
+  </div>
+  <div class="chips" id="liveChips"></div>
+  <div class="c" style="padding:0;overflow:hidden;">
+    <table><thead><tr>
+      <th>Pracownik</th><th>Strefa</th><th>Podstrefa</th><th>Od</th><th>Czas</th><th>Status</th><th>Akcje</th>
+    </tr></thead>
+    <tbody id="liveBody"></tbody></table>
+  </div>
+  <div class="ri" id="liveRI"></div>
+</div>
+
+<!-- ══ MODAL: PRZESUŃ / ZAKOŃCZ ══ -->
+<div class="eoverlay" id="moveModal">
+  <div class="esheet">
+    <div class="etitle" id="moveTitle">Przesuń pracownika</div>
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:12px;" id="moveInfo"></div>
+    <input type="hidden" id="moveKod">
+    <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Docelowa strefa</label>
+    <select id="moveStrefa" style="width:100%;margin-bottom:8px;"></select>
+    <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Podstrefa (opcjonalnie)</label>
+    <select id="movePodstrefa" style="width:100%;margin-bottom:14px;"></select>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-blue"  onclick="doMove()">→ Przesuń</button>
+      <button class="btn btn-red"   onclick="doKoniec()">🏁 Zakończ zmianę</button>
+      <button class="btn btn-grey"  onclick="closeMoveModal()">Anuluj</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: DODAJ RĘCZNIE ══ -->
+<div class="eoverlay" id="startModal">
+  <div class="esheet">
+    <div class="etitle">➕ Dodaj pracownika ręcznie</div>
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:12px;">Uruchom sesję bez skanowania QR</div>
+    <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Pracownik</label>
+    <select id="startKod" style="width:100%;margin-bottom:8px;" onchange="updateStartPodstrefy()"></select>
+    <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Strefa</label>
+    <select id="startStrefa" style="width:100%;margin-bottom:8px;" onchange="updateStartPodstrefy()"></select>
+    <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Podstrefa (opcjonalnie)</label>
+    <select id="startPodstrefa" style="width:100%;margin-bottom:14px;"></select>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-green" onclick="doStart()">▶ Uruchom sesję</button>
+      <button class="btn btn-grey"  onclick="closeStartModal()">Anuluj</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PRZERWY ══ -->
+<div class="panel" id="p-przerwy">
+  <div class="c">
+    <div class="ct">Nadwyżki czasu przerwy — do przypisania strefy</div>
+    <table><thead><tr><th>Pracownik</th><th>Czas przerwy</th><th>Nadwyżka</th><th>Data</th><th>Przypisana strefa</th><th>Akcja</th></tr></thead>
+    <tbody id="nadwyzkiBody"></tbody></table>
+  </div>
+</div>
+
+<!-- ══ HISTORIA ══ -->
+<div class="panel" id="p-historia">
+  <div class="filters">
+    <input type="date" id="hDataOd" placeholder="Od">
+    <input type="date" id="hDataDo" placeholder="Do">
+    <select id="hPrac"><option value="">— Wszyscy —</option></select>
+    <input type="text" id="hStrefa" placeholder="Strefa..." style="max-width:150px;">
+    <button class="btn btn-blue" onclick="loadHistoria()">Szukaj</button>
+  </div>
+  <div class="c" style="padding:0;overflow:hidden;">
+    <table><thead><tr><th>Data</th><th>Pracownik</th><th>Strefa</th><th>Podstrefa</th><th>Wejście</th><th>Wyjście</th><th>Czas</th><th>Flaga</th></tr></thead>
+    <tbody id="historiaBody"></tbody></table>
+  </div>
+  <div class="ri" id="historiaRI"></div>
+</div>
+
+<!-- ══ KOREKTY ══ -->
+<div class="panel" id="p-korekty">
+  <div class="c" style="padding:0;overflow:hidden;">
+    <table><thead><tr><th>Data</th><th>Pracownik</th><th>Opis</th><th>Status</th><th>Akcja</th></tr></thead>
+    <tbody id="korBody"></tbody></table>
+  </div>
+</div>
+
+<!-- ══ PRACOWNICY ══ -->
+<div class="panel" id="p-pracownicy">
+  <div class="g2">
+    <div class="c">
+      <div class="ct">Dodaj pracownika</div>
+      <div class="row"><input type="text" id="nKod" placeholder="HU_NAZWISKO_IMIE" style="flex:2"><input type="text" id="nImie" placeholder="Nazwisko Imię" style="flex:2"><button class="btn btn-green" onclick="addWorker()">+</button></div>
+    </div>
+    <div class="c">
+      <div class="ct">Lista <span id="wCount"></span></div>
+      <div id="wList">Ładowanie...</div>
+    </div>
+  </div>
+  <!-- Editor stref pracownika -->
+  <div class="c" id="wEditor" style="display:none;">
+    <div class="ct">Uprawnienia: <span id="wEdName" style="color:var(--text);text-transform:none;font-weight:700;"></span></div>
+    <div class="toggles" id="wEdToggles"></div>
+    <div style="margin-top:12px;display:flex;gap:8px;">
+      <button class="btn btn-blue" onclick="saveWStrefy()">💾 Zapisz</button>
+      <button class="btn btn-grey" onclick="closeWEditor()">Anuluj</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ STREFY ══ -->
+<div class="panel" id="p-strefy">
+  <div class="g2">
+    <div class="c">
+      <div class="ct">Dodaj strefę główną</div>
+      <div class="row"><input type="text" id="nStr" placeholder="NAZWA"><input type="color" id="nStrKolor" value="#185FA5"><button class="btn btn-green" onclick="addStrefa()">+</button></div>
+    </div>
+    <div class="c"><div class="ct">Strefy</div><div id="strList">Ładowanie...</div></div>
+  </div>
+  <!-- Editor podstref -->
+  <div class="c" id="podEditor" style="display:none;">
+    <div class="ct">Podstrefy: <span id="podEdName" style="color:var(--text);text-transform:none;font-weight:700;"></span></div>
+    <div class="pods" id="podChips"></div>
+    <div class="row" style="margin-top:10px;"><input type="text" id="nPod" placeholder="PODSTREFA"><button class="btn btn-green" onclick="addPod()">+</button></div>
+    <button class="btn btn-grey" onclick="closePodEditor()" style="margin-top:8px;">↩ Zamknij</button>
+  </div>
+</div>
+
+<!-- ══ ADMINS ══ -->
+<div class="panel" id="p-admins">
+  <div class="g2">
+    <div class="c">
+      <div class="ct">Dodaj administratora</div>
+      <div class="row"><input type="text" id="nAdU" placeholder="login"><input type="password" id="nAdP" placeholder="hasło"><button class="btn btn-green" onclick="addAdmin()">+</button></div>
+    </div>
+    <div class="c"><div class="ct">Aktywni</div><div id="admList">Ładowanie...</div></div>
+  </div>
+</div>
+
+<!-- ══ CONFIG ══ -->
+<div class="panel" id="p-config">
+  <div class="c" style="max-width:500px;">
+    <div class="ct">Ustawienia</div>
+    <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Próg alertu przerwy (minuty)</label>
+    <div class="row"><input type="number" id="cfgProg" min="5" max="120" style="max-width:100px;"><span style="font-size:.78rem;color:var(--muted)">min</span></div>
+    <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Ostrzeżenie szybka zmiana (minuty)</label>
+    <div class="row"><input type="number" id="cfgSzybka" min="1" max="60" style="max-width:100px;"><span style="font-size:.78rem;color:var(--muted)">min</span></div>
+    <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">⏰ Alert długi dyżur — po ilu godzinach</label>
+    <div class="row"><input type="number" id="cfgDyzurH" min="1" max="24" style="max-width:100px;"><span style="font-size:.78rem;color:var(--muted)">h (domyślnie 10)</span></div>
+    <div style="font-size:.75rem;color:var(--muted);background:rgba(24,95,165,.1);border:1px solid rgba(24,95,165,.3);border-radius:6px;padding:8px 12px;margin-bottom:12px;">
+      🔒 <strong>Auto-zamknięcie:</strong> każda sesja jest automatycznie zamykana o 23:59:59 dnia jej rozpoczęcia. Sesja nie może przejść przez północ.
+    </div>
+    <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">📅 Tolerancja spóźnienia grafiku (minuty)</label>
+    <div class="row"><input type="number" id="cfgTolGrafik" min="0" max="60" style="max-width:100px;"><span style="font-size:.78rem;color:var(--muted)">min (domyślnie 15)</span></div>
+    <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Ścieżka backup</label>
+    <div class="row"><input type="text" id="cfgBackup" placeholder="/opt/timeapp/backup" style="flex:1;"></div>
+    <button class="btn btn-blue" onclick="saveConfig()">💾 Zapisz ustawienia</button>
+  </div>
+</div>
+
+<!-- ══ GRAFIK ══ -->
+<div class="panel" id="p-grafik">
+  <div class="c">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+      <div class="ct" style="margin:0">📅 Grafik pracy</div>
+      <input type="month" id="grafikMonth" style="padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:.85rem;">
+      <button class="btn btn-blue"  onclick="loadGrafik()">🔄 Załaduj</button>
+      <button class="btn btn-grey"  onclick="loadPorownanie()">📊 Porównanie z obecnością</button>
+      <button class="btn btn-grey"  onclick="document.getElementById('grafikFileInput').click()">⬆ Importuj Excel</button>
+      <a class="btn btn-grey" href="/admin/api/grafik/template" download>⬇ Pobierz szablon</a>
+      <input type="file" id="grafikFileInput" accept=".xlsx,.xls" style="display:none" onchange="importGrafik(this)">
+    </div>
+
+    <!-- legenda -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;font-size:.72rem;">
+      <span style="background:#185FA522;border:1px solid #185FA5;padding:2px 8px;border-radius:4px;color:#7ab4e8">R / 05-13</span>
+      <span style="background:#1e8c4522;border:1px solid #1e8c45;padding:2px 8px;border-radius:4px;color:#6ecf94">P / 13-21</span>
+      <span style="background:#6c35a022;border:1px solid #9b59b6;padding:2px 8px;border-radius:4px;color:#c39bd3">N / nocna</span>
+      <span style="background:#2d3f56;padding:2px 8px;border-radius:4px;color:var(--muted)">W / wolne</span>
+      <span style="background:#1e8c4533;padding:2px 8px;border-radius:4px;color:#6ecf94">✅ Na czas</span>
+      <span style="background:#d3540022;padding:2px 8px;border-radius:4px;color:#f09050">⚠ Spóźnienie</span>
+      <span style="background:#c0392b22;padding:2px 8px;border-radius:4px;color:#f08080">❌ Nieobecność</span>
+    </div>
+
+    <div id="grafikWrap" style="overflow-x:auto;">
+      <div style="color:var(--muted);font-size:.85rem;padding:20px 0">Wybierz miesiąc i kliknij Załaduj.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MACIERZ UPRAWNIEŃ ══ -->
+<div class="panel" id="p-macierz">
+  <div class="mx-toolbar">
+    <input type="text" id="mxSearch" placeholder="Szukaj pracownika..." oninput="mxFilter()">
+    <button class="btn btn-grey" onclick="mxSelAll(true)">✓ Zaznacz widocznych</button>
+    <button class="btn btn-red"  onclick="mxSelAll(false)">✕ Odznacz widocznych</button>
+    <button class="btn btn-blue" onclick="mxSaveAll()">💾 Zapisz wszystkie uprawnienia</button>
+    <span class="mx-saved" id="mxSavedInfo"></span>
+  </div>
+  <div class="mx-wrap">
+    <table class="mx-table" id="mxTable">
+      <thead>
+        <tr id="mxHr"></tr>
+        <tr class="mx-sar" id="mxSar"></tr>
+      </thead>
+      <tbody id="mxBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ NADWYZKA EDITOR ══ -->
+<div class="eoverlay" id="nadwEditor">
+  <div class="esheet">
+    <div class="etitle">Przypisz strefę do nadwyżki</div>
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:12px;" id="nadwEdInfo"></div>
+    <select id="nadwEdSelect" style="width:100%;margin-bottom:12px;"></select>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-blue" onclick="saveNadwyzka()">💾 Zapisz</button>
+      <button class="btn btn-grey" onclick="closeNadwEditor()">Anuluj</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<audio id="alertSound" src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAA..." preload="auto"></audio>
+
+<script>
+// ── UTILS ────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────
+function tab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  document.getElementById('p-'+name).classList.add('on');
+  btn.classList.add('on');
+  const loaders = {
+    dashboard: loadDashboard, podglad: loadLive,
+    przerwy: loadNadwyzki, historia: () => { loadHPracownicy(); loadHistoria(); },
+    korekty: loadKorekty, pracownicy: () => { loadWorkers(); loadStrefyForW(); },
+    strefy: loadStrefy, admins: loadAdmins, config: loadConfig,
+    grafik:  loadGrafik,
+    macierz: loadMacierz,
+  };
+  loaders[name]?.();
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────
+let tT;
+function toast(msg, ok=true) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className=`toast show ${ok?'ok':'err'}`;
+  clearTimeout(tT); tT=setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ── ALERT BANNER ──────────────────────────────────────────────────────────
+async function checkNewAlerts() {
+  try {
+    const r = await fetch('/api/alerts/new');
+    const d = await r.json();
+    if (d.length) {
+      const msg = d.map(a=>a.opis).join(' | ');
+      document.getElementById('alertBannerMsg').textContent = '⚠ ' + msg;
+      document.getElementById('alertBanner').style.display = 'block';
+      // Beep via AudioContext
+      try {
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = 880; gain.gain.value = 0.3;
+        osc.start(); osc.stop(ctx.currentTime + 0.3);
+      } catch {}
+    }
+  } catch {}
+}
+function dismissBanner() { document.getElementById('alertBanner').style.display='none'; }
+setInterval(checkNewAlerts, 20000);
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────
+let chartS, chartP;
+document.getElementById('dashDate').value = new Date().toISOString().slice(0,10);
+
+function fmtMin(min) {
+  const h = Math.floor(min / 60);
+  const m = Math.round(min % 60);
+  return h > 0 ? `${h}h ${m}min` : `${m}min`;
+}
+
+function splitStrefaNazwa(nazwa) {
+  // "STREFA_KURIER1" → ["STREFA_", "KURIER1"]
+  // "PRZERWA" → ["", "PRZERWA"]
+  const idx = nazwa.indexOf('_');
+  if (idx !== -1) {
+    return [nazwa.slice(0, idx + 1), nazwa.slice(idx + 1)];
+  }
+  return ['', nazwa];
+}
+
+async function loadDashboard() {
+  const data = document.getElementById('dashDate').value || new Date().toISOString().slice(0,10);
+  const r = await fetch(`/admin/api/dashboard?data=${data}`);
+  const d = await r.json();
+  document.getElementById('kpiAktywne').textContent = d.aktywne;
+  document.getElementById('kpiPrzerwa').textContent = d.na_przerwie;
+  document.getElementById('kpiAlerty').textContent  = d.alerty_przerwa;
+  document.getElementById('kpiWpisy').textContent   = d.wpisy_dzis;
+
+  const wrap = document.getElementById('strefyKafelki');
+  if (!wrap) return;
+
+  wrap.innerHTML = (d.strefy_kafelki || []).map(s => {
+    const [prefix, suffix] = splitStrefaNazwa(s.strefa);
+    const isPrzerwa = s.strefa === 'PRZERWA';
+    const hasActive = s.aktywni > 0;
+    const borderStyle = hasActive ? `3px solid ${s.kolor}` : `1px solid var(--border)`;
+    const nameLine1 = prefix
+      ? `<span style="font-size:.65rem;opacity:.75;letter-spacing:1px">${escHtml(prefix)}</span><br>`
+      : '';
+    return `<div style="
+        background:var(--card);border:${borderStyle};border-radius:14px;
+        padding:18px 14px;text-align:center;position:relative;
+        box-shadow:${hasActive ? '0 0 0 1px '+s.kolor+'44' : 'none'};
+        transition:box-shadow .2s;">
+      <div style="font-size:.78rem;font-weight:700;color:#fff;line-height:1.3;margin-bottom:12px;">
+        ${nameLine1}<span style="font-size:${suffix.length>8?'.85':'1.05'}rem">${escHtml(suffix)}</span>
+      </div>
+      <div style="font-size:2.6rem;font-weight:900;line-height:1;color:${s.aktywni>0?s.kolor:'var(--muted)'};margin-bottom:4px;">
+        ${s.aktywni}
+      </div>
+      <div style="font-size:.65rem;color:var(--muted);margin-bottom:8px;">
+        ${s.aktywni===1?'osoba':'osób'} teraz
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:8px;font-size:.72rem;color:var(--muted);">
+        ⏱ dziś: <strong style="color:var(--text)">${s.min_dzis > 0 ? fmtMin(s.min_dzis) : '—'}</strong>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── LIVE ──────────────────────────────────────────────────────────────────
+let liveStrefyCache = {};
+
+async function loadLive() {
+  const r = await fetch('/admin/api/status');
+  const data = await r.json();
+  const alerts = data.filter(x=>x.alert).length;
+  document.getElementById('liveCount').textContent = data.length;
+  const ab = document.getElementById('liveAlertBadge');
+  if (alerts) { ab.textContent=`⚠ ${alerts}`; ab.style.display='inline'; } else ab.style.display='none';
+
+  const counts = {};
+  data.forEach(w => {
+    if (!counts[w.strefa]) counts[w.strefa]={count:0,alert:false};
+    counts[w.strefa].count++;
+    if (w.alert) counts[w.strefa].alert=true;
+  });
+  document.getElementById('liveChips').innerHTML = Object.entries(counts)
+    .sort((a,b)=>b[1].count-a[1].count)
+    .map(([s,i])=>`<div class="chip${i.alert?' ha':''}"><span>${s.replace('STREFA_','')}</span><span class="cn">${i.count}</span></div>`)
+    .join('');
+
+  const tb = document.getElementById('liveBody');
+  if (!data.length) {
+    tb.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted)">Brak aktywnych sesji</td></tr>`;
+    return;
+  }
+  tb.innerHTML = data.map(w => {
+    const isDyzur = w.alert_dyzur;
+    const tCls = isDyzur ? 't-alert' : (w.alert ? 't-alert' : (w.czas_min > 60 ? 't-warn' : 't-muted'));
+    const rowCls = isDyzur ? 'arow dyzur-row' : (w.alert ? 'arow' : '');
+    const ts   = w.ts_wejscia.replace('T',' ').slice(0,16);
+    const sNm  = escHtml(w.strefa.replace('STREFA_',''));
+    const badge = isDyzur
+      ? '<span class="badge-alert" style="background:#8b0000">⏰ DŁUGI DYŻUR</span>'
+      : (w.alert ? '<span class="badge-alert">ALERT</span>' : '');
+    const statusTxt = isDyzur ? '⏰ Długi dyżur' : (w.alert ? '⚠ Przekroczono' : 'OK');
+    return `<tr class="${rowCls}">
+      <td><strong>${escHtml(w.imie_nazwisko)}</strong>${badge}<div style="font-size:.65rem;color:var(--muted)">${escHtml(w.pracownik)}</div></td>
+      <td><span class="pill${w.strefa==='PRZERWA'?' prz':''}">${sNm}</span></td>
+      <td class="t-muted">${escHtml(w.podstrefa)||'—'}</td>
+      <td class="t-muted" style="font-size:.73rem">${escHtml(ts)}</td>
+      <td class="mono ${tCls}">${escHtml(w.czas_fmt)}</td>
+      <td class="t-muted" style="font-size:.72rem">${statusTxt}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-blue" style="padding:4px 8px;font-size:.72rem"
+          data-kod="${escHtml(w.pracownik)}" data-imie="${escHtml(w.imie_nazwisko)}" data-strefa="${escHtml(w.strefa)}"
+          onclick="openMoveModal(this.dataset.kod,this.dataset.imie,this.dataset.strefa)">→ Przesuń</button>
+        <button class="btn btn-red" style="padding:4px 8px;font-size:.72rem;margin-left:4px"
+          data-kod="${escHtml(w.pracownik)}" data-imie="${escHtml(w.imie_nazwisko)}"
+          onclick="quickKoniec(this.dataset.kod,this.dataset.imie)">🏁</button>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('liveRI').textContent = `Odśwież: ${new Date().toLocaleTimeString('pl-PL')}`;
+}
+setInterval(loadLive, 20000);
+
+// ── MODAL: PRZESUŃ ────────────────────────────────────────────────────────
+async function openMoveModal(kod, imie, aktStrefa) {
+  document.getElementById('moveKod').value  = kod;
+  document.getElementById('moveTitle').textContent = `Przesuń: ${imie}`;
+  document.getElementById('moveInfo').textContent  = `Aktualnie: ${aktStrefa.replace('STREFA_','')}`;
+
+  // Załaduj strefy
+  if (!Object.keys(liveStrefyCache).length) {
+    const r = await fetch('/admin/api/strefy');
+    liveStrefyCache = await r.json();
+  }
+  const sk = Object.keys(liveStrefyCache);
+  const sel = document.getElementById('moveStrefa');
+  sel.innerHTML = sk.map(s => `<option value="${s}">${s.replace('STREFA_','')}</option>`).join('');
+  sel.value = aktStrefa;
+  updateMovePodstrefy();
+  document.getElementById('moveModal').classList.add('show');
+}
+
+function updateMovePodstrefy() {
+  const strefa = document.getElementById('moveStrefa').value;
+  const pods   = (liveStrefyCache[strefa]||{}).podstrefy||[];
+  const sel    = document.getElementById('movePodstrefa');
+  sel.innerHTML = '<option value="">— brak —</option>' + pods.map(p=>`<option value="${p}">${p.replace(/_/g,' ')}</option>`).join('');
+}
+document.getElementById('moveStrefa')?.addEventListener('change', updateMovePodstrefy);
+
+function closeMoveModal() { document.getElementById('moveModal').classList.remove('show'); }
+
+async function doMove() {
+  const kod     = document.getElementById('moveKod').value;
+  const strefa  = document.getElementById('moveStrefa').value;
+  const pod     = document.getElementById('movePodstrefa').value;
+  const r = await fetch('/admin/api/move', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({pracownik:kod, strefa, podstrefa:pod})
+  });
+  const d = await r.json();
+  if (d.ok) { toast(`Przesunięto → ${strefa.replace('STREFA_','')}`); closeMoveModal(); loadLive(); }
+  else toast(d.error, false);
+}
+
+async function doKoniec() {
+  const kod = document.getElementById('moveKod').value;
+  if (!confirm('Zakończyć zmianę pracownika?')) return;
+  const r = await fetch('/admin/api/move', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({pracownik:kod, strefa:'KONIEC_ZMIANY'})
+  });
+  const d = await r.json();
+  if (d.ok) { toast('Zmiana zakończona'); closeMoveModal(); loadLive(); }
+  else toast(d.error, false);
+}
+
+async function quickKoniec(kod, imie) {
+  if (!confirm(`Zakończyć zmianę: ${imie}?`)) return;
+  const r = await fetch('/admin/api/move', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({pracownik:kod, strefa:'KONIEC_ZMIANY'})
+  });
+  const d = await r.json();
+  if (d.ok) { toast(`Zakończono zmianę: ${imie}`); loadLive(); }
+  else toast(d.error, false);
+}
+
+// ── MODAL: DODAJ RĘCZNIE ──────────────────────────────────────────────────
+async function openStartModal() {
+  if (!Object.keys(liveStrefyCache).length) {
+    const r = await fetch('/admin/api/strefy');
+    liveStrefyCache = await r.json();
+  }
+  const rw = await fetch('/admin/api/workers');
+  const workers = await rw.json();
+
+  // Pracownicy select
+  const selK = document.getElementById('startKod');
+  selK.innerHTML = Object.entries(workers)
+    .sort((a,b)=>a[1].imie.localeCompare(b[1].imie))
+    .map(([k,v])=>`<option value="${k}">${v.imie} (${k})</option>`).join('');
+
+  // Strefy select
+  const sk  = Object.keys(liveStrefyCache);
+  const selS = document.getElementById('startStrefa');
+  selS.innerHTML = sk.map(s=>`<option value="${s}">${s.replace('STREFA_','')}</option>`).join('');
+  updateStartPodstrefy();
+
+  document.getElementById('startModal').classList.add('show');
+}
+
+function updateStartPodstrefy() {
+  const strefa = document.getElementById('startStrefa').value;
+  const pods   = (liveStrefyCache[strefa]||{}).podstrefy||[];
+  const sel    = document.getElementById('startPodstrefa');
+  sel.innerHTML = '<option value="">— brak —</option>' + pods.map(p=>`<option value="${p}">${p.replace(/_/g,' ')}</option>`).join('');
+}
+
+function closeStartModal() { document.getElementById('startModal').classList.remove('show'); }
+
+async function doStart() {
+  const kod    = document.getElementById('startKod').value;
+  const strefa = document.getElementById('startStrefa').value;
+  const pod    = document.getElementById('startPodstrefa').value;
+  const r = await fetch('/admin/api/start', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({pracownik:kod, strefa, podstrefa:pod})
+  });
+  const d = await r.json();
+  if (d.ok) { toast(`Dodano: ${d.imie_nazwisko} → ${strefa.replace('STREFA_','')}`); closeStartModal(); loadLive(); }
+  else toast(d.error, false);
+}
+
+
+
+// ── NADWYŻKI PRZERW ────────────────────────────────────────────────────────
+let allStrefyList = [];
+let nadwEdId = null;
+
+async function loadNadwyzki() {
+  const r = await fetch('/admin/api/nadwyzki');
+  const data = await r.json();
+  const oczek = data.filter(x=>x.status==='oczekuje').length;
+  document.getElementById('przeTab').textContent = oczek ? ` (${oczek})` : '';
+
+  const tb = document.getElementById('nadwyzkiBody');
+  if (!data.length) { tb.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Brak nadwyżek</td></tr>`; return; }
+  tb.innerHTML = data.map(n => {
+    const st = n.status==='przypisana'
+      ? `<span class="pill ok">${n.przypisana_strefa}</span>`
+      : `<span class="pill wait">oczekuje</span>`;
+    const btn = n.status==='oczekuje'
+      ? `<button class="btn btn-blue" onclick="openNadwEditor(${n.id},'${n.imie}','${n.nadwyzka_fmt}')">Przypisz strefę</button>`
+      : '—';
+    const ts = (n.ts_przerwy||'').replace('T',' ').slice(0,16);
+    return `<tr class="${n.status==='oczekuje'?'arow':''}">
+      <td><strong>${escHtml(n.imie)}</strong></td>
+      <td class="mono">${escHtml(n.czas_przerwy_fmt)}</td>
+      <td class="mono t-alert">${escHtml(n.nadwyzka_fmt)}</td>
+      <td class="t-muted" style="font-size:.73rem">${escHtml(ts)}</td>
+      <td>${st}</td>
+      <td>${btn}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function openNadwEditor(id, imie, nadwFmt) {
+  nadwEdId = id;
+  document.getElementById('nadwEdInfo').textContent = `${imie} — nadwyżka: ${nadwFmt}`;
+  // Pobierz strefy
+  const r = await fetch('/admin/api/strefy');
+  const s = await r.json();
+  allStrefyList = Object.keys(s);
+  document.getElementById('nadwEdSelect').innerHTML =
+    allStrefyList.map(s=>`<option value="${s}">${s}</option>`).join('');
+  document.getElementById('nadwEditor').classList.add('show');
+}
+async function saveNadwyzka() {
+  const strefa = document.getElementById('nadwEdSelect').value;
+  const r = await fetch(`/admin/api/nadwyzki/${nadwEdId}/przypisz`, {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({strefa})
+  });
+  const d = await r.json();
+  if (d.ok) { toast('Przypisano strefę'); closeNadwEditor(); loadNadwyzki(); }
+  else toast(d.error, false);
+}
+function closeNadwEditor() { document.getElementById('nadwEditor').classList.remove('show'); nadwEdId=null; }
+
+// ── HISTORIA ──────────────────────────────────────────────────────────────
+async function loadHPracownicy() {
+  const r = await fetch('/admin/api/workers');
+  const w = await r.json();
+  const sel = document.getElementById('hPrac');
+  sel.innerHTML = '<option value="">— Wszyscy —</option>';
+  Object.entries(w).forEach(([k,v]) => {
+    const o=document.createElement('option'); o.value=k; o.textContent=v.imie; sel.appendChild(o);
+  });
+}
+
+// Ustaw domyślne daty
+(function(){
+  const today = new Date().toISOString().slice(0,10);
+  const week  = new Date(Date.now()-7*86400000).toISOString().slice(0,10);
+  document.getElementById('hDataOd').value = week;
+  document.getElementById('hDataDo').value = today;
+})();
+
+async function loadHistoria() {
+  const od  = document.getElementById('hDataOd').value;
+  const doo = document.getElementById('hDataDo').value;
+  const prac= document.getElementById('hPrac').value;
+  const str = document.getElementById('hStrefa').value;
+  const params = new URLSearchParams({data_od:od,data_do:doo,pracownik:prac,strefa:str});
+  const r = await fetch('/admin/api/historia?'+params);
+  const data = await r.json();
+  const tb = document.getElementById('historiaBody');
+  if (!data.length) { tb.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">Brak wyników</td></tr>`; return; }
+  tb.innerHTML = data.map(row => {
+    const ts_in  = (row.ts_wejscia||'').replace('T',' ').slice(0,16);
+    const ts_out = (row.ts_wyjscia||'').replace('T',' ').slice(11,16);
+    const fCls   = row.flaga ? 't-alert' : '';
+    return `<tr>
+      <td class="t-muted" style="font-size:.72rem">${escHtml((row.ts_wejscia||'').slice(0,10))}</td>
+      <td>${escHtml(row.imie_nazwisko||'')}</td>
+      <td><span class="pill${row.strefa==='PRZERWA'?' prz':''}">${escHtml(row.strefa||'')}</span></td>
+      <td class="t-muted">${escHtml(row.podstrefa||'—')}</td>
+      <td class="t-muted" style="font-size:.72rem">${escHtml(ts_in)}</td>
+      <td class="t-muted" style="font-size:.72rem">${escHtml(ts_out)}</td>
+      <td class="mono">${escHtml(row.czas_fmt||'')}</td>
+      <td class="${fCls}" style="font-size:.72rem">${escHtml(row.flaga||'')}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('historiaRI').textContent = `Wyniki: ${data.length} (max 500)`;
+}
+
+// ── KOREKTY ───────────────────────────────────────────────────────────────
+async function loadKorekty() {
+  const r = await fetch('/admin/api/korekty');
+  const data = await r.json();
+  const oczek = data.filter(x=>x.status==='oczekuje').length;
+  document.getElementById('korTab').textContent = oczek ? ` (${oczek})` : '';
+  const tb = document.getElementById('korBody');
+  if (!data.length) { tb.innerHTML=`<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">Brak zgłoszeń</td></tr>`; return; }
+  tb.innerHTML = [...data].reverse().map(k => {
+    const st = {oczekuje:`<span class="pill wait">oczekuje</span>`,zatwierdzona:`<span class="pill ok">zatwierdzona</span>`,odrzucona:`<span class="pill rej">odrzucona</span>`}[k.status]||k.status;
+    const btns = k.status==='oczekuje'
+      ? `<button class="btn btn-green" onclick="decKorekta(${k.id},'tak')">✓</button>
+         <button class="btn btn-red" onclick="decKorekta(${k.id},'nie')" style="margin-left:4px">✕</button>` : '—';
+    return `<tr>
+      <td class="t-muted" style="font-size:.72rem">${escHtml((k.ts_zgloszenia||'').slice(0,16).replace('T',' '))}</td>
+      <td><strong>${escHtml(k.imie)}</strong></td>
+      <td style="max-width:300px;font-size:.78rem">${escHtml(k.opis)}</td>
+      <td>${st}</td>
+      <td>${btns}</td>
+    </tr>`;
+  }).join('');
+}
+async function decKorekta(id, dec) {
+  await fetch(`/admin/api/korekty/${id}`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({decyzja:dec})});
+  toast(dec==='tak'?'Korekta zatwierdzona':'Korekta odrzucona', dec==='tak');
+  loadKorekty();
+}
+
+// ── PRACOWNICY ────────────────────────────────────────────────────────────
+let allStrefyW=[],edKod=null,edSel=[];
+
+async function loadStrefyForW() {
+  const r=await fetch('/admin/api/strefy'); const s=await r.json(); allStrefyW=Object.keys(s);
+}
+async function loadWorkers() {
+  const r=await fetch('/admin/api/workers'); const w=await r.json();
+  const entries=Object.entries(w);
+  document.getElementById('wCount').textContent=`(${entries.length})`;
+  if (!entries.length){document.getElementById('wList').innerHTML='<div style="color:var(--muted);font-size:.8rem">Brak</div>';return;}
+  document.getElementById('wList').innerHTML=entries.map(([k,v])=>`
+    <div class="li">
+      <div class="nm"><strong>${escHtml(v.imie)}</strong>
+        <div style="font-size:.68rem;color:var(--muted)">${escHtml(k)}</div>
+        <div style="font-size:.68rem;color:#8bbde8">${escHtml((v.strefy||[]).join(', ')||'— brak —')}</div>
+      </div>
+      <button class="btn btn-blue" data-kod="${escHtml(k)}" data-imie="${escHtml(v.imie)}" data-strefy="${escHtml(JSON.stringify(v.strefy||[]))}"
+        onclick="openWEditor(this.dataset.kod,this.dataset.imie,JSON.parse(this.dataset.strefy))">Strefy</button>
+      <button class="btn btn-red" data-kod="${escHtml(k)}" onclick="delWorker(this.dataset.kod)">✕</button>
+    </div>`).join('');
+}
+async function addWorker(){
+  const k=document.getElementById('nKod').value.trim().toUpperCase();
+  const i=document.getElementById('nImie').value.trim();
+  if(!k||!i)return toast('Wypełnij pola',false);
+  const r=await fetch('/admin/api/workers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kod:k,imie:i})});
+  const d=await r.json();
+  if(d.ok){document.getElementById('nKod').value='';document.getElementById('nImie').value='';loadWorkers();toast('Dodano');}
+  else toast(d.error,false);
+}
+async function delWorker(k){
+  if(!confirm(`Usunąć ${k}?`))return;
+  await fetch(`/admin/api/workers/${k}`,{method:'DELETE'});
+  loadWorkers();toast('Usunięto');
+}
+function openWEditor(k,imie,strefy){
+  edKod=k;edSel=[...strefy];
+  document.getElementById('wEdName').textContent=imie;
+  document.getElementById('wEditor').style.display='block';
+  document.getElementById('wEdToggles').innerHTML=allStrefyW.map(s=>
+    `<button class="tog${edSel.includes(s)?' on':''}" onclick="togW('${s}',this)">${s}</button>`
+  ).join('');
+}
+function togW(s,btn){
+  const i=edSel.indexOf(s);
+  if(i===-1){edSel.push(s);btn.classList.add('on');}else{edSel.splice(i,1);btn.classList.remove('on');}
+}
+async function saveWStrefy(){
+  if(!edKod)return;
+  const r=await fetch(`/admin/api/workers/${edKod}/strefy`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(edSel)});
+  const d=await r.json();
+  if(d.ok){toast('Zapisano');loadWorkers();closeWEditor();}else toast(d.error,false);
+}
+function closeWEditor(){document.getElementById('wEditor').style.display='none';edKod=null;}
+
+// ── STREFY ────────────────────────────────────────────────────────────────
+let edStr=null;
+
+async function loadStrefy(){
+  const r=await fetch('/admin/api/strefy');const s=await r.json();
+  allStrefyW=Object.keys(s);
+  if(!Object.keys(s).length){document.getElementById('strList').innerHTML='<div style="color:var(--muted);font-size:.8rem">Brak</div>';return;}
+  document.getElementById('strList').innerHTML=Object.entries(s).map(([n,i])=>`
+    <div class="li"><span class="dot" style="background:${escHtml(i.kolor)}"></span>
+      <div class="nm"><strong>${escHtml(n)}</strong> <span style="font-size:.68rem;color:var(--muted)">(${(i.podstrefy||[]).length} podstref)</span></div>
+      <button class="btn btn-blue" data-n="${escHtml(n)}" onclick="openPodEditor(this.dataset.n)">Podstrefy</button>
+      <button class="btn btn-red" data-n="${escHtml(n)}" onclick="delStrefa(this.dataset.n)">✕</button>
+    </div>`).join('');
+}
+async function addStrefa(){
+  const n=document.getElementById('nStr').value.trim().toUpperCase();
+  const k=document.getElementById('nStrKolor').value;
+  if(!n)return toast('Podaj nazwę',false);
+  const r=await fetch('/admin/api/strefy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nazwa:n,kolor:k})});
+  const d=await r.json();
+  if(d.ok){document.getElementById('nStr').value='';loadStrefy();toast('Dodano');}else toast(d.error,false);
+}
+async function delStrefa(n){
+  if(!confirm(`Usunąć ${n}?`))return;
+  await fetch(`/admin/api/strefy/${n}`,{method:'DELETE'});
+  loadStrefy();toast('Usunięto');
+}
+function openPodEditor(n){
+  edStr=n;document.getElementById('podEdName').textContent=n;
+  document.getElementById('podEditor').style.display='block';loadPods(n);
+}
+function closePodEditor(){document.getElementById('podEditor').style.display='none';edStr=null;}
+async function loadPods(n){
+  const r=await fetch('/admin/api/strefy');const s=await r.json();
+  const pods=(s[n]||{}).podstrefy||[];
+  document.getElementById('podChips').innerHTML=pods.map(p=>
+    `<div class="pch"><span>${escHtml(p)}</span><button data-n="${escHtml(n)}" data-p="${escHtml(p)}" onclick="delPod(this.dataset.n,this.dataset.p)">✕</button></div>`
+  ).join('')||'<span style="color:var(--muted);font-size:.75rem">Brak podstref</span>';
+}
+async function addPod(){
+  if(!edStr)return;
+  const p=document.getElementById('nPod').value.trim().toUpperCase();
+  if(!p)return toast('Podaj nazwę',false);
+  const r=await fetch(`/admin/api/strefy/${edStr}/podstrefy`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({podstrefa:p})});
+  const d=await r.json();
+  if(d.ok){document.getElementById('nPod').value='';loadPods(edStr);loadStrefy();toast('Dodano');}else toast(d.error,false);
+}
+async function delPod(s,p){
+  await fetch(`/admin/api/strefy/${s}/podstrefy/${p}`,{method:'DELETE'});loadPods(s);loadStrefy();
+}
+
+// ── ADMINS ────────────────────────────────────────────────────────────────
+async function loadAdmins(){
+  const r=await fetch('/admin/api/admins');const a=await r.json();
+  document.getElementById('admList').innerHTML=a.map(u=>
+    `<div class="li"><div class="nm"><strong>${escHtml(u)}</strong></div>
+     <button class="btn btn-red" data-u="${escHtml(u)}" onclick="delAdmin(this.dataset.u)">✕</button></div>`
+  ).join('')||'<div style="color:var(--muted);font-size:.8rem">Brak</div>';
+}
+async function addAdmin(){
+  const u=document.getElementById('nAdU').value.trim();
+  const p=document.getElementById('nAdP').value;
+  if(!u||!p)return toast('Wypełnij pola',false);
+  const r=await fetch('/admin/api/admins',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+  const d=await r.json();
+  if(d.ok){document.getElementById('nAdU').value='';document.getElementById('nAdP').value='';loadAdmins();toast('Dodano');}
+  else toast(d.error,false);
+}
+async function delAdmin(u){
+  if(!confirm(`Usunąć admina ${u}?`))return;
+  const r=await fetch(`/admin/api/admins/${u}`,{method:'DELETE'});
+  const d=await r.json();
+  if(d.ok){loadAdmins();toast('Usunięto');}else toast(d.error,false);
+}
+
+// ── CONFIG ────────────────────────────────────────────────────────────────
+async function loadConfig(){
+  const r=await fetch('/admin/api/config');const c=await r.json();
+  document.getElementById('cfgProg').value=c.prog_przerwa_min||30;
+  document.getElementById('cfgSzybka').value=c.ostrzezenie_szybka_zmiana_min||5;
+  document.getElementById('cfgDyzurH').value=c.alert_dlugi_dyżur_h||10;
+  document.getElementById('cfgTolGrafik').value=c.grafik_tolerancja_min||15;
+  document.getElementById('cfgBackup').value=c.backup_path||'';
+}
+async function saveConfig(){
+  const d={
+    prog_przerwa_min:parseInt(document.getElementById('cfgProg').value)||30,
+    ostrzezenie_szybka_zmiana_min:parseInt(document.getElementById('cfgSzybka').value)||5,
+    alert_dlugi_dyżur_h:parseInt(document.getElementById('cfgDyzurH').value)||10,
+    grafik_tolerancja_min:parseInt(document.getElementById('cfgTolGrafik').value)||15,
+    backup_path:document.getElementById('cfgBackup').value.trim(),
+  };
+  const r=await fetch('/admin/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
+  const res=await r.json();
+  if(res.ok)toast('Zapisano ustawienia');else toast(res.error,false);
+}
+
+// ── GRAFIK ────────────────────────────────────────────────────────────────
+
+(function(){
+  const m = document.getElementById('grafikMonth');
+  if(m) m.value = new Date().toISOString().slice(0,7);
+})();
+
+function grafikMonth(){ return document.getElementById('grafikMonth').value || new Date().toISOString().slice(0,7); }
+
+const SHIFT_COLORS = {
+  '05:00': '#185FA5', '13:00': '#1e8c45', '21:00': '#6c3590',
+};
+function shiftColor(od){
+  if(!od) return '#2d3f56';
+  const h = od.slice(0,5);
+  return SHIFT_COLORS[h] || '#185FA5';
+}
+function shiftLabel(zaplan){
+  if(!zaplan || zaplan.typ==='W') return 'W';
+  if(zaplan.od && zaplan.do) return `${zaplan.od.slice(0,5)}–${zaplan.do.slice(0,5)}`;
+  return '?';
+}
+function statusStyle(status){
+  switch(status){
+    case 'na_czas':    return 'background:rgba(30,140,69,.25);color:#6ecf94';
+    case 'spoznienie': return 'background:rgba(211,84,0,.25);color:#f09050';
+    case 'nieobecnosc':return 'background:rgba(192,57,43,.25);color:#f08080';
+    case 'wolne':      return 'background:rgba(45,63,86,.6);color:var(--muted)';
+    case 'planowane':  return 'background:rgba(24,95,165,.15);color:#7ab4e8';
+    default:           return 'background:rgba(24,95,165,.2);color:#7ab4e8';
+  }
+}
+function statusIcon(status){
+  return {na_czas:'✅',spoznienie:'⚠',nieobecnosc:'❌',wolne:'—',planowane:'📋',obecny:'✅'}[status]||'?';
+}
+
+function daysInMonth(ym){
+  const [y,m] = ym.split('-').map(Number);
+  return new Date(y, m, 0).getDate();
+}
+function dayLabel(ym, d){
+  const dt = new Date(`${ym}-${String(d).padStart(2,'0')}`);
+  return ['Nd','Pn','Wt','Śr','Cz','Pt','Sb'][dt.getDay()];
+}
+function isWeekend(ym, d){
+  const dt = new Date(`${ym}-${String(d).padStart(2,'0')}`);
+  return dt.getDay()===0 || dt.getDay()===6;
+}
+
+let _grafikData = {};
+let _grafikMode = 'grafik'; // 'grafik' | 'porownanie'
+
+async function loadGrafik(){
+  _grafikMode = 'grafik';
+  const month = grafikMonth();
+  const r = await fetch(`/admin/api/grafik?month=${month}`);
+  _grafikData = await r.json();
+  renderGrafikTable(_grafikData, month, false);
+}
+
+async function loadPorownanie(){
+  _grafikMode = 'porownanie';
+  const month = grafikMonth();
+  const r = await fetch(`/admin/api/grafik/porownanie?month=${month}`);
+  _grafikData = await r.json();
+  renderGrafikTable(_grafikData, month, true);
+}
+
+function renderGrafikTable(data, month, compare){
+  const wrap = document.getElementById('grafikWrap');
+  const days = daysInMonth(month);
+  const cols = Array.from({length:days},(_,i)=>i+1);
+
+  // stats
+  let statNaCzas=0, statSp=0, statNieo=0;
+  if(compare){
+    Object.values(data).forEach(w=>Object.values(w.dni||{}).forEach(d=>{
+      if(d.status==='na_czas') statNaCzas++;
+      else if(d.status==='spoznienie') statSp++;
+      else if(d.status==='nieobecnosc') statNieo++;
+    }));
+  }
+
+  let statsHtml = '';
+  if(compare){
+    statsHtml = `<div style="display:flex;gap:14px;margin-bottom:12px;font-size:.8rem;flex-wrap:wrap;">
+      <span style="color:#6ecf94">✅ Na czas: <strong>${statNaCzas}</strong></span>
+      <span style="color:#f09050">⚠ Spóźnienia: <strong>${statSp}</strong></span>
+      <span style="color:#f08080">❌ Nieobecności: <strong>${statNieo}</strong></span>
+    </div>`;
+  }
+
+  let hdr = `<tr><th style="position:sticky;left:0;z-index:2;background:var(--card);min-width:160px;padding:6px 10px;text-align:left">Pracownik</th>`;
+  cols.forEach(d=>{
+    const we = isWeekend(month,d);
+    hdr += `<th style="min-width:72px;padding:4px 2px;text-align:center;font-size:.68rem;${we?'color:var(--muted)':''}">${String(d).padStart(2,'0')}<br><span style="font-size:.6rem">${dayLabel(month,d)}</span></th>`;
+  });
+  hdr += '</tr>';
+
+  let body = '';
+  const sorted = Object.entries(data).sort((a,b)=>a[1].imie.localeCompare(b[1].imie));
+  sorted.forEach(([kod,w])=>{
+    body += `<tr>`;
+    body += `<td style="position:sticky;left:0;z-index:1;background:var(--card);padding:5px 10px;font-size:.8rem;white-space:nowrap;border-right:1px solid var(--border)">${escHtml(w.imie)}</td>`;
+    cols.forEach(d=>{
+      const dateIso = `${month}-${String(d).padStart(2,'0')}`;
+      const entry   = (w.dni||{})[dateIso];
+      const we      = isWeekend(month,d);
+      if(!entry){
+        const bg = we ? 'rgba(45,63,86,.4)':'';
+        body += `<td style="text-align:center;padding:2px;background:${bg}">
+          <div onclick="editGrafikCell('${escHtml(kod)}','${dateIso}',this)" title="Kliknij aby edytować"
+               style="cursor:pointer;border-radius:4px;padding:3px 4px;font-size:.68rem;color:var(--muted);min-height:28px;display:flex;align-items:center;justify-content:center">—</div>
+        </td>`;
+        return;
+      }
+      const zaplan = entry.zaplanowano || entry;
+      const status = entry.status;
+      const label  = shiftLabel(zaplan);
+      const col    = shiftColor(zaplan.od);
+      let cellHtml = '';
+      if(compare && status){
+        const sp = entry.spoznienie!=null ? `<div style="font-size:.58rem">${entry.spoznienie>0?'+':''}${entry.spoznienie}min</div>` : '';
+        cellHtml = `<div style="${statusStyle(status)};border-radius:4px;padding:3px 4px;font-size:.68rem;text-align:center;cursor:pointer"
+          title="${status==='spoznienie'?'Spóźnienie: '+entry.spoznienie+' min':''}" onclick="editGrafikCell('${escHtml(kod)}','${dateIso}',this)">
+          ${statusIcon(status)} ${label}${sp}</div>`;
+      } else {
+        const bg = zaplan.typ==='W' ? 'rgba(45,63,86,.5)' : col+'33';
+        const tc = zaplan.typ==='W' ? 'var(--muted)' : '#fff';
+        cellHtml = `<div onclick="editGrafikCell('${escHtml(kod)}','${dateIso}',this)"
+          style="background:${bg};color:${tc};border-radius:4px;padding:3px 4px;font-size:.68rem;text-align:center;cursor:pointer;border:1px solid ${zaplan.typ==='W'?'transparent':col}">${label}</div>`;
+      }
+      body += `<td style="padding:2px;${we?'background:rgba(45,63,86,.2)':''}">${cellHtml}</td>`;
+    });
+    body += '</tr>';
+  });
+
+  wrap.innerHTML = statsHtml + `<table style="border-collapse:collapse;width:100%;font-size:.8rem">
+    <thead style="background:var(--card2)">${hdr}</thead>
+    <tbody>${body}</tbody>
+  </table>`;
+}
+
+function editGrafikCell(kod, dateIso, el){
+  const cur = el.textContent.trim().replace(/[✅⚠❌📋—]/g,'').trim();
+  const val = prompt(`Zmiana dla ${dateIso}\nWpisz: R, P, N, 05-13, 13-21, W (wolne) lub puste:`, cur==='—'?'':cur);
+  if(val===null) return;
+  fetch('/admin/api/grafik/entry',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({pracownik:kod, data:dateIso, shift:val})
+  }).then(()=>{ _grafikMode==='porownanie' ? loadPorownanie() : loadGrafik(); });
+}
+
+async function importGrafik(input){
+  const file = input.files[0];
+  if(!file) return;
+  const fd = new FormData();
+  fd.append('file', file);
+  const r = await fetch('/admin/api/grafik/import',{method:'POST',body:fd});
+  const d = await r.json();
+  if(d.ok){
+    toast(`Zaimportowano ${d.zaimportowano} wpisów dla ${d.pracownicy} pracowników`+(d.bledy.length?` | ${d.bledy.length} błędów`:''));
+    if(d.bledy.length) alert('Nieznani pracownicy:\n'+d.bledy.join('\n'));
+    loadGrafik();
+  } else {
+    toast(d.error || 'Błąd importu','err');
+    if(d.bledy && d.bledy.length) alert(d.bledy.join('\n'));
+  }
+  input.value='';
+}
+
+// ── MACIERZ UPRAWNIEŃ ────────────────────────────────────────────────────
+let mxWorkers = {}, mxStrefy = {}, mxState = {}, mxBuilt = false;
+
+async function loadMacierz() {
+  if (mxBuilt) return;
+  const [rw, rs] = await Promise.all([
+    fetch('/admin/api/workers'), fetch('/admin/api/strefy')
+  ]);
+  mxWorkers = await rw.json();
+  mxStrefy  = await rs.json();
+
+  // Init state
+  Object.entries(mxWorkers).forEach(([k,v]) => {
+    mxState[k] = new Set(v.strefy || []);
+  });
+
+  mxBuildHeader();
+  mxBuildBody();
+  mxBuilt = true;
+}
+
+function mxBuildHeader() {
+  const hr  = document.getElementById('mxHr');
+  const sar = document.getElementById('mxSar');
+  const sk  = Object.keys(mxStrefy);
+  const pods = (mxStrefy['STREFA_INNE'] || {}).podstrefy || [];
+
+  // Worker col
+  hr.innerHTML  = '<th class="mx-wcol">ZASÓB</th>';
+  sar.innerHTML = '<td class="mx-wc" style="font-size:.57rem;color:var(--muted)">KOL▼</td>';
+
+  sk.forEach(s => {
+    const th = document.createElement('th');
+    th.innerHTML = `<div class="mx-thi">${s.replace('STREFA_','')}</div>`;
+    hr.appendChild(th);
+    const td = document.createElement('td');
+    const b  = document.createElement('button');
+    b.className = 'mx-sab'; b.textContent = '▼';
+    b.onclick = () => mxTogCol(s); td.appendChild(b); sar.appendChild(td);
+  });
+
+  // Separator + podstrefy
+  hr.innerHTML  += '<th><div class="mx-thi" style="color:var(--blue);font-size:.55rem">POD-<br>STREFY</div></th>';
+  sar.innerHTML += '<td></td>';
+
+  pods.forEach(p => {
+    const th = document.createElement('th');
+    th.innerHTML = `<div class="mx-thi pod">${p.replace(/_/g,' ')}</div>`;
+    hr.appendChild(th);
+    const td = document.createElement('td');
+    const b  = document.createElement('button');
+    b.className = 'mx-sab'; b.textContent = '▼';
+    b.onclick = () => mxTogCol('POD:'+p); td.appendChild(b); sar.appendChild(td);
+  });
+}
+
+function mxBuildBody() {
+  const mb   = document.getElementById('mxBody');
+  const sk   = Object.keys(mxStrefy);
+  const pods = (mxStrefy['STREFA_INNE'] || {}).podstrefy || [];
+  mb.innerHTML = '';
+
+  Object.entries(mxWorkers).forEach(([kod, w]) => {
+    const tr = document.createElement('tr');
+    tr.dataset.kod = kod;
+    tr.dataset.s   = w.imie.toLowerCase();
+
+    const tdw = document.createElement('td');
+    tdw.className = 'mx-wc';
+    tdw.innerHTML = `<span class="mn">${w.imie}</span><span class="mk">${kod}</span>`;
+    tr.appendChild(tdw);
+
+    sk.forEach(s => tr.appendChild(mxMakeCell(kod, s)));
+
+    const sep = document.createElement('td'); sep.className = 'mx-sep'; tr.appendChild(sep);
+    pods.forEach(p => tr.appendChild(mxMakeCell(kod, 'POD:'+p)));
+
+    mb.appendChild(tr);
+  });
+}
+
+function mxMakeCell(kod, s) {
+  const td  = document.createElement('td');
+  const btn = document.createElement('button');
+  const on  = mxState[kod].has(s);
+  btn.className   = 'mx-cb ' + (on ? 'on' : 'off');
+  btn.textContent = on ? '✓' : '·';
+  btn.dataset.kod = kod; btn.dataset.s = s;
+  btn.onclick = () => mxTogCell(btn, kod, s);
+  td.appendChild(btn); return td;
+}
+
+function mxTogCell(btn, kod, s) {
+  if (mxState[kod].has(s)) { mxState[kod].delete(s); btn.className='mx-cb off'; btn.textContent='·'; }
+  else                      { mxState[kod].add(s);    btn.className='mx-cb on';  btn.textContent='✓'; }
+}
+
+function mxTogCol(s) {
+  const rows = [...document.querySelectorAll('#mxBody tr:not(.mx-fout)')];
+  const allOn = rows.every(tr => mxState[tr.dataset.kod].has(s));
+  rows.forEach(tr => {
+    const kod = tr.dataset.kod;
+    [...tr.querySelectorAll('.mx-cb')].filter(b=>b.dataset.s===s).forEach(btn => {
+      if (allOn) { mxState[kod].delete(s); btn.className='mx-cb off'; btn.textContent='·'; }
+      else       { mxState[kod].add(s);    btn.className='mx-cb on';  btn.textContent='✓'; }
+    });
+  });
+}
+
+function mxSelAll(on) {
+  const rows = [...document.querySelectorAll('#mxBody tr:not(.mx-fout)')];
+  const pods = (mxStrefy['STREFA_INNE']||{}).podstrefy||[];
+  const all  = [...Object.keys(mxStrefy), ...pods.map(p=>'POD:'+p)];
+  rows.forEach(tr => {
+    const kod = tr.dataset.kod;
+    all.forEach(s => { if(on) mxState[kod].add(s); else mxState[kod].delete(s); });
+    tr.querySelectorAll('.mx-cb').forEach(btn => {
+      btn.className = 'mx-cb ' + (mxState[kod].has(btn.dataset.s) ? 'on' : 'off');
+      btn.textContent = mxState[kod].has(btn.dataset.s) ? '✓' : '·';
+    });
+  });
+}
+
+function mxFilter() {
+  const q = document.getElementById('mxSearch').value.toLowerCase();
+  document.querySelectorAll('#mxBody tr').forEach(tr => {
+    tr.classList.toggle('mx-fout', !tr.dataset.s.includes(q) && !tr.dataset.kod.toLowerCase().includes(q));
+  });
+}
+
+async function mxSaveAll() {
+  const pods = (mxStrefy['STREFA_INNE']||{}).podstrefy||[];
+  let saved = 0, errors = 0;
+  const entries = Object.entries(mxWorkers);
+  const info = document.getElementById('mxSavedInfo');
+  info.textContent = 'Zapisywanie...';
+
+  for (const [kod] of entries) {
+    const keys    = [...mxState[kod]];
+    const strefy  = keys.filter(k => !k.startsWith('POD:')).sort();
+    const podSel  = keys.filter(k => k.startsWith('POD:')).map(k=>k.replace('POD:',''));
+    const final   = [...strefy];
+    if (podSel.length && !final.includes('STREFA_INNE')) final.push('STREFA_INNE');
+
+    const r = await fetch(`/admin/api/workers/${kod}/strefy`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(final.sort())
+    });
+    const d = await r.json();
+    if (d.ok) saved++; else errors++;
+  }
+
+  if (errors === 0) {
+    info.textContent = `✓ Zapisano ${saved} pracowników`;
+    info.style.color = 'var(--green)';
+    toast(`Zapisano uprawnienia dla ${saved} pracowników`);
+    // Odśwież lokalny cache
+    const rw = await fetch('/admin/api/workers');
+    mxWorkers = await rw.json();
+  } else {
+    info.textContent = `⚠ ${errors} błędów, ${saved} OK`;
+    info.style.color = 'var(--red)';
+    toast(`Błędy: ${errors}`, false);
+  }
+}
+
+// Init
+loadDashboard();
+</script>
+</body>
+</html>
