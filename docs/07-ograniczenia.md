@@ -73,12 +73,6 @@ Prototyp nie przeszedł przeglądu bezpieczeństwa. Przed jakimkolwiek wdrożeni
 | `index.html:612-617`; `admin.html:850, 888, 935, 959, 1155` | interfejs nie sprawdza odpowiedzi serwera |
 | `admin.html:515-518, 559-561` i pozostałe funkcje `load*` | brak obsługi 401 i błędów sieci |
 
-## Pytania otwarte
-
-- Jaka jest skala problemu i koszt procesu w Excelu? <DO UZUPEŁNIENIA>
-- Kto korzysta z ewidencji i w jakim formacie jej potrzebuje? <DO UZUPEŁNIENIA>
-- Jak długo przechowywać dane osobowe w ewidencji i kopiach? <DO UZUPEŁNIENIA>
-
 ## Co dalej
 
 Kolejność wynika z wpływu na wiarygodność ewidencji:
@@ -88,3 +82,4 @@ Kolejność wynika z wpływu na wiarygodność ewidencji:
 3. Korekta powiązana z konkretnym wpisem i zmieniająca go po zatwierdzeniu (D6).
 4. Usunięcie pozostałości uprawnień per podstrefa z macierzy uprawnień (D8).
 5. Klucz sesji ze zmiennej środowiskowej i wymuszenie zmiany hasła startowego (B1–B3).
+6. Polityka retencji danych osobowych w ewidencji, alertach i kopiach zapasowych — wymagana przed wdrożeniem.
