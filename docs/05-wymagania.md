@@ -34,10 +34,10 @@ i [07-ograniczenia](07-ograniczenia.md), nie tutaj.
 
 | ID | Wymaganie | Kryterium akceptacji | Gdzie zrealizowane |
 |---|---|---|---|
-| PRZ-01 | Administrator dowiaduje się o przekroczonej przerwie, gdy ona trwa. | Po 30 min w strefie PRZERWA w ciągu minuty pojawia się alert `DLUGA_PRZERWA`, a w otwartym panelu w ciągu 20 s baner i sygnał dźwiękowy. Alert pojawia się raz na sesję. | `app.py:379-386, 618-624`, `admin.html:472-493` |
+| PRZ-01 | Administrator dowiaduje się o przekroczonej przerwie, gdy ona trwa. | Po 30 min w strefie PRZERWA w ciągu minuty pojawia się alert `DLUGA_PRZERWA`, a w otwartym panelu w ciągu 20 s baner i sygnał dźwiękowy. Alert pojawia się raz na sesję. | `app.py:379-386, 618-624`, `admin.html:469-490` |
 | PRZ-02 | Przekroczona przerwa jest oznaczona w ewidencji. | Wpis przerwy dłuższej niż 30 min ma flagę `DLUGA_PRZERWA`. | `app.py:292-297` |
 | PRZ-03 | Nadwyżka przerwy trafia do rozliczenia. | Zakończenie przerwy 42 min przez pracownika tworzy w zakładce Przerwy pozycję z nadwyżką 12 min i statusem „oczekuje”; pracownik widzi na ekranie potwierdzenia ramkę z czasem przerwy i nadwyżką. | `app.py:549-569`, `index.html:588-593` |
-| PRZ-04 | Administrator przypisuje nadwyżkę do strefy. | „Przypisz strefę” → wybór strefy → „Zapisz” zmienia status na strefę przypisaną; licznik przy zakładce Przerwy maleje. | `app.py:778-790`, `admin.html:758-778` |
+| PRZ-04 | Administrator przypisuje nadwyżkę do strefy. | „Przypisz strefę” → wybór strefy → „Zapisz” zmienia status na strefę przypisaną; licznik przy zakładce Przerwy maleje. | `app.py:778-790`, `admin.html:754-774` |
 
 ## Korekty
 
@@ -45,7 +45,7 @@ i [07-ograniczenia](07-ograniczenia.md), nie tutaj.
 |---|---|---|---|
 | KOR-01 | Pracownik zgłasza korektę opisem tekstowym. | „Zgłoś korektę wpisu” → opis → kod pracownika → zgłoszenie pojawia się w zakładce Korekty ze statusem „oczekuje”. Pusty opis jest odrzucany komunikatem „Opisz problem”. | `app.py:627-645`, `index.html:599-618` |
 | KOR-02 | Zgłosić korektę może tylko znany pracownik. | Zgłoszenie z kodem spoza słownika jest odrzucane przez serwer (403) i nie trafia do listy. | `app.py:631-633` |
-| KOR-03 | Administrator zatwierdza lub odrzuca korektę. | ✓ zmienia status na „zatwierdzona”, ✕ na „odrzucona”; przyciski znikają. | `app.py:798-809`, `admin.html:828-853` |
+| KOR-03 | Administrator zatwierdza lub odrzuca korektę. | ✓ zmienia status na „zatwierdzona”, ✕ na „odrzucona”; przyciski znikają. | `app.py:798-809`, `admin.html:824-849` |
 
 ## Panel administratora
 
@@ -53,14 +53,14 @@ i [07-ograniczenia](07-ograniczenia.md), nie tutaj.
 |---|---|---|---|
 | ADM-01 | Panel jest dostępny tylko po zalogowaniu. | Wejście na `/admin` bez sesji przekierowuje do logowania; API panelu bez sesji zwraca 401; złe hasło pokazuje „Nieprawidłowy login lub hasło”. | `app.py:650-672`, `is_admin()` w każdym endpointcie `/admin/api/*` |
 | ADM-02 | Dashboard pokazuje stan dnia. | Dla wybranej daty widać: aktywne sesje, osoby na przerwie, przekroczone przerwy, liczbę wpisów; per strefa — liczbę osób teraz i łączny czas dnia. | `app.py:705-764` |
-| ADM-03 | Podgląd Live pokazuje, kto jest gdzie i od kiedy. | Tabela odświeża się co 20 s; wiersze z alertem są na górze. | `app.py:591-616`, `admin.html:559-612` |
+| ADM-03 | Podgląd Live pokazuje, kto jest gdzie i od kiedy. | Tabela odświeża się co 20 s; wiersze z alertem są na górze. | `app.py:591-616`, `admin.html:555-608` |
 | ADM-04 | Administrator może przesunąć pracownika lub zakończyć mu zmianę. | „Przesuń” do innej strefy zamyka bieżącą sesję wpisem z `korekta_info = ADMIN:<login>` i otwiera nową. | `app.py:812-852` |
 | ADM-05 | Administrator może uruchomić sesję bez skanu. | „Dodaj ręcznie” tworzy sesję widoczną w Live; ewentualna wcześniejsza sesja jest zamknięta wpisem z `ADMIN:<login>:start_override`. | `app.py:854-888` |
 | ADM-06 | Historia wpisów z filtrami. | Filtr dat, pracownika i strefy zwraca najnowsze wpisy, maksymalnie 500. | `app.py:681-702` |
 | ADM-07 | Administrator zarządza słownikami. | Dodanie pracownika z kodem bez prefiksu `HU_` zwraca błąd „Kod musi zaczynać się od HU_”; nowa strefa jest widoczna na skanerze przy kolejnym skanie pracownika, któremu nadano do niej uprawnienie. | `app.py:890-964` |
-| ADM-08 | Uprawnienia można nadawać hurtowo. | W Macierzy uprawnień zaznaczenie kolumny i „Zapisz wszystkie uprawnienia” zmienia uprawnienia widocznych pracowników; zapis obejmuje wszystkich pracowników z macierzy. | `admin.html:1179-1344` |
+| ADM-08 | Uprawnienia można nadawać hurtowo. | W Macierzy uprawnień zaznaczenie kolumny i „Zapisz wszystkie uprawnienia” zmienia uprawnienia widocznych pracowników; zapis obejmuje wszystkich pracowników z macierzy. | `admin.html:1175-1316` |
 | ADM-09 | Administrator zarządza kontami administratorów. | Można dodać konto; nie można usunąć konta, na którym jest się zalogowanym. | `app.py:966-987` |
-| ADM-10 | Progi są konfigurowalne. | Zmiana progu przerwy na 20 min w Config sprawia, że kolejna przerwa 25 min dostaje flagę `DLUGA_PRZERWA`. | `app.py:989-1000`, `admin.html:987-1006` |
+| ADM-10 | Progi są konfigurowalne. | Zmiana progu przerwy na 20 min w Config sprawia, że kolejna przerwa 25 min dostaje flagę `DLUGA_PRZERWA`. | `app.py:989-1000`, `admin.html:983-1002` |
 
 ## Grafik
 
@@ -68,7 +68,7 @@ i [07-ograniczenia](07-ograniczenia.md), nie tutaj.
 |---|---|---|---|
 | GRF-01 | Szablon grafiku do pobrania. | „Pobierz szablon” zwraca plik `.xlsx` z kolumną „Pracownik”, dniami bieżącego miesiąca i legendą R / P / N / W. | `app.py:1022-1070` |
 | GRF-02 | Import grafiku z Excela. | Import wypełnionego szablonu pokazuje liczbę wpisów i pracowników; wiersze z nieznanym nazwiskiem są wylistowane jako błędy. Kody R, P, N i zakresy `05-13` lub `05:00-13:00` są rozpoznawane. | `app.py:97-196, 1073-1089` |
-| GRF-03 | Ręczna edycja grafiku. | Kliknięcie komórki i wpisanie `P` zmienia dzień na 13:00–21:00. | `app.py:1110-1124`, `admin.html:1151-1159` |
+| GRF-03 | Ręczna edycja grafiku. | Kliknięcie komórki i wpisanie `P` zmienia dzień na 13:00–21:00. | `app.py:1110-1124`, `admin.html:1147-1155` |
 | GRF-04 | Porównanie planu z obecnością. | Dla zaplanowanego dnia: pierwszy **zamknięty** wpis ewidencji zaczęty do 15 min po początku zmiany = „na czas”, później = „spóźnienie” z liczbą minut, brak wpisu w dniu minionym lub bieżącym = „nieobecność”; nad tabelą widać podsumowanie. | `app.py:1127-1187` |
 
 ## Eksport, kopie i bezpieczeństwo

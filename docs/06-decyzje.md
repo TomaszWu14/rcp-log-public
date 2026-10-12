@@ -28,7 +28,7 @@ słownik pracowników, wpisy czasu.
 
 **Skutki.**
 - ➕ Uruchomienie bez żadnej infrastruktury; ewidencja od razu czytelna w Excelu.
-- ➖ Brak kluczy obcych — spójność trzyma kod, i nie wszędzie (patrz [04-model-danych](04-model-danych.md), N1–N12).
+- ➖ Brak kluczy obcych — spójność trzyma kod, i nie wszędzie (patrz [04-model-danych](04-model-danych.md), N1–N11).
 - ➖ Odczyt historii wymaga przejścia po plikach dziennych; zapis wpisu zawsze do dwóch plików.
 - ➖ Uszkodzony plik JSON jest czytany jak pusty bez alarmu (`app.py:63-67`).
 
@@ -124,12 +124,11 @@ zgłoszenie tekstowe z decyzją administratora.
 
 **Alternatywy.** Brak uprawnień; uprawnienia per strefa; uprawnienia per podstrefa.
 
-**Dlaczego ta.** Uprawnienia per podstrefa okazały się zbędne — dostęp wystarczy kontrolować na poziomie strefy. Kolumny podstref w macierzy (`admin.html:1204`) to pozostałość porzuconego pomysłu.
+**Dlaczego ta.** Uprawnienia per podstrefa okazały się zbędne — dostęp wystarczy kontrolować na poziomie strefy. Pozostałości tego pomysłu (kolumny podstref w macierzy uprawnień) zostały usunięte z kodu.
 
 **Skutki.**
 - ➕ Pracownik widzi tylko swoje strefy — mniej kafelków, mniej pomyłek.
 - ➖ Wszystkie podstrefy dozwolonej strefy są dostępne dla każdego, kto ma strefę.
-- ➖ W macierzy uprawnień zostały kolumny podstref i odwołania do `STREFA_INNE` (`admin.html:1204, 1290, 1310, 1321`) — martwy kod do usunięcia.
 
 ## D9. Skaner bez logowania, panel z logowaniem
 

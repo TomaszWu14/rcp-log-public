@@ -171,9 +171,9 @@ flowchart LR
 | U1 | Ekrany 2 i 3 nie wracają same do ekranu startowego. Gdy pracownik odejdzie, kolejna osoba może wybrać strefę w jego imieniu. | `index.html:294-320` |
 | U2 | Zgłoszenie korekty zawsze kończy się komunikatem sukcesu, także gdy serwer odrzuci nieznany kod. | `index.html:612-617` |
 | U3 | Korektę można zgłosić tylko z ekranu startowego, z ręcznym wpisaniem kodu. | `index.html:290, 610` |
-| U4 | Decyzja o korekcie, usunięcie pracownika, strefy lub podstrefy i edycja grafiku nie sprawdzają odpowiedzi serwera. | `admin.html:849-853, 886-890, 933-937, 958-960, 1155-1158` |
-| U5 | Po wygaśnięciu sesji administratora zakładki przestają się ładować bez komunikatu. | np. `admin.html:559-562` |
+| U4 | Decyzja o korekcie, usunięcie pracownika, strefy lub podstrefy i edycja grafiku nie sprawdzają odpowiedzi serwera. | `admin.html:845-849, 882-886, 929-933, 954-956, 1151-1154` |
+| U5 | Po wygaśnięciu sesji administratora zakładki przestają się ładować bez komunikatu. | np. `admin.html:555-558` |
 | U6 | Eksport nieistniejącego pliku otwiera stronę z samym tekstem błędu, bez nawigacji. | `app.py:1014-1015` |
-| U7 | Brak linku z panelu do skanera i ze skanera do panelu. | `admin.html:167-176`, `index.html:270-276` |
+| U7 | Brak linku z panelu do skanera i ze skanera do panelu. | `admin.html:164-173`, `index.html:270-276` |
 | U8 | Przy ostrzeżeniu o szybkiej zmianie otwierają się jednocześnie modal ostrzeżenia i modal potwierdzenia. | `index.html:556-561` |
-| U9 | Macierz uprawnień nie odświeża się po dodaniu pracownika lub strefy — trzeba przeładować stronę. | `admin.html:1183` |
+| U9 | Macierz uprawnień nie odświeża się po dodaniu pracownika lub strefy — trzeba przeładować stronę. | `admin.html:1179` |
