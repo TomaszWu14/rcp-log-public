@@ -1,64 +1,95 @@
-# WHO-SCAN
+# RCP Log
 
-System ewidencji czasu pracy w strefach magazynowych.
+Rejestracja czasu pracy w strefach magazynu jednym skanem kodu QR — dla pracowników zmiany
+i administratora, który do tej pory liczył ten czas ręcznie w Excelu.
 
-## Funkcje
+![demo](docs/screenshots/demo.gif)
+<!-- DO UZUPEŁNIENIA: nagrać GIF wg docs/screenshots/README.md -->
 
-- Skanowanie kodów QR pracowników (format `HU_NAZWISKO_IMIE`)
-- Rejestracja przejść między strefami magazynowymi
-- Podstrefy dla strefy INNE
-- Panel admina z podglądem live, historią, raportami
-- Macierz uprawnień stref per pracownik
-- Ręczne zarządzanie sesjami przez admina
-- Alerty przy przekroczeniu czasu przerwy
-- Raport nadwyżek czasu przerwy
-- Backup danych co noc
-- CSV per dzień i per miesiąc
-- Ciemny / jasny motyw
+📹 [Prezentacja działania — 2 min](<DO UZUPEŁNIENIA: link YouTube>)
 
-## Instalacja
+**Demo:** brak publicznej instancji — to prototyp z danymi przykładowymi; uruchomienie lokalne opisane niżej.
+
+## Problem → rozwiązanie
+
+Pracownik magazynu w ciągu zmiany przechodzi między strefami: kompletacja, przyjęcia, wysyłka, przerwa.
+Czas w strefach trafiał ręcznie do Excela, więc nikt nie wiedział na bieżąco, kto jest gdzie,
+a przekroczoną przerwę widać było dopiero przy rozliczeniu.
+RCP Log zastępuje arkusz jednym skanem: każdy skan zamyka poprzedni pobyt i otwiera nowy,
+administrator widzi obsadę na żywo, a przerwa ponad próg wywołuje alert i trafia na listę do rozliczenia.
+
+## Dokumentacja analityczna
+
+| Dokument | Zawartość |
+|---|---|
+| [01. Problem i zakres](docs/01-problem-i-zakres.md) | problem, interesariusze, co jest w zakresie, a co poza nim i dlaczego |
+| [02. Proces](docs/02-proces.md) | proces przed i po wdrożeniu, aktorzy, punkty decyzyjne — diagramy Mermaid |
+| [03. User flow](docs/03-user-flow.md) | mapa 12 ekranów i okien oraz 11 zakładek panelu, przejścia, ścieżki alternatywne i ślepe |
+| [04. Model danych](docs/04-model-danych.md) | ERD, opis encji, słowniki wartości, reguły integralności i znane niespójności |
+| [05. Wymagania](docs/05-wymagania.md) | 38 wymagań z kryteriami akceptacji i wskazaniem miejsca w kodzie |
+| [06. Decyzje](docs/06-decyzje.md) | dziennik 9 decyzji projektowych: kontekst, alternatywy, uzasadnienie, skutki |
+| [07. Ograniczenia](docs/07-ograniczenia.md) | czego aplikacja nie robi, znane problemy, miejsca bez walidacji, dalsze kroki |
+
+## Jak uruchomić
+
+Wymagany Python 3.11 lub nowszy.
+
+Windows (PowerShell lub cmd):
+
+```powershell
+git clone https://github.com/TomaszWu14/rcp-log-public.git
+cd rcp-log-public
+python -m venv .venv
+.venv\Scripts\python -m pip install -r requirements.txt
+.venv\Scripts\python run.py
+```
+
+Linux / macOS:
 
 ```bash
-python -m venv venv
-venv\Scripts\activate        # Windows
-pip install -r requirements.txt
-python run.py
+git clone https://github.com/TomaszWu14/rcp-log-public.git
+cd rcp-log-public
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python run.py
 ```
 
-Aplikacja dostępna pod:
-- Skaner: `http://localhost:5050/`
-- Admin: `http://localhost:5050/admin`
+Po starcie:
 
-Domyślne dane logowania: `admin / admin123`
+| Adres | Co to jest |
+|---|---|
+| http://localhost:5050/ | skaner — wpisz `HU_KOWALSKI_JAN` i naciśnij Enter |
+| http://localhost:5050/admin | panel administratora — login `admin`, hasło `admin123` |
 
-## Struktura
+Przy pierwszym uruchomieniu aplikacja sama tworzy katalog `data/` ze strefami, trzema przykładowymi
+pracownikami (`HU_KOWALSKI_JAN`, `HU_NOWAK_ANNA`, `HU_WISNIEWSKI_PIOTR`) i kontem administratora.
+Katalog `data/` nie jest wersjonowany.
 
-```
-HUSCAN/
-├── app.py              # Logika Flask + API
-├── run.py              # Uruchomienie produkcyjne (Waitress)
-├── requirements.txt
-├── templates/
-│   ├── index.html      # Ekran skanowania
-│   ├── admin.html      # Panel admina
-│   └── admin_login.html
-└── data/               # Dane (nie w repo)
-    ├── pracownicy.json
-    ├── strefy.json
-    ├── admins.json
-    ├── aktywne_sesje.json
-    ├── config.json
-    └── ewidencja_*.csv
-```
+## Stack i dlaczego taki
 
-## Format kodów QR
+| Element | Dlaczego |
+|---|---|
+| **Python 3.11 + Flask** | cała logika i API mieszczą się w jednym pliku (`app.py`) — przy prototypie liczy się czas od pomysłu do sprawdzenia procesu |
+| **Waitress** | produkcyjny serwer WSGI, który działa także na Windowsie (`run.py`) |
+| **Pliki JSON i CSV zamiast bazy** | zero infrastruktury; ewidencja zapisywana jest jako CSV z separatorem `;` i BOM, więc otwiera się wprost w Excelu, którego używano wcześniej — szczegóły i koszty tej decyzji w [D1](docs/06-decyzje.md#d1-pliki-json-i-csv-zamiast-bazy-danych) |
+| **openpyxl** | grafik zmian przychodzi w Excelu — aplikacja generuje szablon `.xlsx` i importuje wypełniony plik |
+| **HTML, CSS i JavaScript bez frameworka** | skaner działa w dowolnej przeglądarce na stanowisku, bez kroku budowania frontendu |
 
-`HU_NAZWISKO_INICJAL` — np. `HU_KOWALSKI_JAN`
+## Zakres i ograniczenia
 
-## Dane startowe
+W zakresie: rejestracja wejść do stref i przerw, uprawnienia do stref, alerty przerw i długich dyżurów,
+korekty, podgląd na żywo, grafik i porównanie z obecnością, eksport CSV, kopia zapasowa.
 
-Przed pierwszym uruchomieniem wrzuć do `data/`:
-- `pracownicy.json` — lista pracowników z uprawnieniami stref
-- `strefy.json` — definicje stref i podstref
+Poza zakresem: naliczanie wynagrodzeń i integracja z systemem kadrowym, automatyczna poprawka ewidencji
+po zatwierdzeniu korekty, zmiana nocna przez północ, praca skanera offline.
 
-Pliki generuje się przez macierz uprawnień w panelu admina.
+To prototyp, który nie przeszedł przeglądu bezpieczeństwa (m.in. klucz sesji w kodzie, domyślne hasło
+administratora). Pełna lista: [07. Ograniczenia](docs/07-ograniczenia.md).
+
+## Kontekst projektu
+
+<DO UZUPEŁNIENIA: skąd projekt, Twoja rola (analiza, implementacja), kto był odbiorcą wymagań, czas realizacji>
+
+## Licencja
+
+[MIT](LICENSE)
