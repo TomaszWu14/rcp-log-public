@@ -88,7 +88,18 @@ administratora). Pełna lista: [07. Ograniczenia](docs/07-ograniczenia.md).
 
 ## Kontekst projektu
 
-<DO UZUPEŁNIENIA: skąd projekt, Twoja rola (analiza, implementacja), kto był odbiorcą wymagań, czas realizacji>
+Projekt powstał z problemu, który zauważyłem w swojej pracy w magazynie: czas w strefach liczono w Excelu
+na podstawie ręcznych wpisów lidera zmiany. Z własnej inicjatywy przygotowałem prototyp, który ten proces zastępuje.
+
+Odpowiadałem za całość — od analizy do działającego rozwiązania:
+
+- **analiza procesu i wymagań** — wymagania zebrane od kierownika magazynu i lidera zmiany oraz z własnej obserwacji procesu,
+- **projekt ekranów i modelu danych**,
+- **implementacja**,
+- **testy prototypu z użytkownikami**.
+
+Od pomysłu do działającego prototypu minął około miesiąc. Repozytorium nie zawiera danych ani nazwy firmy —
+wszystkie dane są przykładowe.
 
 ## Licencja
 
