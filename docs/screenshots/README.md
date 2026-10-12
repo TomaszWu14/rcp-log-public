@@ -1,10 +1,14 @@
 # Zrzuty ekranu i GIF
 
-Pliki do dodania (dane wyłącznie fikcyjne, adres `localhost`):
+Wszystkie dane na zrzutach są fikcyjne (przykładowi pracownicy, strefy z danych startowych, adres `localhost`).
 
-| Plik | Co pokazuje | Status |
-|---|---|---|
-| `demo.gif` | skan kodu → wybór strefy i podstrefy → potwierdzenie → ekran „zapisano” (ok. 18 s) | <DO UZUPEŁNIENIA> |
-| `skaner-pracownik.png` | ekran pracownika z kafelkami stref | <DO UZUPEŁNIENIA> |
-| `panel-live.png` | panel administratora, zakładka Live z alertem przerwy | <DO UZUPEŁNIENIA> |
-| `panel-grafik.png` | porównanie grafiku z obecnością | <DO UZUPEŁNIENIA> |
+| Plik | Co pokazuje |
+|---|---|
+| `demo.gif` | skan kodu → wybór strefy i podstrefy → potwierdzenie → ekran „zapisano” (14 s) |
+| `skaner-pracownik.png` | ekran pracownika: bieżąca strefa, czas w strefie i dziś, kafelki dozwolonych stref |
+| `panel-live.png` | panel administratora, zakładka Live: kto jest w której strefie, alert przekroczonej przerwy |
+| `panel-grafik.png` | porównanie grafiku z obecnością: na czas, spóźnienia, nieobecności |
+
+![Ekran pracownika](skaner-pracownik.png)
+![Panel — Live](panel-live.png)
+![Panel — porównanie grafiku z obecnością](panel-grafik.png)

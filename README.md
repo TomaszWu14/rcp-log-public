@@ -4,7 +4,6 @@ Rejestracja czasu pracy w strefach magazynu jednym skanem kodu QR — dla pracow
 i administratora, który do tej pory liczył ten czas ręcznie w Excelu.
 
 ![demo](docs/screenshots/demo.gif)
-<!-- DO UZUPEŁNIENIA: nagrać GIF wg docs/screenshots/README.md -->
 
 📹 [Prezentacja działania — 2 min](<DO UZUPEŁNIENIA: link YouTube>)
 
