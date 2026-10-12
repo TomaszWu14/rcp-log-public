@@ -34,3 +34,10 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Sekrety i zmienne środowiskowe
+.env
+.env.*
+
+# Node (na wypadek narzędzi frontendowych)
+node_modules/
