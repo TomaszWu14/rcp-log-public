@@ -1,5 +1,5 @@
 """
-TimeApp v3
+RCP Log v3
 """
 from flask import (Flask, request, jsonify, render_template,
                    session, redirect, url_for, send_file)
