@@ -12,16 +12,17 @@
 
 ```mermaid
 flowchart TD
-    A[Pracownik zmienia strefę lub idzie na przerwę] --> B["DO UZUPEŁNIENIA: jak informacja trafiała do Excela — kto wpisywał i kiedy"]
+    A[Pracownik zmienia strefę lub idzie na przerwę] --> B[Lider zmiany zbiera informacje<br/>i wpisuje godziny do arkusza]
     B --> C[(Arkusz Excel)]
-    C --> D["DO UZUPEŁNIENIA: jak liczono czas per strefa i nadwyżki przerw"]
-    D --> E["DO UZUPEŁNIENIA: kto odbierał wynik i do czego go używał"]
+    C --> D[Formuły w arkuszu liczą czas per strefa<br/>i nadwyżki przerw]
+    D --> E[Kierownik magazynu: obsada i wydajność stref<br/>Lider zmiany: kontrola przerw]
 ```
 
 Słabe punkty procesu PRZED:
 - brak informacji na bieżąco, kto jest w której strefie,
 - przekroczenie przerwy widoczne dopiero przy rozliczeniu,
-- <DO UZUPEŁNIENIA: koszt — czas ręcznego liczenia, błędy, spory>
+- każda zmiana strefy wymaga przekazania informacji liderowi i ręcznego wpisu — dodatkowa praca lidera na każdej zmianie,
+- dane w arkuszu są tak aktualne, jak ostatni wpis lidera.
 
 ## Proces PO — rejestracja w RCP Log
 

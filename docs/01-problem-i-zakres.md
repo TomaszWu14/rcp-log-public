@@ -9,8 +9,6 @@ Czas spędzony w każdej strefie był ewidencjonowany ręcznie w Excelu. W takim
 - długą przerwę widać dopiero przy rozliczeniu, a nie w chwili, gdy trwa,
 - dane o czasie per strefa powstają z opóźnieniem i wymagają ręcznego przepisywania.
 
-Skala problemu (liczba pracowników, stref, czas poświęcany na ręczne liczenie): <DO UZUPEŁNIENIA>
-
 ## Cel
 
 Zastąpić ręczną ewidencję w Excelu rejestracją jednym skanem kodu QR, z podglądem obsady na żywo
@@ -24,7 +22,8 @@ Status: **prototyp** — rozwiązanie zbudowane do sprawdzenia procesu, nie wdro
 |---|---|---|
 | Pracownik magazynu | rejestruje wejście do strefy, przerwę i koniec zmiany | szybkiej rejestracji bez formularzy; informacji, ile przepracował dziś |
 | Administrator | monitoruje obsadę, reaguje na alerty, rozlicza nadwyżki przerw i korekty, utrzymuje słowniki | podglądu na żywo, alertów, eksportu danych |
-| Odbiorca danych (np. kierownik, kadry) | korzysta z ewidencji CSV | <DO UZUPEŁNIENIA: kto i do czego używa danych> |
+| Kierownik magazynu | korzysta z ewidencji i dashboardu | czasu per strefa do planowania obsady stref i oceny wydajności |
+| Lider zmiany | wcześniej wpisywał godziny do Excela; dziś korzysta z podglądu na żywo | bieżącej informacji, kto jest w której strefie i ile trwają przerwy |
 
 ## W zakresie
 
@@ -51,6 +50,6 @@ Status: **prototyp** — rozwiązanie zbudowane do sprawdzenia procesu, nie wdro
 | Praca offline skanera | skan wymaga połączenia z serwerem |
 | Wielu użytkowników z różnymi rolami w panelu | jest jedna rola: administrator |
 | Baza danych | dane w plikach JSON i CSV — patrz [06-decyzje](06-decyzje.md) D1 |
-| Polityka retencji danych osobowych | <DO UZUPEŁNIENIA> |
+| Polityka retencji danych osobowych | nie ustalono — prototyp działał na danych przykładowych; polityka retencji jest wymagana przed wdrożeniem |
 
 Pełna lista ograniczeń i znanych problemów: [07-ograniczenia](07-ograniczenia.md).
