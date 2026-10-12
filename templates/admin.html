@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TimeApp — Admin</title>
+<title>RCP Log — Admin</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root {
@@ -165,7 +165,7 @@ select option{background:var(--card2);}
 </div>
 
 <header>
-  <h1>📦 TimeApp — Admin</h1>
+  <h1>📦 RCP Log — Admin</h1>
   <div class="hr">
     <span class="user-chip">👤 <strong>{{ admin_user }}</strong></span>
     <a href="/admin/export/dzien"   class="btn btn-grey">⬇ CSV dziś</a>
@@ -364,7 +364,7 @@ select option{background:var(--card2);}
     <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">📅 Tolerancja spóźnienia grafiku (minuty)</label>
     <div class="row"><input type="number" id="cfgTolGrafik" min="0" max="60" style="max-width:100px;"><span style="font-size:.78rem;color:var(--muted)">min (domyślnie 15)</span></div>
     <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Ścieżka backup</label>
-    <div class="row"><input type="text" id="cfgBackup" placeholder="/opt/timeapp/backup" style="flex:1;"></div>
+    <div class="row"><input type="text" id="cfgBackup" placeholder="/opt/rcp-log/backup" style="flex:1;"></div>
     <button class="btn btn-blue" onclick="saveConfig()">💾 Zapisz ustawienia</button>
   </div>
 </div>
