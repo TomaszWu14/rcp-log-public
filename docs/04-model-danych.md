@@ -161,6 +161,5 @@ Niepilnowane — znane niespójności:
 | N7 | `id` nadwyżek i korekt to długość listy + 1; zapis tych plików nie jest objęty blokadą. | `app.py:554, 636` |
 | N8 | Wpis trafia do pliku dnia wejścia — pobyt przez północ trafia do dnia poprzedniego. | `app.py:547` |
 | N9 | Nic nie blokuje utworzenia strefy o nazwie `KONIEC_ZMIANY`. | `app.py:900` |
-| N10 | Macierz uprawnień odwołuje się do strefy `STREFA_INNE`, której nie ma w danych startowych; zapis może dodać uprawnienie do nieistniejącej strefy. | `admin.html:1204, 1321` |
-| N11 | Wpis grafiku nie sprawdza istnienia pracownika ani formatu daty. | `app.py:1114-1123` |
-| N12 | Dodanie pracownika lub strefy o istniejącej nazwie nadpisuje rekord (kasuje uprawnienia lub podstrefy). | `app.py:944, 902` |
+| N10 | Wpis grafiku nie sprawdza istnienia pracownika ani formatu daty. | `app.py:1114-1123` |
+| N11 | Dodanie pracownika lub strefy o istniejącej nazwie nadpisuje rekord (kasuje uprawnienia lub podstrefy). | `app.py:944, 902` |

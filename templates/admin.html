@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RCP Log — Admin</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root {
   --bg:#0f1923;--card:#1a2535;--card2:#212f42;--border:#2d3f56;
@@ -130,7 +129,6 @@ select option{background:var(--card2);}
 .mx-table thead th{position:sticky;top:0;z-index:20;background:#0f1923;padding:0;border-right:1px solid var(--border);border-bottom:2px solid var(--border);}
 .mx-table thead th.mx-wcol{position:sticky;left:0;z-index:30;background:#0f1923;min-width:170px;max-width:170px;padding:7px 10px;text-align:left;font-size:.6rem;letter-spacing:1px;color:var(--muted);border-right:2px solid var(--blue);}
 .mx-thi{writing-mode:vertical-rl;transform:rotate(180deg);padding:8px 4px;font-size:.6rem;color:var(--text);white-space:nowrap;min-height:90px;display:flex;align-items:center;justify-content:center;}
-.mx-thi.pod{color:#5a9fd4;font-style:italic;}
 .mx-table tbody tr:hover td{background:rgba(24,95,165,.06);}
 .mx-table tbody tr.mx-fout{display:none;}
 .mx-table td{border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;padding:0;}
@@ -146,7 +144,6 @@ select option{background:var(--card2);}
 .mx-sar td.mx-wc{font-size:.57rem;color:var(--muted);}
 .mx-sab{width:24px;height:16px;border:1px solid var(--border);background:transparent;cursor:pointer;border-radius:2px;color:var(--muted);font-size:.55rem;display:flex;align-items:center;justify-content:center;margin:0 auto;transition:all .1s;}
 .mx-sab:hover{border-color:var(--blue);color:var(--blue);}
-.mx-sep{border-left:2px solid var(--blue)!important;min-width:5px;}
 .mx-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
 .mx-toolbar input{padding:6px 10px;background:var(--card2);border:1.5px solid var(--border);border-radius:6px;color:var(--text);font-family:inherit;font-size:.78rem;width:220px;outline:none;}
 .mx-toolbar input:focus{border-color:var(--blue);}
@@ -493,7 +490,6 @@ function dismissBanner() { document.getElementById('alertBanner').style.display=
 setInterval(checkNewAlerts, 20000);
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────
-let chartS, chartP;
 document.getElementById('dashDate').value = new Date().toISOString().slice(0,10);
 
 function fmtMin(min) {
@@ -1201,7 +1197,6 @@ function mxBuildHeader() {
   const hr  = document.getElementById('mxHr');
   const sar = document.getElementById('mxSar');
   const sk  = Object.keys(mxStrefy);
-  const pods = (mxStrefy['STREFA_INNE'] || {}).podstrefy || [];
 
   // Worker col
   hr.innerHTML  = '<th class="mx-wcol">ZASÓB</th>';
@@ -1217,25 +1212,11 @@ function mxBuildHeader() {
     b.onclick = () => mxTogCol(s); td.appendChild(b); sar.appendChild(td);
   });
 
-  // Separator + podstrefy
-  hr.innerHTML  += '<th><div class="mx-thi" style="color:var(--blue);font-size:.55rem">POD-<br>STREFY</div></th>';
-  sar.innerHTML += '<td></td>';
-
-  pods.forEach(p => {
-    const th = document.createElement('th');
-    th.innerHTML = `<div class="mx-thi pod">${p.replace(/_/g,' ')}</div>`;
-    hr.appendChild(th);
-    const td = document.createElement('td');
-    const b  = document.createElement('button');
-    b.className = 'mx-sab'; b.textContent = '▼';
-    b.onclick = () => mxTogCol('POD:'+p); td.appendChild(b); sar.appendChild(td);
-  });
 }
 
 function mxBuildBody() {
   const mb   = document.getElementById('mxBody');
   const sk   = Object.keys(mxStrefy);
-  const pods = (mxStrefy['STREFA_INNE'] || {}).podstrefy || [];
   mb.innerHTML = '';
 
   Object.entries(mxWorkers).forEach(([kod, w]) => {
@@ -1249,9 +1230,6 @@ function mxBuildBody() {
     tr.appendChild(tdw);
 
     sk.forEach(s => tr.appendChild(mxMakeCell(kod, s)));
-
-    const sep = document.createElement('td'); sep.className = 'mx-sep'; tr.appendChild(sep);
-    pods.forEach(p => tr.appendChild(mxMakeCell(kod, 'POD:'+p)));
 
     mb.appendChild(tr);
   });
@@ -1287,8 +1265,7 @@ function mxTogCol(s) {
 
 function mxSelAll(on) {
   const rows = [...document.querySelectorAll('#mxBody tr:not(.mx-fout)')];
-  const pods = (mxStrefy['STREFA_INNE']||{}).podstrefy||[];
-  const all  = [...Object.keys(mxStrefy), ...pods.map(p=>'POD:'+p)];
+  const all  = Object.keys(mxStrefy);
   rows.forEach(tr => {
     const kod = tr.dataset.kod;
     all.forEach(s => { if(on) mxState[kod].add(s); else mxState[kod].delete(s); });
@@ -1307,18 +1284,13 @@ function mxFilter() {
 }
 
 async function mxSaveAll() {
-  const pods = (mxStrefy['STREFA_INNE']||{}).podstrefy||[];
   let saved = 0, errors = 0;
   const entries = Object.entries(mxWorkers);
   const info = document.getElementById('mxSavedInfo');
   info.textContent = 'Zapisywanie...';
 
   for (const [kod] of entries) {
-    const keys    = [...mxState[kod]];
-    const strefy  = keys.filter(k => !k.startsWith('POD:')).sort();
-    const podSel  = keys.filter(k => k.startsWith('POD:')).map(k=>k.replace('POD:',''));
-    const final   = [...strefy];
-    if (podSel.length && !final.includes('STREFA_INNE')) final.push('STREFA_INNE');
+    const final   = [...mxState[kod]];
 
     const r = await fetch(`/admin/api/workers/${kod}/strefy`, {
       method: 'PUT',
