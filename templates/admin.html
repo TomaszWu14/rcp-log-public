@@ -499,7 +499,7 @@ function fmtMin(min) {
 }
 
 function splitStrefaNazwa(nazwa) {
-  // "STREFA_KURIER1" → ["STREFA_", "KURIER1"]
+  // "ADMIN_MAG" → ["ADMIN_", "MAG"]
   // "PRZERWA" → ["", "PRZERWA"]
   const idx = nazwa.indexOf('_');
   if (idx !== -1) {
@@ -568,7 +568,7 @@ async function loadLive() {
   });
   document.getElementById('liveChips').innerHTML = Object.entries(counts)
     .sort((a,b)=>b[1].count-a[1].count)
-    .map(([s,i])=>`<div class="chip${i.alert?' ha':''}"><span>${s.replace('STREFA_','')}</span><span class="cn">${i.count}</span></div>`)
+    .map(([s,i])=>`<div class="chip${i.alert?' ha':''}"><span>${s}</span><span class="cn">${i.count}</span></div>`)
     .join('');
 
   const tb = document.getElementById('liveBody');
@@ -581,7 +581,7 @@ async function loadLive() {
     const tCls = isDyzur ? 't-alert' : (w.alert ? 't-alert' : (w.czas_min > 60 ? 't-warn' : 't-muted'));
     const rowCls = isDyzur ? 'arow dyzur-row' : (w.alert ? 'arow' : '');
     const ts   = w.ts_wejscia.replace('T',' ').slice(0,16);
-    const sNm  = escHtml(w.strefa.replace('STREFA_',''));
+    const sNm  = escHtml(w.strefa);
     const badge = isDyzur
       ? '<span class="badge-alert" style="background:#8b0000">⏰ DŁUGI DYŻUR</span>'
       : (w.alert ? '<span class="badge-alert">ALERT</span>' : '');
@@ -611,7 +611,7 @@ setInterval(loadLive, 20000);
 async function openMoveModal(kod, imie, aktStrefa) {
   document.getElementById('moveKod').value  = kod;
   document.getElementById('moveTitle').textContent = `Przesuń: ${imie}`;
-  document.getElementById('moveInfo').textContent  = `Aktualnie: ${aktStrefa.replace('STREFA_','')}`;
+  document.getElementById('moveInfo').textContent  = `Aktualnie: ${aktStrefa}`;
 
   // Załaduj strefy
   if (!Object.keys(liveStrefyCache).length) {
@@ -620,7 +620,7 @@ async function openMoveModal(kod, imie, aktStrefa) {
   }
   const sk = Object.keys(liveStrefyCache);
   const sel = document.getElementById('moveStrefa');
-  sel.innerHTML = sk.map(s => `<option value="${s}">${s.replace('STREFA_','')}</option>`).join('');
+  sel.innerHTML = sk.map(s => `<option value="${s}">${s}</option>`).join('');
   sel.value = aktStrefa;
   updateMovePodstrefy();
   document.getElementById('moveModal').classList.add('show');
@@ -645,7 +645,7 @@ async function doMove() {
     body: JSON.stringify({pracownik:kod, strefa, podstrefa:pod})
   });
   const d = await r.json();
-  if (d.ok) { toast(`Przesunięto → ${strefa.replace('STREFA_','')}`); closeMoveModal(); loadLive(); }
+  if (d.ok) { toast(`Przesunięto → ${strefa}`); closeMoveModal(); loadLive(); }
   else toast(d.error, false);
 }
 
@@ -690,7 +690,7 @@ async function openStartModal() {
   // Strefy select
   const sk  = Object.keys(liveStrefyCache);
   const selS = document.getElementById('startStrefa');
-  selS.innerHTML = sk.map(s=>`<option value="${s}">${s.replace('STREFA_','')}</option>`).join('');
+  selS.innerHTML = sk.map(s=>`<option value="${s}">${s}</option>`).join('');
   updateStartPodstrefy();
 
   document.getElementById('startModal').classList.add('show');
@@ -714,7 +714,7 @@ async function doStart() {
     body: JSON.stringify({pracownik:kod, strefa, podstrefa:pod})
   });
   const d = await r.json();
-  if (d.ok) { toast(`Dodano: ${d.imie_nazwisko} → ${strefa.replace('STREFA_','')}`); closeStartModal(); loadLive(); }
+  if (d.ok) { toast(`Dodano: ${d.imie_nazwisko} → ${strefa}`); closeStartModal(); loadLive(); }
   else toast(d.error, false);
 }
 
@@ -1204,7 +1204,7 @@ function mxBuildHeader() {
 
   sk.forEach(s => {
     const th = document.createElement('th');
-    th.innerHTML = `<div class="mx-thi">${s.replace('STREFA_','')}</div>`;
+    th.innerHTML = `<div class="mx-thi">${s}</div>`;
     hr.appendChild(th);
     const td = document.createElement('td');
     const b  = document.createElement('button');

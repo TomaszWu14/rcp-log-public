@@ -523,7 +523,7 @@ function showCbar(strefa, pod) {
   document.getElementById('cbarIcon').textContent  = isKoniec ? '🏁' : '➜';
   document.getElementById('cbarLabel').textContent = isKoniec
     ? 'Zakończ zmianę'
-    : `Potwierdź przejście do strefy\n${strefa.replace('STREFA_','')}${pod ? ' / '+pod.replace(/_/g,' ') : ''}`;
+    : `Potwierdź przejście do strefy\n${strefa}${pod ? ' / '+pod.replace(/_/g,' ') : ''}`;
   document.getElementById('cbarSub').textContent = isKoniec
     ? 'Potwierdź zakończenie pracy'
     : 'Kliknij Potwierdź aby zapisać';
