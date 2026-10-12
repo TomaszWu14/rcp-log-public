@@ -137,7 +137,7 @@ zgłoszenie tekstowe z decyzją administratora.
 
 **Alternatywy.** Logowanie każdego pracownika; skaner otwarty, kod QR jako identyfikator.
 
-**Dlaczego ta.** <DO UZUPEŁNIENIA — podpowiedź: szybkość przy wspólnym stanowisku.>
+**Dlaczego ta.** Szybkość przy wspólnym stanowisku. Z jednego urządzenia korzysta cała zmiana — logowanie hasłem przy każdej zmianie strefy byłoby niepraktyczne.
 
 **Skutki.**
 - ➕ Rejestracja to jeden skan, bez hasła.
