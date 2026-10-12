@@ -9,7 +9,7 @@ i pytania, na które analiza nie dała jeszcze odpowiedzi.
 |---|---|
 | Naliczanie wynagrodzeń, integracja z systemem kadrowo-płacowym | dane przekazywane przez eksport CSV |
 | Automatyczna poprawka ewidencji po zatwierdzeniu korekty | poprawka danych odbywa się poza aplikacją |
-| Zmiana nocna przechodząca przez północ | sesja zamykana o 23:59:59 ([D3](06-decyzje.md#d3-sesja-zamykana-o-235959-dnia-rozpoczęcia)) |
+| Zmiana nocna przechodząca przez północ (brak zmian nocnych w strefach) | sesja zamykana o 23:59:59 ([D3](06-decyzje.md#d3-sesja-zamykana-o-235959-dnia-rozpoczęcia)) |
 | Uprawnienia per podstrefa | podstrefy dostępne dla każdego z uprawnieniem do strefy ([D8](06-decyzje.md#d8-uprawnienia-na-poziomie-strefy)) |
 | Praca skanera bez połączenia | skan bez połączenia przepada z komunikatem „Błąd połączenia” |
 | Role w panelu | jeden poziom dostępu: administrator |
@@ -77,8 +77,6 @@ Prototyp nie przeszedł przeglądu bezpieczeństwa. Przed jakimkolwiek wdrożeni
 
 - Jaka jest skala problemu i koszt procesu w Excelu? <DO UZUPEŁNIENIA>
 - Kto korzysta z ewidencji i w jakim formacie jej potrzebuje? <DO UZUPEŁNIENIA>
-- Co dzieje się z nadwyżką przypisaną do strefy? <DO UZUPEŁNIENIA>
-- Czy zmiany nocne występują w strefach objętych rejestracją? <DO UZUPEŁNIENIA>
 - Jak długo przechowywać dane osobowe w ewidencji i kopiach? <DO UZUPEŁNIENIA>
 
 ## Co dalej
@@ -88,5 +86,5 @@ Kolejność wynika z wpływu na wiarygodność ewidencji:
 1. Powrót ekranu pracownika do startu po bezczynności (U1) i ochrona `/api/status` (B4) — chronią przed rejestracją w cudzym imieniu i wyciekiem obecności.
 2. Spójne zamykanie przerw: nadwyżka niezależnie od tego, kto zamknął przerwę (P1).
 3. Korekta powiązana z konkretnym wpisem i zmieniająca go po zatwierdzeniu (D6).
-4. Decyzja o zmianach nocnych (D3) — po odpowiedzi na pytanie otwarte.
+4. Usunięcie pozostałości uprawnień per podstrefa z macierzy uprawnień (D8).
 5. Klucz sesji ze zmiennej środowiskowej i wymuszenie zmiany hasła startowego (B1–B3).

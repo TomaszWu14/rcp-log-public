@@ -46,8 +46,8 @@ Status: **prototyp** — rozwiązanie zbudowane do sprawdzenia procesu, nie wdro
 |---|---|
 | Naliczanie wynagrodzeń i integracja z systemem kadrowo-płacowym | prototyp ma potwierdzić proces rejestracji; eksport CSV jest punktem styku |
 | Automatyczna zmiana ewidencji po zatwierdzeniu korekty | decyzję i poprawkę zostawiono człowiekowi; zatwierdzenie zmienia tylko status zgłoszenia |
-| Zmiana nocna przechodząca przez północ | sesja jest zamykana o 23:59:59 dnia rozpoczęcia — patrz [06-decyzje](06-decyzje.md) D3 |
-| Uprawnienia na poziomie podstref | uprawnienia działają na strefach; podstrefa jest tylko doprecyzowaniem |
+| Zmiana nocna przechodząca przez północ | w strefach objętych rejestracją nie ma zmian nocnych; sesja jest zamykana o 23:59:59 dnia rozpoczęcia — patrz [06-decyzje](06-decyzje.md) D3 |
+| Uprawnienia na poziomie podstref | okazały się zbędne — uprawnienia działają na strefach, podstrefa jest tylko doprecyzowaniem ([06-decyzje](06-decyzje.md) D8) |
 | Praca offline skanera | skan wymaga połączenia z serwerem |
 | Wielu użytkowników z różnymi rolami w panelu | jest jedna rola: administrator |
 | Baza danych | dane w plikach JSON i CSV — patrz [06-decyzje](06-decyzje.md) D1 |

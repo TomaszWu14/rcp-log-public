@@ -24,7 +24,7 @@ słownik pracowników, wpisy czasu.
 
 **Alternatywy.** SQLite; serwer bazy (PostgreSQL); pliki JSON/CSV.
 
-**Dlaczego ta.** <DO UZUPEŁNIENIA — podpowiedź: brak instalacji bazy; CSV otwiera się w Excelu, czyli w narzędziu, którego używano wcześniej (kod zapisuje CSV z BOM i separatorem `;` właśnie pod Excel, `app.py:214`); kopia zapasowa = kopiowanie plików.>
+**Dlaczego ta.** Dwa powody. Po pierwsze, ewidencja ma trafiać do Excela, którego odbiorcy używali wcześniej — dlatego CSV jest zapisywany z BOM i separatorem `;` (`app.py:214`) i otwiera się dwuklikiem, bez konwersji. Po drugie, to prototyp: liczył się czas do sprawdzenia procesu, a pliki nie wymagają instalowania ani utrzymywania bazy.
 
 **Skutki.**
 - ➕ Uruchomienie bez żadnej infrastruktury; ewidencja od razu czytelna w Excelu.
@@ -40,7 +40,7 @@ skanerze to czas i ryzyko pominięcia.
 **Alternatywy.** Osobne skany „wejście” i „wyjście” dla każdej strefy; jeden skan zamykający
 bieżący pobyt i otwierający następny.
 
-**Dlaczego ta.** <DO UZUPEŁNIENIA — podpowiedź: jedna czynność zamiast dwóch; nie da się „zapomnieć wyjścia”.>
+**Dlaczego ta.** Jedna czynność zamiast dwóch. Pracownik zmienia strefę wiele razy na zmianę — para skanów „wejście” i „wyjście” podwajałaby liczbę podejść do skanera.
 
 **Skutki.**
 - ➕ Pracownik ma najwyżej jedną otwartą sesję (`app.py:526, 576`) — wpisy jednego pracownika nigdy na siebie nie nachodzą i nie ma wyjścia bez wejścia.
@@ -55,13 +55,13 @@ bieżący pobyt i otwierający następny.
 **Alternatywy.** Zamknięcie po stałym czasie od wejścia; zamknięcie o północy; zostawienie sesji
 otwartej do decyzji administratora; zamknięcie na końcu zmiany z grafiku.
 
-**Dlaczego ta.** <DO UZUPEŁNIENIA — czy zmiany nocne w ogóle występowały w strefach? Grafik zna zmianę N 21:00–05:00 (`app.py:94`).>
+**Dlaczego ta.** Zmiany nocne nie występują w strefach objętych rejestracją. Sesja przechodząca przez północ oznacza więc zapomniany „Koniec zmiany”, a nie pracę — zamknięcie o 23:59:59 utrzymuje każdy wpis w jednym dniu kalendarzowym. Kod zmiany N w grafiku nie jest wykorzystywany przez rejestrację.
 
 **Skutki.**
 - ➕ Każdy wpis należy do jednego dnia kalendarzowego; ewidencja dzienna jest kompletna.
 - ➕ Wpis dostaje flagę `AUTO_ZAMKNIETO` i alert — administrator wie, co sprawdzić.
 - ➖ Czas zapomnianej sesji do północy jest liczony jako praca w strefie.
-- ➖ Zmiana nocna przez północ traci czas po północy do kolejnego skanu.
+- ➖ Wprowadzenie zmian nocnych w strefach wymagałoby zmiany tej reguły — dziś czas po północy przepadłby do kolejnego skanu.
 
 ## D4. Przerwa jako strefa
 
@@ -70,7 +70,7 @@ otwartej do decyzji administratora; zamknięcie na końcu zmiany z grafiku.
 **Alternatywy.** Osobny typ zdarzenia „przerwa start / koniec”; przerwa jako zwykła strefa
 o zarezerwowanej nazwie `PRZERWA`.
 
-**Dlaczego ta.** <DO UZUPEŁNIENIA — podpowiedź: ten sam mechanizm skanu, ta sama ewidencja, zero dodatkowych ekranów.>
+**Dlaczego ta.** Ten sam mechanizm skanu. Pracownik rejestruje przerwę dokładnie tak, jak zmianę strefy — nie ma osobnej czynności do nauczenia.
 
 **Skutki.**
 - ➕ Przerwa jest kafelkiem jak każda strefa; ewidencja przerw nie wymaga osobnej struktury.
@@ -84,11 +84,11 @@ o zarezerwowanej nazwie `PRZERWA`.
 **Alternatywy.** Automatyczne odjęcie nadwyżki od czasu pracy; tylko flaga w ewidencji;
 osobna lista nadwyżek rozliczana przez administratora.
 
-**Dlaczego ta.** <DO UZUPEŁNIENIA — co dalej działo się z nadwyżką przypisaną do strefy?>
+**Dlaczego ta.** Nadwyżka jest kosztem czasu — przypisanie wskazuje strefę, która ten koszt ponosi w rozliczeniu. Automatyczne odjęcie od czasu pracy albo sama flaga nie dawałyby tej informacji.
 
 **Skutki.**
 - ➕ Każda nadwyżka ma status „oczekuje” / „przypisana” — widać, co jeszcze nie jest rozliczone.
-- ➖ Przypisanie nie zmienia ewidencji; znaczenie przypisania jest poza systemem.
+- ➖ Przypisanie nie zmienia ewidencji — rozliczenie kosztu nadwyżki odbywa się poza systemem.
 - ➖ Nadwyżka powstaje tylko, gdy przerwę zamknie pracownik — nie przy zamknięciu przez administratora ani automatycznym (`app.py:549` vs `843, 412`).
 
 ## D6. Korekta jako zgłoszenie z decyzją człowieka
@@ -99,7 +99,7 @@ bez kontroli.
 **Alternatywy.** Edycja wpisu przez pracownika; edycja wpisu przez administratora w panelu;
 zgłoszenie tekstowe z decyzją administratora.
 
-**Dlaczego ta.** <DO UZUPEŁNIENIA — kto i gdzie poprawiał dane po zatwierdzeniu?>
+**Dlaczego ta.** Kontrola nad danymi. Ewidencja czasu pracy nie może zmieniać się bez oceny człowieka — każda korekta przechodzi przez decyzję administratora.
 
 **Skutki.**
 - ➕ Pracownik nie może sam zmienić ewidencji; każda korekta ma ślad i decyzję.
@@ -112,7 +112,7 @@ zgłoszenie tekstowe z decyzją administratora.
 
 **Alternatywy.** Blokada zmiany przez X minut; brak kontroli; ostrzeżenie z możliwością potwierdzenia.
 
-**Dlaczego ta.** <DO UZUPEŁNIENIA — podpowiedź: blokada zatrzymałaby pracownika, który faktycznie zmienia strefę po 2 minutach.>
+**Dlaczego ta.** Blokada zatrzymałaby pracę. Pracownik czasem naprawdę zmienia strefę po dwóch minutach — przy blokadzie potrzebowałby interwencji administratora.
 
 **Skutki.**
 - ➕ Pomyłkowe kliknięcie zostaje zatrzymane, prawdziwa zmiana przechodzi po jednym dodatkowym kliknięciu.
@@ -124,11 +124,12 @@ zgłoszenie tekstowe z decyzją administratora.
 
 **Alternatywy.** Brak uprawnień; uprawnienia per strefa; uprawnienia per podstrefa.
 
-**Dlaczego ta.** <DO UZUPEŁNIENIA — macierz w panelu ma kolumny podstref (`admin.html:1204`), backend ich nie egzekwuje: porzucony pomysł czy plan?>
+**Dlaczego ta.** Uprawnienia per podstrefa okazały się zbędne — dostęp wystarczy kontrolować na poziomie strefy. Kolumny podstref w macierzy (`admin.html:1204`) to pozostałość porzuconego pomysłu.
 
 **Skutki.**
 - ➕ Pracownik widzi tylko swoje strefy — mniej kafelków, mniej pomyłek.
 - ➖ Wszystkie podstrefy dozwolonej strefy są dostępne dla każdego, kto ma strefę.
+- ➖ W macierzy uprawnień zostały kolumny podstref i odwołania do `STREFA_INNE` (`admin.html:1204, 1290, 1310, 1321`) — martwy kod do usunięcia.
 
 ## D9. Skaner bez logowania, panel z logowaniem
 
