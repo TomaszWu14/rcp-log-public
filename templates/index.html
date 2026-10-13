@@ -61,6 +61,22 @@ header h1 { font-size: .95rem; font-weight: 700; }
   font-size: .8rem; cursor: pointer;
 }
 
+/* DEMO */
+.demo-hint {
+  max-width: 420px; width: 100%; text-align: center;
+  border: 1px dashed var(--border); border-radius: 10px;
+  padding: 14px 16px; font-size: .85rem; color: var(--muted);
+  display: flex; flex-direction: column; gap: 8px; user-select: text;
+}
+.demo-hint-title { color: var(--yellow); font-weight: 700; text-transform: uppercase; font-size: .75rem; letter-spacing: .05em; }
+.demo-codes { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.demo-codes button {
+  background: var(--card2); color: var(--text); border: 1px solid var(--border);
+  border-radius: 6px; padding: 6px 10px; font-family: monospace; font-size: .8rem; cursor: pointer;
+}
+.demo-codes button:hover { border-color: var(--blue); }
+.demo-hint a { color: var(--blue); font-weight: 600; text-decoration: none; }
+
 /* ══ IDLE ══ */
 #stateIdle {
   min-height: calc(100vh - 47px);
@@ -288,6 +304,18 @@ header h1 { font-size: .95rem; font-weight: 700; }
     <span class="scan-ic">🔍</span>
   </div>
   <button class="btn-korekta-link" onclick="openKorektaIdle()">📝 Zgłoś korektę wpisu</button>
+  {% if demo %}
+  <div class="demo-hint">
+    <div class="demo-hint-title">Tryb demo — dane fikcyjne</div>
+    <div>Kliknij przykładowy kod zamiast skanowania:</div>
+    <div class="demo-codes">
+      {% for k in ["HU_KOWALSKI_JAN", "HU_WOJCIK_MARTA", "HU_KAMINSKI_TOMASZ"] %}
+      <button type="button" onclick="doScan('{{ k }}')">{{ k }}</button>
+      {% endfor %}
+    </div>
+    <a href="/admin">Panel administratora →</a>
+  </div>
+  {% endif %}
 </div>
 
 <!-- ══ WORKER ══ -->

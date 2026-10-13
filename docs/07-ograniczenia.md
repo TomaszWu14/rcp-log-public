@@ -53,8 +53,8 @@ Prototyp nie przeszedł przeglądu bezpieczeństwa. Przed jakimkolwiek wdrożeni
 
 | # | Problem | Gdzie |
 |---|---|---|
-| B1 | Klucz sesji zapisany w kodzie. | `app.py:16` |
-| B2 | Konto startowe `admin / admin123` bez wymuszenia zmiany hasła; dane logowania wypisywane w konsoli. | `app.py:314`, `run.py:4, 14` |
+| B1 | Klucz sesji ma wartość domyślną w kodzie, używaną, gdy nie ustawiono zmiennej `RCP_SECRET_KEY`. | `app.py:16` |
+| B2 | Konto startowe `admin / admin123` bez wymuszenia zmiany hasła; dane logowania wypisywane w konsoli. | `app.py:314`, `run.py:4, 17` |
 | B3 | Migracja starych hashy ustawia hasło `admin123`. | `app.py:319-322` |
 | B4 | Podgląd obecności `/api/status` dostępny bez logowania. | `app.py:591` |
 | B5 | Przewidywalna treść kodów QR pozwala zarejestrować inną osobę. Przy zgubieniu karty drukowany jest duplikat z tym samym kodem, a kodu nie da się unieważnić — zgubiona karta działa dalej. | `app.py:943` |
@@ -74,15 +74,15 @@ Prototyp nie przeszedł przeglądu bezpieczeństwa. Przed jakimkolwiek wdrożeni
 | `app.py:351-352` | błąd kopii zapasowej tylko w konsoli serwera |
 | `app.py:601, 377, 513, 530, 831, 871` | odczyt dat z plików bez obsługi błędu — uszkodzony wpis sesji daje błąd 500 |
 | `app.py:708-709` | data z adresu bez walidacji — zły format daje błąd 500 |
-| `app.py:123` | nieprawidłowy plik Excel daje błąd 500; pole wyboru akceptuje `.xls` (`admin.html:379`), którego biblioteka nie czyta |
+| `app.py:123` | nieprawidłowy plik Excel daje błąd 500; pole wyboru akceptuje `.xls` (`admin.html:388`), którego biblioteka nie czyta |
 | `app.py:435, 485, 629` | treść żądania, która nie jest obiektem JSON, daje błąd 500 |
 | `app.py:640` | opis korekty bez walidacji po stronie serwera |
 | `app.py:784-790, 803-809` | nieistniejące `id` nadwyżki lub korekty zwraca sukces |
 | `app.py:960-963` | lista uprawnień bez walidacji typu |
 | `app.py:998-999` | konfiguracja bez walidacji zakresów |
 | `app.py:1114-1123` | wpis grafiku bez walidacji pracownika i daty |
-| `index.html:612-617`; `admin.html:846, 884, 931, 955, 1151` | interfejs nie sprawdza odpowiedzi serwera |
-| `admin.html:511-514, 555-557` i pozostałe funkcje `load*` | brak obsługi 401 i błędów sieci |
+| `index.html:640-645`; `admin.html:864, 884, 931, 955, 1151` | interfejs nie sprawdza odpowiedzi serwera |
+| `admin.html:529-532, 555-557` i pozostałe funkcje `load*` | brak obsługi 401 i błędów sieci |
 
 ## Co dalej
 
@@ -91,7 +91,7 @@ Kolejność wynika z wpływu na wiarygodność ewidencji:
 1. Powrót ekranu pracownika do startu po bezczynności (U1) i ochrona `/api/status` (B4) — chronią przed rejestracją w cudzym imieniu i wyciekiem obecności.
 2. Spójne zamykanie przerw: nadwyżka niezależnie od tego, kto zamknął przerwę (P1).
 3. Korekta powiązana z konkretnym wpisem i zmieniająca go po zatwierdzeniu (D6).
-4. Klucz sesji ze zmiennej środowiskowej i wymuszenie zmiany hasła startowego (B1–B3).
+4. Wymóg ustawienia `RCP_SECRET_KEY` poza trybem demo i wymuszenie zmiany hasła startowego (B1–B3).
 5. Polityka retencji danych osobowych w ewidencji, alertach i kopiach zapasowych — wymagana przed wdrożeniem.
 6. Blokada równoczesnej edycji nadwyżki i korekty przez dwóch administratorów (P20).
 7. Unieważnianie kodu QR zgubionej karty — dziś duplikat ma ten sam kod (B5).

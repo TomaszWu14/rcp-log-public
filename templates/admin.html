@@ -25,6 +25,10 @@ a.btn,button.btn{display:inline-block;padding:6px 12px;border:none;border-radius
 .btn-red{background:var(--red);color:#fff;}
 .btn-grey{background:var(--card2);color:var(--text);border:1px solid var(--border);}
 
+/* DEMO */
+#demoBar{background:rgba(243,156,18,.12);border-bottom:1px solid var(--yellow);color:var(--yellow);padding:7px 20px;font-size:.78rem;text-align:center;}
+#demoBar a{color:var(--text);font-weight:600;margin-left:8px;}
+
 /* ALERT BANNER */
 #alertBanner{display:none;background:rgba(192,57,43,.15);border-bottom:2px solid var(--red);padding:10px 20px;font-size:.85rem;color:#f08080;animation:pulse 1s infinite alternate;}
 @keyframes pulse{from{background:rgba(192,57,43,.1)}to{background:rgba(192,57,43,.25)}}
@@ -156,6 +160,9 @@ select option{background:var(--card2);}
 </head>
 <body>
 
+{% if demo %}
+<div id="demoBar">Tryb demo — dane fikcyjne, odtwarzane co {{ demo_reset_min }} min. Zmiana stref, pracowników, adminów i konfiguracji jest zablokowana. <a href="/">← Skaner</a></div>
+{% endif %}
 <div id="alertBanner">
   <span id="alertBannerMsg">⚠ Nowy alert</span>
   <button onclick="dismissBanner()">OK</button>
@@ -168,7 +175,9 @@ select option{background:var(--card2);}
     <a href="/admin/export/dzien"   class="btn btn-grey">⬇ CSV dziś</a>
     <a href="/admin/export/miesiac" class="btn btn-grey">⬇ CSV mies.</a>
     <a href="/admin/export/alerty"  class="btn btn-grey">⬇ Alerty</a>
+    {% if not demo %}
     <a href="/admin/logout"         class="btn btn-red">Wyloguj</a>
+    {% endif %}
   </div>
 </header>
 
@@ -459,6 +468,15 @@ function tab(name, btn) {
 
 // ── TOAST ─────────────────────────────────────────────────────────────────
 let tT;
+{% if demo %}
+// W demo część akcji (np. usuwanie podstrefy) nie sprawdza odpowiedzi — pokaż komunikat blokady.
+const _fetch = window.fetch;
+window.fetch = async (...a) => {
+  const r = await _fetch(...a);
+  if (r.headers.get('X-RCP-Demo') === 'blocked') toast('Niedostępne w trybie demo', false);
+  return r;
+};
+{% endif %}
 function toast(msg, ok=true) {
   const t=document.getElementById('toast');
   t.textContent=msg; t.className=`toast show ${ok?'ok':'err'}`;
@@ -881,8 +899,8 @@ async function addWorker(){
 }
 async function delWorker(k){
   if(!confirm(`Usunąć ${k}?`))return;
-  await fetch(`/admin/api/workers/${k}`,{method:'DELETE'});
-  loadWorkers();toast('Usunięto');
+  const d=await (await fetch(`/admin/api/workers/${k}`,{method:'DELETE'})).json();
+  loadWorkers();d.ok?toast('Usunięto'):toast(d.error,false);
 }
 function openWEditor(k,imie,strefy){
   edKod=k;edSel=[...strefy];
@@ -928,8 +946,8 @@ async function addStrefa(){
 }
 async function delStrefa(n){
   if(!confirm(`Usunąć ${n}?`))return;
-  await fetch(`/admin/api/strefy/${n}`,{method:'DELETE'});
-  loadStrefy();toast('Usunięto');
+  const d=await (await fetch(`/admin/api/strefy/${n}`,{method:'DELETE'})).json();
+  loadStrefy();d.ok?toast('Usunięto'):toast(d.error,false);
 }
 function openPodEditor(n){
   edStr=n;document.getElementById('podEdName').textContent=n;

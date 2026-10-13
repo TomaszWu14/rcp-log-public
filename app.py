@@ -13,10 +13,10 @@ from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
 app = Flask(__name__)
-app.secret_key = "timeapp-secret-change-in-production-32ch"
-
+app.secret_key = os.environ.get("RCP_SECRET_KEY") or "timeapp-secret-change-in-production-32ch"
+DEMO = os.environ.get("RCP_DEMO") == "1"   # tryb demo — opis w sekcji DEMO na końcu pliku
 BASE_DIR     = Path(__file__).parent
-DATA_DIR     = BASE_DIR / "data"
+DATA_DIR     = BASE_DIR / ("data_demo" if DEMO else "data")
 DATA_DIR.mkdir(exist_ok=True)
 
 WORKERS_FILE = DATA_DIR / "pracownicy.json"
@@ -351,7 +351,7 @@ def backup_job():
         except Exception as e:
             print(f"[BACKUP ERROR] {e}")
 
-threading.Thread(target=backup_job, daemon=True).start()
+if not DEMO: threading.Thread(target=backup_job, daemon=True).start()
 
 # ── ALERT CHECKER ──────────────────────────────────────────────────────────────
 _active_alerts = {}   # {pracownik: True} — alerty które jeszcze nie były "odczytane"
@@ -1187,5 +1187,76 @@ def adm_grafik_porownanie():
     return jsonify(wynik)
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# DEMO (RCP_DEMO=1)
+# ══════════════════════════════════════════════════════════════════════════════
+# Logowanie automatyczne, fikcyjne dane z demo_data.py odtwarzane co RCP_DEMO_RESET_MIN minut,
+# operacje zmieniające konfigurację zablokowane. Dane demo leżą w data_demo/, więc reset
+# nigdy nie dotyka prawdziwej ewidencji w data/.
+DEMO_RESET_MIN = int(os.environ.get("RCP_DEMO_RESET_MIN", "30"))
+
+# Endpointy niedostępne dla gościa demo: słowniki, konta, konfiguracja i wgrywanie plików.
+# Rejestracja wejść, korekty, przesunięcia pracowników i edycja grafiku działają.
+DEMO_BLOCKED = {
+    "adm_add_strefa", "adm_del_strefa", "adm_add_pod", "adm_del_pod",
+    "adm_add_worker", "adm_del_worker",
+    "adm_add_admin", "adm_del_admin",
+    "adm_save_config", "adm_grafik_import",
+}
+
+def demo_reset():
+    import demo_data
+    with _lock:
+        for f in list(DATA_DIR.glob("*.csv")) + list(DATA_DIR.glob("*.json")):
+            f.unlink()
+        save_strefy(DEFAULT_STREFY)
+        save_config(DEFAULT_CONFIG)
+        save_admins({"demo": hash_pw(os.urandom(16).hex())})
+        d = demo_data.build(datetime.now(), DEFAULT_STREFY)
+        save_workers(d["workers"])
+        _w(STATE_FILE, d["state"])
+        save_korekty(d["korekty"])
+        save_nadwyzki(d["nadwyzki"])
+        save_grafik(d["grafik"])
+        ensure_alerts()
+        with open(ALERTS_FILE_PATH, "a", newline="", encoding="utf-8-sig") as f:
+            csv.writer(f, delimiter=";").writerows(d["alerts"])
+        ids = {}
+        for row in d["rows"]:
+            ts_in = datetime.fromisoformat(row["ts_wejscia"])
+            month = ts_in.strftime("%Y-%m")
+            ids[month] = ids.get(month, 0) + 1
+            append_csv_row({"id": ids[month], **row}, ts_in)
+        _active_alerts.clear()
+    print(f"[DEMO] Dane demo odtworzone ({len(d['rows'])} wpisów ewidencji)")
+
+def demo_reset_job():
+    while True:
+        time_module.sleep(DEMO_RESET_MIN * 60)
+        try: demo_reset()
+        except Exception as e: print(f"[DEMO RESET ERROR] {e}")
+
+@app.before_request
+def demo_guard():
+    if not DEMO: return
+    if not is_admin():
+        session["admin_logged"] = True
+        session["admin_user"]   = "demo"
+    if request.endpoint == "admin_login":
+        return redirect(url_for("admin_panel"))
+    if request.endpoint in DEMO_BLOCKED:
+        resp = jsonify({"ok": False, "error": "Niedostępne w trybie demo"})
+        resp.headers["X-RCP-Demo"] = "blocked"
+        return resp, 403
+
+@app.context_processor
+def demo_context():
+    return {"demo": DEMO, "demo_reset_min": DEMO_RESET_MIN}
+
+if DEMO:
+    demo_reset()
+    threading.Thread(target=demo_reset_job, daemon=True).start()
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5050, debug=False)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5050)), debug=False)
