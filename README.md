@@ -1,3 +1,5 @@
+<img src="docs/media/logo.svg" alt="Logo RCP Log" width="96" align="right">
+
 # RCP Log
 
 Rejestracja czasu pracy w strefach magazynu jednym skanem kodu QR — dla pracowników zmiany
@@ -5,7 +7,21 @@ i administratora, który do tej pory liczył ten czas ręcznie w Excelu.
 
 ![demo](docs/screenshots/demo.gif)
 
-📹 Prezentacja wideo (2 min) — w przygotowaniu.
+📹 **Film (1:46, bez dźwięku, z napisami):** [docs/media/rcp-log-prezentacja.mp4](docs/media/rcp-log-prezentacja.mp4)
+
+[![Film: RCP Log w działaniu](docs/media/miniatura-youtube.png)](docs/media/rcp-log-prezentacja.mp4)
+
+Film pokazuje pełną ścieżkę na danych fikcyjnych: pracownik skanuje kod i wybiera strefę, a administrator
+widzi obsadę na żywo, alert przekroczonej przerwy, korekty i porównanie grafiku z obecnością.
+
+| Czas | Co widać |
+|---|---|
+| 0:00 | problem: ręczna ewidencja w Excelu |
+| 0:24 | ekran pracownika: skan kodu, wybór strefy i podstrefy, potwierdzenie |
+| 0:44 | panel administratora: obsada stref, podgląd Live z alertem przerwy |
+| 1:07 | nadwyżki przerw do rozliczenia i korekty zgłoszone przez pracowników |
+| 1:19 | grafik z Excela porównany z pierwszym skanem dnia |
+| 1:29 | zakres projektu i linki |
 
 **Demo bez logowania:** <DO UZUPEŁNIENIA: adres instancji na Render> — dane fikcyjne, odtwarzane co 30 min. Lokalnie: [tryb demo](#tryb-demo).
 
@@ -108,7 +124,7 @@ demo_data.py        generator fikcyjnych danych dla trybu demo
 render.yaml         konfiguracja publicznego demo na Render
 templates/          skaner (index.html), panel (admin.html), logowanie
 tests/              testy akceptacyjne wymagań z docs/05
-docs/               dokumentacja analityczna 01–07 i zrzuty ekranu
+docs/               dokumentacja analityczna 01–07 i zrzuty ekranu; docs/media: logo, film, miniatura
 data/               tworzony przy starcie: JSON i CSV z danymi (poza repozytorium)
 data_demo/          dane trybu demo, odtwarzane automatycznie (poza repozytorium)
 ```
