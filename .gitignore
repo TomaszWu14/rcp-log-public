@@ -39,5 +39,3 @@ Thumbs.db
 .env
 .env.*
 
-# Node (na wypadek narzędzi frontendowych)
-node_modules/
