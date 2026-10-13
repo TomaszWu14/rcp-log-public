@@ -11,6 +11,18 @@ i administratora, który do tej pory liczył ten czas ręcznie w Excelu.
 
 [![Film: RCP Log w działaniu](docs/media/miniatura-youtube.png)](docs/media/rcp-log-prezentacja.mp4)
 
+Film pokazuje pełną ścieżkę na danych fikcyjnych: pracownik skanuje kod i wybiera strefę, a administrator
+widzi obsadę na żywo, alert przekroczonej przerwy, korekty i porównanie grafiku z obecnością.
+
+| Czas | Co widać |
+|---|---|
+| 0:00 | problem: ręczna ewidencja w Excelu |
+| 0:24 | ekran pracownika: skan kodu, wybór strefy i podstrefy, potwierdzenie |
+| 0:44 | panel administratora: obsada stref, podgląd Live z alertem przerwy |
+| 1:07 | nadwyżki przerw do rozliczenia i korekty zgłoszone przez pracowników |
+| 1:19 | grafik z Excela porównany z pierwszym skanem dnia |
+| 1:29 | zakres projektu i linki |
+
 **Demo bez logowania:** <DO UZUPEŁNIENIA: adres instancji na Render> — dane fikcyjne, odtwarzane co 30 min. Lokalnie: [tryb demo](#tryb-demo).
 
 ## Problem → rozwiązanie
