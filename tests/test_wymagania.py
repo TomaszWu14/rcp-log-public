@@ -1,0 +1,187 @@
+"""Testy akceptacyjne — nazwa testu = ID wymagania z docs/05-wymagania.md.
+
+Uruchomienie: python -m unittest discover tests
+
+app.py przy imporcie tworzy katalog data/ obok siebie, dlatego każdy test
+ładuje kopię aplikacji w katalogu tymczasowym — prawdziwe dane nie są ruszane.
+"""
+import importlib.util
+import io
+import shutil
+import tempfile
+import unittest
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import openpyxl
+
+REPO = Path(__file__).resolve().parent.parent
+
+
+def load_app():
+    tmp = Path(tempfile.mkdtemp())
+    shutil.copy(REPO / "app.py", tmp / "app.py")
+    shutil.copytree(REPO / "templates", tmp / "templates")
+    spec = importlib.util.spec_from_file_location(f"rcp_{tmp.name}", tmp / "app.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod, tmp
+
+
+class Wymagania(unittest.TestCase):
+    def setUp(self):
+        self.A, self.tmp = load_app()
+        self.c = self.A.app.test_client()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def login(self):
+        self.c.post("/admin/login", data={"username": "admin", "password": "admin123"})
+
+    def rejestruj(self, strefa, force=True, kod="HU_KOWALSKI_JAN"):
+        return self.c.post("/api/rejestruj", json={"pracownik": kod, "strefa": strefa, "force": force})
+
+    def ewidencja_dzis(self):
+        daily, _ = self.A.get_csv_paths(datetime.now())
+        return self.A.read_csv_rows(daily)
+
+    # ── Rejestracja ──────────────────────────────────────────────────────────
+    def test_REJ_01_kod_bez_wzgledu_na_wielkosc_liter_i_spacje(self):
+        r = self.c.post("/api/scan", json={"kod": "  hu_kowalski_jan "})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json["imie_nazwisko"], "Kowalski Jan")
+
+    def test_REJ_02_nieznany_kod_odrzucony_i_odnotowany(self):
+        r = self.c.post("/api/scan", json={"kod": "HU_NIEMA"})
+        self.assertEqual(r.status_code, 403)
+        self.assertEqual(r.json["error"], "Nieznany kod QR. Skontaktuj się z liderem.")
+        self.assertEqual(self.A.read_alerts()[0]["typ"], "NIEZNANY_KOD")
+
+    def test_REJ_03_tylko_przypisane_strefy(self):
+        r = self.c.post("/api/scan", json={"kod": "HU_KOWALSKI_JAN"})
+        nazwy = [s["nazwa"] for s in r.json["dozwolone"]]
+        self.assertEqual(nazwy, ["PICKING", "PRZYJECIA", "KURIER1", "PRZERWA"])
+        r = self.rejestruj("EXPORT")
+        self.assertEqual(r.status_code, 403)
+        self.assertEqual(r.json["error"], "Brak uprawnień do strefy EXPORT")
+
+    def test_REJ_06_szybka_zmiana_wymaga_potwierdzenia(self):
+        self.rejestruj("PICKING")
+        r = self.rejestruj("PRZYJECIA", force=False)
+        self.assertEqual(r.status_code, 409)
+        self.assertTrue(r.json["wymaga_potwierdzenia"])
+        self.assertEqual(self.rejestruj("PRZYJECIA", force=True).status_code, 200)
+
+    def test_REJ_07_koniec_zmiany_zamyka_sesje(self):
+        self.rejestruj("PICKING")
+        r = self.rejestruj("KONIEC_ZMIANY")
+        self.assertEqual(r.json["akcja"], "koniec_zmiany")
+        self.assertNotIn("HU_KOWALSKI_JAN", self.A.load_state())
+
+    # ── Sesje i ewidencja ────────────────────────────────────────────────────
+    def test_SES_01_najwyzej_jedna_otwarta_sesja(self):
+        self.rejestruj("PICKING")
+        self.rejestruj("PRZYJECIA")
+        status = self.c.get("/api/status").json
+        self.assertEqual([(w["pracownik"], w["strefa"]) for w in status],
+                         [("HU_KOWALSKI_JAN", "PRZYJECIA")])
+
+    def test_SES_02_zamkniecie_sesji_tworzy_wpis(self):
+        self.rejestruj("PICKING")
+        r = self.rejestruj("PRZYJECIA")
+        wpisy = self.ewidencja_dzis()
+        self.assertEqual(len(wpisy), 1)
+        self.assertEqual(wpisy[0]["strefa"], "PICKING")
+        self.assertEqual(wpisy[0]["ts_wyjscia"], r.json["ts"])
+        _, monthly = self.A.get_csv_paths(datetime.now())
+        self.assertEqual(len(self.A.read_csv_rows(monthly)), 1)
+
+    def test_SES_03_csv_otwiera_sie_w_excelu(self):
+        self.rejestruj("PICKING")
+        self.rejestruj("PRZYJECIA")
+        daily, _ = self.A.get_csv_paths(datetime.now())
+        raw = daily.read_bytes()
+        self.assertTrue(raw.startswith(b"\xef\xbb\xbf"))  # BOM
+        self.assertIn(b"id;pracownik;imie_nazwisko", raw)
+
+    # ── Przerwy ──────────────────────────────────────────────────────────────
+    def test_PRZ_02_PRZ_03_dluga_przerwa_flaga_i_nadwyzka(self):
+        start = (datetime.now() - timedelta(minutes=42)).isoformat(timespec="seconds")
+        self.A.save_state({"HU_KOWALSKI_JAN": {"strefa": "PRZERWA", "podstrefa": "", "ts_wejscia": start}})
+        r = self.rejestruj("PICKING")
+        self.assertEqual(r.json["alerts"][0]["typ"], "DLUGA_PRZERWA")
+        self.assertEqual(self.ewidencja_dzis()[0]["flaga"], "DLUGA_PRZERWA")
+        n = self.A.load_nadwyzki()[0]
+        self.assertAlmostEqual(n["nadwyzka_min"], 12, delta=0.1)
+        self.assertEqual(n["status"], "oczekuje")
+
+    # ── Korekty ──────────────────────────────────────────────────────────────
+    def test_KOR_02_korekta_tylko_od_znanego_pracownika(self):
+        r = self.c.post("/api/korekta", json={"pracownik": "HU_NIEMA", "opis": "x"})
+        self.assertEqual(r.status_code, 403)
+        self.assertEqual(self.A.load_korekty(), [])
+
+    # ── Panel administratora ─────────────────────────────────────────────────
+    def test_ADM_01_panel_tylko_po_zalogowaniu(self):
+        self.assertEqual(self.c.get("/admin").status_code, 302)
+        self.assertEqual(self.c.get("/admin/api/status").status_code, 401)
+        r = self.c.post("/admin/login", data={"username": "admin", "password": "zle"})
+        self.assertIn("Nieprawidłowy login lub hasło", r.get_data(as_text=True))
+
+    def test_ADM_07_kod_pracownika_z_prefiksem_HU(self):
+        self.login()
+        r = self.c.post("/admin/api/workers", json={"kod": "XYZ_NOWY", "imie": "Nowy Jan"})
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(r.json["error"], "Kod musi zaczynać się od HU_")
+
+    def test_ADM_09_nie_mozna_usunac_wlasnego_konta(self):
+        self.login()
+        r = self.c.delete("/admin/api/admins/admin")
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("admin", self.A.load_admins())
+
+    # ── Grafik ───────────────────────────────────────────────────────────────
+    def test_GRF_02_kody_zmian(self):
+        p = self.A.parse_shift
+        self.assertEqual(p("R"), {"od": "05:00", "do": "13:00", "typ": "P"})
+        self.assertEqual(p("05-13"), {"od": "05:00", "do": "13:00", "typ": "P"})
+        self.assertEqual(p("13:00-21:00"), {"od": "13:00", "do": "21:00", "typ": "P"})
+        self.assertEqual(p("wolne")["typ"], "W")
+
+    def test_GRF_04_porownanie_planu_z_obecnoscia(self):
+        self.login()
+        for dzien in ("2026-01-05", "2026-01-06", "2026-01-07"):
+            self.c.post("/admin/api/grafik/entry",
+                        json={"pracownik": "HU_KOWALSKI_JAN", "data": dzien, "shift": "R"})
+        for start in (datetime(2026, 1, 5, 5, 10), datetime(2026, 1, 6, 5, 30)):
+            self.A.append_csv_row({"pracownik": "HU_KOWALSKI_JAN", "strefa": "PICKING",
+                                   "ts_wejscia": start.isoformat(), "czas_min": 60}, start)
+        dni = self.c.get("/admin/api/grafik/porownanie?month=2026-01").json["HU_KOWALSKI_JAN"]["dni"]
+        self.assertEqual(dni["2026-01-05"]["status"], "na_czas")
+        self.assertEqual(dni["2026-01-06"]["status"], "spoznienie")
+        self.assertEqual(dni["2026-01-06"]["spoznienie"], 30)
+        self.assertEqual(dni["2026-01-07"]["status"], "nieobecnosc")
+
+    # ── Bezpieczeństwo i start ───────────────────────────────────────────────
+    def test_SYS_02_haslo_nie_jest_zapisane_jawnie(self):
+        self.assertNotIn("admin123", (self.tmp / "data" / "admins.json").read_text(encoding="utf-8"))
+
+    def test_SYS_03_start_bez_przygotowania_danych(self):
+        self.assertEqual(len(self.A.load_workers()), 3)
+        self.assertIn("PRZERWA", self.A.load_strefy())
+
+    # ── Znane problemy (docs/07-ograniczenia.md) — test pilnuje opisu ─────────
+    def test_P13_import_szablonu_zglasza_wiersz_legendy(self):
+        """Gdy ktoś to naprawi, test przestanie przechodzić — wtedy usuń P13 z docs."""
+        self.login()
+        wb = openpyxl.load_workbook(io.BytesIO(self.c.get("/admin/api/grafik/template").data))
+        buf = io.BytesIO()
+        wb.save(buf)
+        r = self.c.post("/admin/api/grafik/import", data={"file": (io.BytesIO(buf.getvalue()), "g.xlsx")},
+                        content_type="multipart/form-data")
+        self.assertEqual(r.json["bledy"], ["Wiersz 2: nie znaleziono pracownika 'LEGENDA →'"])
+
+
+if __name__ == "__main__":
+    unittest.main()

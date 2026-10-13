@@ -5,15 +5,15 @@ i administratora, który do tej pory liczył ten czas ręcznie w Excelu.
 
 ![demo](docs/screenshots/demo.gif)
 
-📹 [Prezentacja działania — 2 min](<DO UZUPEŁNIENIA: link YouTube>)
+📹 Prezentacja wideo (2 min) — w przygotowaniu.
 
 **Demo:** brak publicznej instancji — to prototyp z danymi przykładowymi; uruchomienie lokalne opisane niżej.
 
 ## Problem → rozwiązanie
 
-Pracownik magazynu w ciągu zmiany przechodzi między strefami: kompletacja, przyjęcia, wysyłka, przerwa.
-Czas w strefach trafiał ręcznie do Excela, więc nikt nie wiedział na bieżąco, kto jest gdzie,
-a przekroczoną przerwę widać było dopiero przy rozliczeniu.
+Na zmianie pracuje około 60 osób w około 15 strefach: kompletacja, przyjęcia, wysyłka, przerwa.
+Czas w strefach lider wpisuje ręcznie do Excela, więc nikt nie wie na bieżąco, kto jest gdzie,
+a przekroczoną przerwę widać dopiero przy rozliczeniu.
 RCP Log zastępuje arkusz jednym skanem: każdy skan zamyka poprzedni pobyt i otwiera nowy,
 administrator widzi obsadę na żywo, a przerwa ponad próg wywołuje alert i trafia na listę do rozliczenia.
 
@@ -25,7 +25,7 @@ administrator widzi obsadę na żywo, a przerwa ponad próg wywołuje alert i tr
 | [02. Proces](docs/02-proces.md) | proces przed i po wdrożeniu, aktorzy, punkty decyzyjne — diagramy Mermaid |
 | [03. User flow](docs/03-user-flow.md) | mapa 12 ekranów i okien oraz 11 zakładek panelu, przejścia, ścieżki alternatywne i ślepe |
 | [04. Model danych](docs/04-model-danych.md) | ERD, opis encji, słowniki wartości, reguły integralności i znane niespójności |
-| [05. Wymagania](docs/05-wymagania.md) | 38 wymagań z kryteriami akceptacji i wskazaniem miejsca w kodzie |
+| [05. Wymagania](docs/05-wymagania.md) | 38 wymagań z kryteriami akceptacji, wskazaniem miejsca w kodzie i mapą testów automatycznych |
 | [06. Decyzje](docs/06-decyzje.md) | dziennik 9 decyzji projektowych: kontekst, alternatywy, uzasadnienie, skutki |
 | [07. Ograniczenia](docs/07-ograniczenia.md) | czego aplikacja nie robi, znane problemy, miejsca bez walidacji, dalsze kroki |
 
@@ -64,6 +64,23 @@ Przy pierwszym uruchomieniu aplikacja sama tworzy katalog `data/` ze strefami, t
 pracownikami (`HU_KOWALSKI_JAN`, `HU_NOWAK_ANNA`, `HU_WISNIEWSKI_PIOTR`) i kontem administratora.
 Katalog `data/` nie jest wersjonowany.
 
+Testy akceptacyjne (18 testów nazwanych ID wymagań, bez dodatkowych zależności):
+
+```bash
+python -m unittest discover tests
+```
+
+## Struktura repozytorium
+
+```
+app.py              cała logika i API (Flask) — świadomie jeden plik, patrz D1
+run.py              start produkcyjny (Waitress)
+templates/          skaner (index.html), panel (admin.html), logowanie
+tests/              testy akceptacyjne wymagań z docs/05
+docs/               dokumentacja analityczna 01–07 i zrzuty ekranu
+data/               tworzony przy starcie: JSON i CSV z danymi (poza repozytorium)
+```
+
 ## Stack i dlaczego taki
 
 | Element | Dlaczego |
@@ -95,7 +112,9 @@ Odpowiadałem za całość — od analizy do działającego rozwiązania:
 - **analiza procesu i wymagań** — wymagania zebrane od kierownika magazynu i lidera zmiany oraz z własnej obserwacji procesu,
 - **projekt ekranów i modelu danych**,
 - **implementacja**,
-- **testy prototypu z użytkownikami**.
+- **testy akceptacyjne** wymagań.
+
+Prototyp nie był jeszcze testowany z użytkownikami na zmianie — to następny krok.
 
 Od pomysłu do działającego prototypu minął około miesiąc. Repozytorium nie zawiera danych ani nazwy firmy —
 wszystkie dane są przykładowe.

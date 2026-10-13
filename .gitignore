@@ -39,5 +39,6 @@ Thumbs.db
 .env
 .env.*
 
-# Node (na wypadek narzędzi frontendowych)
-node_modules/
+
+# graphify — cache ekstrakcji (graf i raport są wersjonowane)
+graphify-out/cache/

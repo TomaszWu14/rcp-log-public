@@ -76,7 +76,8 @@ flowchart TD
     P1[Dashboard i podgląd Live] --> P2{Co wymaga reakcji?}
     P2 -- alert długiej przerwy --> P3[Zakładka Przerwy:<br/>przypisz nadwyżkę do strefy]
     P2 -- zgłoszona korekta --> P4[Zakładka Korekty:<br/>zatwierdź lub odrzuć]
-    P2 -- pracownik w złej strefie<br/>lub bez zakończenia zmiany --> P5[Live: przesuń<br/>lub zakończ zmianę]
+    P4 -- zatwierdzona --> P4b[/Poza aplikacją: administrator lub kierownik<br/>poprawia wpis w CSV dnia i miesiąca/]
+    P2 -- pracownik w złej strefie<br/>lub bez zakończenia zmiany --> P5[Live: przesuń<br/>lub zakończ zmianę<br/>bez kontroli uprawnień]
     P2 -- nowa osoba / strefa --> P6[Pracownicy, Strefy,<br/>Macierz uprawnień]
     P1 --> P7[Grafik: import z Excela<br/>i porównanie z obecnością]
     P1 --> P8[Eksport CSV:<br/>dzień, miesiąc, alerty]
@@ -92,6 +93,9 @@ flowchart TD
 | Czy przerwa jest za długa | system | przerwa dłuższa niż próg (domyślnie 30 min) dostaje flagę i nadwyżkę | `app.py:292-297, 549-569` |
 | Do jakiej strefy przypisać nadwyżkę | administrator | wybór z listy stref | `app.py:778-790` |
 | Czy uznać korektę | administrator | zatwierdzenie lub odrzucenie | `app.py:798-809` |
+| Jak nanieść zatwierdzoną korektę | administrator lub kierownik, poza aplikacją | ręczna poprawka wpisu w obu plikach: dziennym i miesięcznym | `app.py:217-222` (zapis do dwóch plików) |
+| Do jakiej strefy przesunąć pracownika | administrator | dowolna nazwa — serwer nie sprawdza uprawnień ani istnienia strefy | `app.py:812-852, 854-888` |
+| Co przy zgubionym identyfikatorze | lider / administrator, poza aplikacją | drukowany jest duplikat z tym samym kodem — zgubiona karta nadal działa (patrz [07](07-ograniczenia.md) B5) | — |
 
 ## Wejścia i wyjścia
 

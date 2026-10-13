@@ -16,9 +16,10 @@ erDiagram
     PRACOWNIK ||--o{ WPIS_EWIDENCJI : "generuje"
     STREFA ||..o{ WPIS_EWIDENCJI : "nazwa, bez FK"
     STREFA ||..o{ AKTYWNA_SESJA : "nazwa, bez FK"
-    PRACOWNIK ||--o{ NADWYZKA_PRZERWY : "ma"
-    PRACOWNIK ||--o{ KOREKTA : "zgłasza"
-    PRACOWNIK ||--o{ DZIEN_GRAFIKU : "ma zaplanowane"
+    PRACOWNIK ||..o{ NADWYZKA_PRZERWY : "kod, zostaje po usunięciu"
+    PRACOWNIK ||..o{ KOREKTA : "kod, zostaje po usunięciu"
+    PRACOWNIK |o..o{ DZIEN_GRAFIKU : "kod bez walidacji"
+    STREFA |o..o{ NADWYZKA_PRZERWY : "przypisana_strefa, wolny tekst"
     PRACOWNIK |o..o{ ALERT : "dotyczy"
 
     PRACOWNIK {
@@ -132,6 +133,7 @@ Linia przerywana — powiązanie tylko przez nazwę, bez kontroli spójności.
 | `ALERT.typ` | `DLUGA_PRZERWA`, `DLUGI_DYZUR`, `AUTO_ZAMKNIETO`, `NIEZNANY_KOD` | `app.py:383, 391, 415, 441` |
 | `NADWYZKA_PRZERWY.status` | `oczekuje`, `przypisana` | `app.py:563, 787` |
 | `KOREKTA.status` | `oczekuje`, `zatwierdzona`, `odrzucona` | `app.py:641, 805` |
+| `KOREKTA.decyzja` | `tak` → status `zatwierdzona`; **każda inna wartość** → `odrzucona` | `app.py:801-806` |
 | `DZIEN_GRAFIKU.typ` | `P` (praca), `W` (wolne) | `app.py:97-115` |
 | strefa specjalna | `PRZERWA` (logika przerw), `KONIEC_ZMIANY` (pseudo-strefa zamykająca sesję) | `app.py:295, 501` |
 
@@ -163,3 +165,7 @@ Niepilnowane — znane niespójności:
 | N9 | Nic nie blokuje utworzenia strefy o nazwie `KONIEC_ZMIANY`. | `app.py:900` |
 | N10 | Wpis grafiku nie sprawdza istnienia pracownika ani formatu daty. | `app.py:1114-1123` |
 | N11 | Dodanie pracownika lub strefy o istniejącej nazwie nadpisuje rekord (kasuje uprawnienia lub podstrefy). | `app.py:944, 902` |
+| N12 | Usunięcie pracownika zostawia jego grafik, nadwyżki i korekty; porównanie grafiku pokazuje je z kodem zamiast nazwiska. | `app.py:950-954, 1161` |
+| N13 | Pracownik może mieć pustą listę stref — zeskanuje się, ale do wyboru ma tylko „Koniec zmiany”. | `app.py:944` |
+| N14 | Strefa przypisana nadwyżce to wolny tekst, niesprawdzany z listą stref. | `app.py:781-786` |
+| N15 | Kod pracownika we wpisie grafiku nie jest zamieniany na wielkie litery — w pozostałych miejscach jest. | `app.py:1114` |

@@ -1,0 +1,102 @@
+{
+  "app.py": {
+    "mtime": 1791867065.6154077,
+    "ast_hash": "bf1d17edb2bd0a3de7de89b0e7ad3dcf",
+    "semantic_hash": ""
+  },
+  "run.py": {
+    "mtime": 1791867065.6332088,
+    "ast_hash": "552cb6551b113aff62f35c23592e176d",
+    "semantic_hash": ""
+  },
+  "tests/test_wymagania.py": {
+    "mtime": 1791880688.8446777,
+    "ast_hash": "da22e6f5647157d9708bf9bcf5348b24",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1791881087.492367,
+    "ast_hash": "739d54fae196f3961b6d753d7b481687",
+    "semantic_hash": ""
+  },
+  "docs/01-problem-i-zakres.md": {
+    "mtime": 1791880772.918892,
+    "ast_hash": "baab5e3f632e496637c8368b996cb329",
+    "semantic_hash": ""
+  },
+  "docs/02-proces.md": {
+    "mtime": 1791880788.2994227,
+    "ast_hash": "e92d08c43c87d046da02b89a4d802cf4",
+    "semantic_hash": ""
+  },
+  "docs/03-user-flow.md": {
+    "mtime": 1791867065.6176853,
+    "ast_hash": "3b1ebdea343cee72978ef9cfb7f14500",
+    "semantic_hash": ""
+  },
+  "docs/04-model-danych.md": {
+    "mtime": 1791880828.6962624,
+    "ast_hash": "999646adde94ae255bf822c565e31f9d",
+    "semantic_hash": ""
+  },
+  "docs/05-wymagania.md": {
+    "mtime": 1791880960.715372,
+    "ast_hash": "c8332264e66446e9eaf53b8f6da2728c",
+    "semantic_hash": ""
+  },
+  "docs/06-decyzje.md": {
+    "mtime": 1791881017.2307243,
+    "ast_hash": "f545d09f13203ccc041f5b9dcbf6cf1d",
+    "semantic_hash": ""
+  },
+  "docs/07-ograniczenia.md": {
+    "mtime": 1791881051.251279,
+    "ast_hash": "68d76a5f845e6d7ce28584bc616a4d44",
+    "semantic_hash": ""
+  },
+  "docs/screenshots/README.md": {
+    "mtime": 1791867065.627386,
+    "ast_hash": "80d1a5acfb95d6fbdf155fd4374b459e",
+    "semantic_hash": ""
+  },
+  "requirements.txt": {
+    "mtime": 1791867065.6332088,
+    "ast_hash": "4aee468ff4259686f0f47fe1bf376d43",
+    "semantic_hash": ""
+  },
+  "templates/admin.html": {
+    "mtime": 1791867065.6342256,
+    "ast_hash": "156039586cebef880f2f19701c568252",
+    "semantic_hash": ""
+  },
+  "templates/admin_login.html": {
+    "mtime": 1791867065.6342256,
+    "ast_hash": "de365f8abb0a159873e24d3da17a9451",
+    "semantic_hash": ""
+  },
+  "templates/index.html": {
+    "mtime": 1791867065.6357336,
+    "ast_hash": "187df1aacd148a079aabb26bf6d5b038",
+    "semantic_hash": ""
+  },
+  "docs/screenshots/demo.gif": {
+    "mtime": 1791867065.628402,
+    "ast_hash": "31f352ac9d46be937457cb937f3859ed",
+    "semantic_hash": ""
+  },
+  "docs/screenshots/panel-grafik.png": {
+    "mtime": 1791867065.630399,
+    "ast_hash": "d88c1e24c19893ce36af9cb770cb1a85",
+    "semantic_hash": ""
+  },
+  "docs/screenshots/panel-live.png": {
+    "mtime": 1791867065.631171,
+    "ast_hash": "ec2e6de767e56090af2fda1441ab5c99",
+    "semantic_hash": ""
+  },
+  "docs/screenshots/skaner-pracownik.png": {
+    "mtime": 1791867065.6322124,
+    "ast_hash": "8b0be120224a16631681eb21e76662b7",
+    "semantic_hash": ""
+  }
+}

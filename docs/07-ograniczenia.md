@@ -32,6 +32,15 @@ i pytania, na które analiza nie dała jeszcze odpowiedzi.
 | P10 | Dodanie pracownika lub strefy o istniejącej nazwie nadpisuje rekord. | `app.py:944, 902` |
 | P11 | Zmiana nazwy strefy jest możliwa tylko przez usunięcie i ponowne dodanie; stare uprawnienia i wpisy zostają ze starą nazwą. | `app.py:905-909` |
 | P12 | Czas lokalny serwera bez strefy czasowej — zmiana czasu letni/zimowy zaburza sesje nocne. | `datetime.now()` w całym `app.py` |
+| P13 | Import pobranego szablonu grafiku zawsze zgłasza błąd „Wiersz 2: nie znaleziono pracownika 'LEGENDA →'” — szablon wstawia wiersz legendy, a import czyta go jak pracownika. Pozostałe wiersze importują się poprawnie. Pilnuje tego test `test_P13_…`. | `app.py:1055, 172-188` |
+| P14 | Dzień zaplanowany, który jeszcze się nie zaczął, ma dziś status „nieobecność” — np. o 08:00 przy zmianie od 13:00. | `app.py:1170` |
+| P15 | Nagłówek grafiku z samym numerem dnia trafia do bieżącego miesiąca — grafik na kolejny miesiąc zaimportowany wcześniej nadpisze bieżący. | `app.py:159-163` |
+| P16 | Usunięcie pracownika zostawia jego grafik, nadwyżki i korekty ([04](04-model-danych.md) N12). | `app.py:950-954` |
+| P17 | Przesunięcie i ręczny start sesji przez administratora nie sprawdzają uprawnień pracownika ani istnienia strefy — serwer przyjmie dowolną nazwę. | `app.py:812-888` |
+| P18 | Przekroczona przerwa daje w `alerty.csv` dwa wiersze `DLUGA_PRZERWA`: w trakcie i przy zamknięciu. | `app.py:383, 566` |
+| P19 | Kopia zapasowa powstaje tylko, gdy serwer działa między 02:00 a 02:59; stare kopie nie są usuwane. | `app.py:332-352` |
+| P20 | Dwóch administratorów może jednocześnie rozliczać tę samą nadwyżkę lub korektę — wygrywa ostatni zapis, bez ostrzeżenia. Docelowo drugi administrator ma zostać zablokowany, dopóki pierwszy edytuje pozycję. | `app.py:783-789, 802-808` |
+| P21 | API dashboardu liczy czas per strefa i per pracownik, których interfejs nie wyświetla — pozostałość po usuniętych wykresach. | `app.py:712-724, 757-758` |
 
 ## Znane problemy — interfejs
 
@@ -48,9 +57,11 @@ Prototyp nie przeszedł przeglądu bezpieczeństwa. Przed jakimkolwiek wdrożeni
 | B2 | Konto startowe `admin / admin123` bez wymuszenia zmiany hasła; dane logowania wypisywane w konsoli. | `app.py:314`, `run.py:4, 14` |
 | B3 | Migracja starych hashy ustawia hasło `admin123`. | `app.py:319-322` |
 | B4 | Podgląd obecności `/api/status` dostępny bez logowania. | `app.py:591` |
-| B5 | Przewidywalna treść kodów QR pozwala zarejestrować inną osobę. | `app.py:943` |
+| B5 | Przewidywalna treść kodów QR pozwala zarejestrować inną osobę. Przy zgubieniu karty drukowany jest duplikat z tym samym kodem, a kodu nie da się unieważnić — zgubiona karta działa dalej. | `app.py:943` |
 | B6 | Brak limitu prób logowania i ochrony CSRF. | `app.py:650-662` |
 | B7 | API konfiguracji zapisuje dowolne klucze, a ścieżka kopii zapasowej może wskazywać dowolny katalog serwera. | `app.py:995-1000` |
+| B8 | Skan bez logowania zapisuje treść nieznanego kodu do `alerty.csv`. Kod zaczynający się od `=` zostaje formułą po otwarciu pliku w Excelu (CSV injection). | `app.py:441, 248-252` |
+| B9 | Dodanie administratora o istniejącym loginie po cichu zmienia hasło tego konta. | `app.py:978` |
 
 ## Miejsca bez obsługi błędów i walidacji
 
@@ -82,3 +93,6 @@ Kolejność wynika z wpływu na wiarygodność ewidencji:
 3. Korekta powiązana z konkretnym wpisem i zmieniająca go po zatwierdzeniu (D6).
 4. Klucz sesji ze zmiennej środowiskowej i wymuszenie zmiany hasła startowego (B1–B3).
 5. Polityka retencji danych osobowych w ewidencji, alertach i kopiach zapasowych — wymagana przed wdrożeniem.
+6. Blokada równoczesnej edycji nadwyżki i korekty przez dwóch administratorów (P20).
+7. Unieważnianie kodu QR zgubionej karty — dziś duplikat ma ten sam kod (B5).
+8. Testy z użytkownikami — prototyp nie był jeszcze sprawdzony na zmianie.
