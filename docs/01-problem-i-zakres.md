@@ -2,8 +2,9 @@
 
 ## Problem
 
-Pracownik magazynu w ciągu zmiany przechodzi między strefami: kompletacja, przyjęcia, wysyłka, przerwa.
-Czas spędzony w każdej strefie był ewidencjonowany ręcznie w Excelu. W takim układzie:
+Na zmianie pracuje około 60 osób w około 15 strefach magazynu. Pracownik w ciągu zmiany przechodzi
+między strefami: kompletacja, przyjęcia, wysyłka, przerwa. Czas spędzony w każdej strefie lider zmiany
+ewidencjonuje ręcznie w Excelu. W takim układzie:
 
 - nie ma bieżącej informacji, kto jest w której strefie,
 - długą przerwę widać dopiero przy rozliczeniu, a nie w chwili, gdy trwa,
@@ -15,15 +16,16 @@ Zastąpić ręczną ewidencję w Excelu rejestracją jednym skanem kodu QR, z po
 i automatycznym wykrywaniem przekroczonych przerw.
 
 Status: **prototyp** — rozwiązanie zbudowane do sprawdzenia procesu, nie wdrożenie produkcyjne.
+Prototyp nie był jeszcze testowany z użytkownikami; opis interesariuszy poniżej to rola docelowa.
 
 ## Interesariusze
 
 | Interesariusz | Rola w procesie | Czego potrzebuje |
 |---|---|---|
-| Pracownik magazynu | rejestruje wejście do strefy, przerwę i koniec zmiany | szybkiej rejestracji bez formularzy; informacji, ile przepracował dziś |
-| Administrator | monitoruje obsadę, reaguje na alerty, rozlicza nadwyżki przerw i korekty, utrzymuje słowniki | podglądu na żywo, alertów, eksportu danych |
-| Kierownik magazynu | korzysta z ewidencji i dashboardu | czasu per strefa do planowania obsady stref i oceny wydajności |
-| Lider zmiany | wcześniej wpisywał godziny do Excela; dziś korzysta z podglądu na żywo | bieżącej informacji, kto jest w której strefie i ile trwają przerwy |
+| Pracownik magazynu | ma rejestrować wejście do strefy, przerwę i koniec zmiany | szybkiej rejestracji bez formularzy; informacji, ile przepracował dziś |
+| Administrator | ma monitorować obsadę, reagować na alerty, rozliczać nadwyżki przerw i korekty, utrzymywać słowniki | podglądu na żywo, alertów, eksportu danych |
+| Kierownik magazynu | ma korzystać z ewidencji i dashboardu; razem z administratorem nanosi zatwierdzone korekty na ewidencję | czasu per strefa do planowania obsady stref i oceny wydajności |
+| Lider zmiany | dziś wpisuje godziny do Excela; docelowo korzysta z podglądu na żywo | bieżącej informacji, kto jest w której strefie i ile trwają przerwy |
 
 ## W zakresie
 
