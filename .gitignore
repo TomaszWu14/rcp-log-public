@@ -41,3 +41,6 @@ Thumbs.db
 
 # Node (na wypadek narzędzi frontendowych)
 node_modules/
+
+# Dane trybu demo (odtwarzane automatycznie)
+data_demo/

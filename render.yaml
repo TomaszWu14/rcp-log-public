@@ -1,0 +1,23 @@
+# Publiczne demo RCP Log na Render (https://render.com) — Blueprint.
+# Dashboard Render → New → Blueprint → wskaż to repozytorium.
+# Darmowy plan usypia usługę po ~15 min bez ruchu; pierwsze wejście budzi ją w ok. 1 min.
+# Dysk jest ulotny, więc po każdym restarcie dane demo powstają od nowa.
+services:
+  - type: web
+    name: rcp-log-demo
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python run.py
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: RCP_DEMO
+        value: "1"
+      - key: RCP_DEMO_RESET_MIN
+        value: "30"
+      - key: TZ
+        value: Europe/Warsaw
+      - key: RCP_SECRET_KEY
+        generateValue: true

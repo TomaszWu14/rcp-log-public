@@ -7,7 +7,7 @@ i administratora, który do tej pory liczył ten czas ręcznie w Excelu.
 
 📹 [Prezentacja działania — 2 min](<DO UZUPEŁNIENIA: link YouTube>)
 
-**Demo:** brak publicznej instancji — to prototyp z danymi przykładowymi; uruchomienie lokalne opisane niżej.
+**Demo bez logowania:** <DO UZUPEŁNIENIA: adres instancji na Render> — dane fikcyjne, odtwarzane co 30 min. Lokalnie: [tryb demo](#tryb-demo).
 
 ## Problem → rozwiązanie
 
@@ -63,6 +63,35 @@ Po starcie:
 Przy pierwszym uruchomieniu aplikacja sama tworzy katalog `data/` ze strefami, trzema przykładowymi
 pracownikami (`HU_KOWALSKI_JAN`, `HU_NOWAK_ANNA`, `HU_WISNIEWSKI_PIOTR`) i kontem administratora.
 Katalog `data/` nie jest wersjonowany.
+
+### Tryb demo
+
+Zmienna `RCP_DEMO=1` uruchamia aplikację do pokazu:
+
+- panel administratora otwiera się bez logowania,
+- [`demo_data.py`](demo_data.py) generuje 12 fikcyjnych pracowników, ewidencję z 10 dni roboczych, trwającą zmianę
+  z przekroczoną przerwą, nadwyżki przerw, korekty do zatwierdzenia i grafik ze spóźnieniem i nieobecnością,
+- dane leżą w osobnym katalogu `data_demo/` i są odtwarzane co `RCP_DEMO_RESET_MIN` minut (domyślnie 30),
+- dodawanie i usuwanie stref, pracowników i adminów, zmiana konfiguracji i import grafiku są zablokowane.
+
+```bash
+RCP_DEMO=1 .venv/bin/python run.py          # Linux / macOS
+```
+
+```powershell
+$env:RCP_DEMO = "1"; .venv\Scripts\python run.py   # Windows (PowerShell)
+```
+
+Publiczną instancję opisuje [`render.yaml`](render.yaml): w [Render](https://render.com) wybierz
+**New → Blueprint** i wskaż to repozytorium. Darmowy plan usypia usługę bez ruchu — pierwsze wejście
+budzi ją w około minutę.
+
+| Zmienna | Znaczenie |
+|---|---|
+| `RCP_DEMO` | `1` włącza tryb demo |
+| `RCP_DEMO_RESET_MIN` | co ile minut odtworzyć dane demo (domyślnie 30) |
+| `RCP_SECRET_KEY` | klucz podpisu sesji; bez niej używana jest wartość z kodu |
+| `PORT` | port serwera (domyślnie 5050) |
 
 ## Stack i dlaczego taki
 
