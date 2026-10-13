@@ -103,7 +103,7 @@ zgłoszenie tekstowe z decyzją administratora.
 
 **Skutki.**
 - ➕ Pracownik nie może sam zmienić ewidencji; każda korekta ma ślad i decyzję.
-- ➖ Zatwierdzenie zmienia tylko status — sama poprawka danych odbywa się poza aplikacją.
+- ➖ Zatwierdzenie zmienia tylko status — poprawkę nanosi ręcznie administrator lub kierownik, w obu plikach CSV: dziennym i miesięcznym (`app.py:217-222`). Pominięcie jednego z nich rozspójnia ewidencję.
 - ➖ Zgłoszenie nie wskazuje konkretnego wpisu, tylko opisuje problem tekstem.
 
 ## D7. Ostrzeżenie zamiast blokady przy szybkiej zmianie strefy
@@ -136,7 +136,7 @@ zgłoszenie tekstowe z decyzją administratora.
 
 **Alternatywy.** Logowanie każdego pracownika; skaner otwarty, kod QR jako identyfikator.
 
-**Dlaczego ta.** Szybkość przy wspólnym stanowisku. Z jednego urządzenia korzysta cała zmiana — logowanie hasłem przy każdej zmianie strefy byłoby niepraktyczne.
+**Dlaczego ta.** Szybkość przy wspólnym stanowisku. Z jednego urządzenia ma korzystać cała zmiana — logowanie hasłem przy każdej zmianie strefy byłoby niepraktyczne.
 
 **Skutki.**
 - ➕ Rejestracja to jeden skan, bez hasła.
