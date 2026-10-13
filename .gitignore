@@ -39,3 +39,6 @@ Thumbs.db
 .env
 .env.*
 
+
+# graphify — cache ekstrakcji (graf i raport są wersjonowane)
+graphify-out/cache/
