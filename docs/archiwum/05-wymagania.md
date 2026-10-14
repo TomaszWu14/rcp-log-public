@@ -84,7 +84,7 @@ i [07-ograniczenia](07-ograniczenia.md), nie tutaj.
 
 ## Testy akceptacyjne
 
-Plik [`tests/test_wymagania.py`](../tests/test_wymagania.py), uruchomienie jedną komendą:
+Plik [`tests/test_wymagania.py`](../../tests/test_wymagania.py), uruchomienie jedną komendą:
 
 ```
 python -m unittest discover tests

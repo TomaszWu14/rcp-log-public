@@ -35,15 +35,62 @@ administrator widzi obsadę na żywo, a przerwa ponad próg wywołuje alert i tr
 
 ## Dokumentacja analityczna
 
+Dokumentacja przedwdrożeniowa odtworzona z kodu: procesy P1–P7 z diagramami BPMN w Mermaid i torami
+aktorów, reguły biznesowe BR-1–BR-58, wymagania WF-1–WF-37 z kryteriami Given/When/Then, model danych,
+user flow, integracje i dziennik decyzji. Główny proces poniżej, reszta w [`docs/`](docs/00-przeglad.md).
+
+```mermaid
+flowchart TD
+    subgraph PR["Pracownik magazynu"]
+        E1(["Pracownik przy skanerze"]) --> T1["Zeskanuj kod QR"]
+        T2["Wybierz strefę albo Koniec zmiany"]
+        T3["Wybierz podstrefę lub pomiń"]
+        T4["Potwierdź wybór"]
+        T5["Odpowiedz na ostrzeżenie"]
+    end
+    subgraph SYS["RCP Log"]
+        G1{"Kod znany?"}
+        T6["Odrzuć kod i zapisz alert"]
+        T7["Pokaż stan dnia i dozwolone strefy"]
+        G2{"Strefa ma podstrefy?"}
+        G3{"Trwa pobyt krótszy niż próg szybkiej zmiany?"}
+        T8["Zamknij trwający pobyt i zapisz wpis"]
+        G4{"Koniec zmiany?"}
+        T9["Otwórz nowy pobyt"]
+        E2(["Potwierdzenie wyświetlone"])
+    end
+    T1 --> G1
+    G1 -->|"nie"| T6 --> E1
+    G1 -->|"tak"| T7 --> T2
+    T2 -->|"strefa"| G2
+    T2 -->|"Koniec zmiany"| T4
+    G2 -->|"tak"| T3 --> T4
+    G2 -->|"nie"| T4
+    T4 --> G3
+    G3 -->|"tak"| T5
+    T5 -->|"Zostań"| T2
+    T5 -->|"Tak, zmień"| T8
+    G3 -->|"nie"| T8
+    T8 --> G4
+    G4 -->|"nie"| T9 --> E2
+    G4 -->|"tak"| E2
+```
+
 | Dokument | Zawartość |
 |---|---|
-| [01. Problem i zakres](docs/01-problem-i-zakres.md) | problem, interesariusze, co jest w zakresie, a co poza nim i dlaczego |
-| [02. Proces](docs/02-proces.md) | proces przed i po wdrożeniu, aktorzy, punkty decyzyjne — diagramy Mermaid |
-| [03. User flow](docs/03-user-flow.md) | mapa 12 ekranów i okien oraz 11 zakładek panelu, przejścia, ścieżki alternatywne i ślepe |
-| [04. Model danych](docs/04-model-danych.md) | ERD, opis encji, słowniki wartości, reguły integralności i znane niespójności |
-| [05. Wymagania](docs/05-wymagania.md) | 38 wymagań z kryteriami akceptacji, wskazaniem miejsca w kodzie i mapą testów automatycznych |
-| [06. Decyzje](docs/06-decyzje.md) | dziennik 9 decyzji projektowych: kontekst, alternatywy, uzasadnienie, skutki |
-| [07. Ograniczenia](docs/07-ograniczenia.md) | czego aplikacja nie robi, znane problemy, miejsca bez walidacji, dalsze kroki |
+| [00. Przegląd](docs/00-przeglad.md) | cel biznesowy, zakres, aktorzy, mapa procesów, SIPOC, założenia do potwierdzenia, lista do anonimizacji |
+| [P1. Rejestracja pobytu w strefie](docs/01-procesy/P1-rejestracja-pobytu.md) | skan, wybór strefy i podstrefy, potwierdzenie, zamknięcie pobytu, koniec zmiany |
+| [P2. Nadzór nad obsadą i alertowanie](docs/01-procesy/P2-nadzor-i-alerty.md) | kontrola w tle, alerty, Live, Dashboard, ręczne przesunięcia |
+| [P3. Rozliczanie nadwyżek przerw](docs/01-procesy/P3-nadwyzki-przerw.md) | nadwyżka ponad próg i przypisanie strefy |
+| [P4. Obsługa korekt ewidencji](docs/01-procesy/P4-korekty-ewidencji.md) | zgłoszenie pracownika i decyzja administratora |
+| [P5. Planowanie grafiku i kontrola obecności](docs/01-procesy/P5-grafik-i-obecnosc.md) | szablon, import z Excela, edycja, porównanie z obecnością |
+| [P6. Utrzymanie słowników i konfiguracji](docs/01-procesy/P6-slowniki-i-konfiguracja.md) | strefy, pracownicy, uprawnienia, konta, progi, dane startowe |
+| [P7. Raportowanie, eksport i kopia zapasowa](docs/01-procesy/P7-eksport-i-kopie.md) | historia, eksport CSV, kopia o 02:00 |
+| [02. Model danych](docs/02-dane/model-danych.md) | ERD, słownik encji z cyklem życia, słownik pojęć, spójność danych |
+| [03. User flow](docs/03-user-flow/user-flow.md) | przejścia między ekranami, zakładki panelu, ślepe ścieżki |
+| [04. Integracje](docs/04-integracje.md) | diagram kontekstu, interfejsy, adresy HTTP, środowisko uruchomieniowe, tryb demo |
+| [05. Decyzje i ograniczenia](docs/05-decyzje-i-ograniczenia.md) | decyzje D1–D11, ograniczenia, dług techniczny, lista przed wdrożeniem produkcyjnym |
+| [Archiwum](docs/archiwum/README.md) | pierwsza wersja dokumentacji (01–07); jej identyfikatory wymagań są nazwami testów |
 
 ## Jak uruchomić
 
@@ -134,7 +181,8 @@ docker run --rm -p 5050:5050 -e RCP_DEMO=1 rcp-log
 | `RCP_SECRET_KEY` | klucz podpisu sesji; bez niej używana jest wartość z kodu |
 | `PORT` | port serwera (domyślnie 5050) |
 
-Testy akceptacyjne (18 testów nazwanych ID wymagań, bez dodatkowych zależności):
+Testy akceptacyjne (18 testów, bez dodatkowych zależności; nazwy testów to identyfikatory wymagań
+z [archiwalnej listy](docs/archiwum/05-wymagania.md), a mapę na WF-n ma każdy dokument procesu):
 
 ```bash
 python -m unittest discover tests
@@ -150,8 +198,9 @@ Dockerfile          obraz produkcyjny (Python 3.12 slim + Waitress) dla Coolify 
 docker-compose.yaml konfiguracja publicznego demo na Coolify (rcp.log.twapp.pl)
 render.yaml         konfiguracja demo na Render (alternatywa)
 templates/          skaner (index.html), panel (admin.html), logowanie
-tests/              testy akceptacyjne wymagań z docs/05
-docs/               dokumentacja analityczna 01–07 i zrzuty ekranu; docs/media: logo, film, miniatura
+tests/              testy akceptacyjne; nazwy testów to ID z docs/archiwum/05, mapa na WF-n w docs/01-procesy
+docs/               dokumentacja przedwdrożeniowa: 00 przegląd, 01-procesy P1–P7, 02-dane, 03-user-flow,
+                    04 integracje, 05 decyzje i ograniczenia; archiwum, screenshots, media (logo, film)
 data/               tworzony przy starcie: JSON i CSV z danymi (poza repozytorium)
 data_demo/          dane trybu demo, odtwarzane automatycznie (poza repozytorium)
 ```
@@ -162,7 +211,7 @@ data_demo/          dane trybu demo, odtwarzane automatycznie (poza repozytorium
 |---|---|
 | **Python 3.11 + Flask** | cała logika i API mieszczą się w jednym pliku (`app.py`) — przy prototypie liczy się czas od pomysłu do sprawdzenia procesu |
 | **Waitress** | produkcyjny serwer WSGI, który działa także na Windowsie (`run.py`) |
-| **Pliki JSON i CSV zamiast bazy** | zero infrastruktury; ewidencja zapisywana jest jako CSV z separatorem `;` i BOM, więc otwiera się wprost w Excelu, którego używano wcześniej — szczegóły i koszty tej decyzji w [D1](docs/06-decyzje.md#d1-pliki-json-i-csv-zamiast-bazy-danych) |
+| **Pliki JSON i CSV zamiast bazy** | zero infrastruktury; ewidencja zapisywana jest jako CSV z separatorem `;` i BOM, więc otwiera się wprost w Excelu, którego używano wcześniej — szczegóły i koszty tej decyzji w [D1](docs/05-decyzje-i-ograniczenia.md#d1-pliki-json-i-csv-zamiast-bazy-danych) |
 | **openpyxl** | grafik zmian przychodzi w Excelu — aplikacja generuje szablon `.xlsx` i importuje wypełniony plik |
 | **HTML, CSS i JavaScript bez frameworka** | skaner działa w dowolnej przeglądarce na stanowisku, bez kroku budowania frontendu |
 
@@ -175,7 +224,7 @@ Poza zakresem: naliczanie wynagrodzeń i integracja z systemem kadrowym, automat
 po zatwierdzeniu korekty, zmiana nocna przez północ, praca skanera offline.
 
 To prototyp, który nie przeszedł przeglądu bezpieczeństwa (m.in. klucz sesji w kodzie, domyślne hasło
-administratora). Pełna lista: [07. Ograniczenia](docs/07-ograniczenia.md).
+administratora). Pełna lista: [05. Decyzje i ograniczenia](docs/05-decyzje-i-ograniczenia.md).
 
 ## Kontekst projektu
 

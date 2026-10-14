@@ -1,4 +1,5 @@
-"""Testy akceptacyjne — nazwa testu = ID wymagania z docs/05-wymagania.md.
+"""Testy akceptacyjne — nazwa testu = ID wymagania z docs/archiwum/05-wymagania.md
+(mapa na wymagania WF-n jest w tabelach "Wymagania funkcjonalne" w docs/01-procesy/).
 
 Uruchomienie: python -m unittest discover tests
 
@@ -171,7 +172,7 @@ class Wymagania(unittest.TestCase):
         self.assertEqual(len(self.A.load_workers()), 3)
         self.assertIn("PRZERWA", self.A.load_strefy())
 
-    # ── Znane problemy (docs/07-ograniczenia.md) — test pilnuje opisu ─────────
+    # ── Znane problemy (docs/05-decyzje-i-ograniczenia.md, T6) — test pilnuje opisu ──
     def test_P13_import_szablonu_zglasza_wiersz_legendy(self):
         """Gdy ktoś to naprawi, test przestanie przechodzić — wtedy usuń P13 z docs."""
         self.login()
