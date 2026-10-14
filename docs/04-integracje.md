@@ -35,7 +35,7 @@ flowchart LR
 
 | Nr | Interfejs | Kierunek | Format | Częstotliwość | Obsługa błędów | Źródło w kodzie |
 |---|---|---|---|---|---|---|
-| I1 | Czytnik kodów QR → ekran skanera | do aplikacji | tekst kodu (`HU_…`) wpisany w pole jak z klawiatury, zakończony Enter albo wysłany samoczynnie 0,7 s po wpisaniu ponad 5 znaków | każdy skan | nieznany kod: komunikat na ekranie i alert; pusty kod ignorowany | `index.html:439-460`, `app.py:434-442` |
+| I1 | Czytnik kodów QR → ekran skanera | do aplikacji | czytnik USB emulujący klawiaturę na jednym wspólnym komputerze zmiany (Z2): tekst kodu (`HU_…`) wpisany w pole, zakończony Enter albo wysłany samoczynnie 0,7 s po wpisaniu ponad 5 znaków | każdy skan | nieznany kod: komunikat na ekranie i alert; pusty kod ignorowany | `index.html:439-460`, `app.py:434-442` |
 | I2 | Ekran skanera ↔ serwer | dwukierunkowy | HTTP, JSON: skan (`/api/scan`), rejestracja (`/api/rejestruj`), korekta (`/api/korekta`) | na żądanie, przy każdej akcji pracownika | odpowiedzi z komunikatem i kodem 400, 403 lub 409; brak połączenia: „Błąd połączenia”; treść żądania niebędąca JSON daje błąd serwera | `app.py:433-645`, `index.html:450-459, 570-596` |
 | I3 | Panel administratora ↔ serwer | dwukierunkowy | HTTP, JSON (`/admin/api/*`); pliki do pobrania (`/admin/export/*`, szablon grafiku); plik wysyłany (`/admin/api/grafik/import`, multipart) | Live i nowe alerty co 20 s; reszta na żądanie | bez sesji: odmowa 401 lub 403, której ekran nie obsługuje; komunikat tam, gdzie ekran sprawdza odpowiedź | `app.py:650-1187`, `admin.html:458-468, 487-508, 626` |
 | I4 | Serwer ↔ katalog danych | dwukierunkowy | JSON (słowniki, pobyty, nadwyżki, korekty, grafik, konta, konfiguracja); CSV ze średnikiem i UTF-8 BOM (ewidencja dnia i miesiąca, alerty) | przy każdej zmianie stanu; odczyt przy każdym żądaniu (bez pamięci podręcznej) | uszkodzony JSON czytany jak pusty bez alarmu; zapis nieatomowy; błędy odczytu CSV pomijane | `app.py:18-29, 63-71, 205-260` |
@@ -82,6 +82,7 @@ Dane dashboardu zawierają także czas per strefa i per pracownik, których ekra
 | Publiczna instancja demo | Coolify z pliku compose: tryb demo, reset co 30 min, losowany klucz sesji, domena ustawiana w panelu Coolify | `docker-compose.yaml`, README |
 | Alternatywne wdrożenie demo | Render (plan darmowy, dysk ulotny) | `render.yaml` |
 | Trwałość danych | katalog danych obok kodu; w kontenerze bez woluminu dane giną przy ponownym wdrożeniu; wolumin na `data/` i `backup/` jest w compose zakomentowany dla trybu produkcyjnego | `app.py:18-20`, `docker-compose.yaml` |
+| Instancja produkcyjna (plan) | osobna instancja na tym samym serwerze Coolify bez trybu demo, z woluminami na dane i kopie; kopie na tym samym serwerze z retencją 30 dni (do zbudowania); strefa czasowa Europe/Warsaw (Z7, Z10, Z16) | ustalenia w [00](00-przeglad.md#ustalenia-potwierdzone) |
 
 ### Zmienne środowiskowe
 
@@ -91,7 +92,7 @@ Dane dashboardu zawierają także czas per strefa i per pracownik, których ekra
 | `RCP_DEMO_RESET_MIN` | co ile minut odtworzyć dane demo | 30 | `app.py:1196` |
 | `RCP_SECRET_KEY` | klucz podpisu sesji przeglądarki | wartość wpisana w kodzie (znane ryzyko) | `app.py:16` |
 | `PORT` | port serwera | 5050 | `run.py:12` |
-| `TZ` | strefa czasowa serwera (czas lokalny w ewidencji) | strefa systemu; w obrazie Docker Europe/Warsaw | `Dockerfile`, `render.yaml` |
+| `TZ` | strefa czasowa serwera (czas lokalny w ewidencji); docelowo Europe/Warsaw, czas lokalny wystarcza (Z10) | strefa systemu; w obrazie Docker Europe/Warsaw | `Dockerfile`, `render.yaml` |
 
 ### Tryb demo
 
@@ -101,5 +102,5 @@ Dane dashboardu zawierają także czas per strefa i per pracownik, których ekra
 | Logowanie | każdy odwiedzający jest administratorem „demo”; strona logowania przekierowuje do panelu; „Wyloguj” ukryty | `app.py:1240-1246`, `admin.html:178-180` |
 | Blokady | dodawanie i usuwanie stref, podstref, pracowników i kont, zapis konfiguracji, import grafiku: odmowa „Niedostępne w trybie demo” | `app.py:1200-1205, 1247-1251` |
 | Działa nadal | skaner, przesunięcia i ręczny start, nadwyżki, korekty, edycja komórek grafiku, eksport | `app.py:1200-1205` (brak na liście) |
-| Kopia zapasowa | nie uruchamia się | `app.py:354` |
+| Kopia zapasowa | nie uruchamia się; instancja demo nie potrzebuje kopii (Z7) | `app.py:354` |
 | Ekrany | pasek informacyjny w panelu; przyciski z przykładowymi kodami i link do panelu na skanerze | `admin.html:163-165`, `index.html:307-319` |

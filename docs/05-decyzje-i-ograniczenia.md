@@ -49,7 +49,7 @@ widoczne w działaniu aplikacji.
 - **Opcje.** Zamknięcie po stałym czasie od wejścia; o północy; decyzja administratora; koniec zmiany
   z grafiku.
 - **Wybór i uzasadnienie.** Zamknięcie o 23:59:59 dnia wejścia. W strefach objętych rejestracją nie ma
-  zmian nocnych ([Z8](00-przeglad.md#założenia-wymagające-potwierdzenia)), więc pobyt przez północ
+  zmian nocnych (potwierdzone, [Z8](00-przeglad.md#ustalenia-potwierdzone)), więc pobyt przez północ
   oznacza zapomniany koniec zmiany, nie pracę; każdy wpis zostaje w jednym dniu kalendarzowym.
 - **Konsekwencje.** ➕ Kompletna ewidencja dzienna. ➕ Wpis z flagą `AUTO_ZAMKNIETO` i alert (BR-17).
   ➖ Czas zapomnianego pobytu do północy liczony jako praca. ➖ Wprowadzenie zmian nocnych wymaga zmiany
@@ -71,7 +71,7 @@ widoczne w działaniu aplikacji.
 - **Opcje.** Automatyczne odjęcie od czasu pracy; sama flaga w ewidencji; osobna lista rozliczana przez
   administratora.
 - **Wybór i uzasadnienie.** Osobna lista ze statusem. Nadwyżka jest kosztem czasu, a przypisanie wskazuje
-  strefę, która ten koszt ponosi ([Z5](00-przeglad.md#założenia-wymagające-potwierdzenia)).
+  strefę, która ten koszt ponosi w rozliczeniu miesięcznym prowadzonym poza aplikacją (potwierdzone, [Z5](00-przeglad.md#ustalenia-potwierdzone)).
 - **Konsekwencje.** ➕ Widać, co nie jest rozliczone (status „oczekuje”). ➖ Przypisanie nie zmienia
   ewidencji (BR-27). ➖ Nadwyżka powstaje tylko przy zamknięciu przerwy przez pracownika (BR-24).
 
@@ -108,7 +108,7 @@ widoczne w działaniu aplikacji.
 
 ### D9. Skaner bez logowania, panel z logowaniem
 
-- **Kontekst.** Stanowisko skanowania jest wspólne dla całej zmiany ([Z2](00-przeglad.md#założenia-wymagające-potwierdzenia)).
+- **Kontekst.** Jedno wspólne stanowisko skanowania na zmianie: komputer z czytnikiem USB działającym jak klawiatura (potwierdzone, [Z2](00-przeglad.md#ustalenia-potwierdzone)).
 - **Opcje.** Logowanie każdego pracownika; skaner otwarty, kod QR jako identyfikator.
 - **Wybór i uzasadnienie.** Skaner otwarty. Logowanie hasłem przy każdej zmianie strefy byłoby
   niepraktyczne na wspólnym urządzeniu.
@@ -150,12 +150,12 @@ widoczne w działaniu aplikacji.
 | Brak zmian nocnych przez północ | pobyt zamykany o 23:59:59 | BR-17, D3 |
 | Uprawnienia tylko per strefa | podstrefy dostępne dla każdego z uprawnieniem do strefy | BR-5, D8 |
 | Skaner wymaga połączenia z serwerem | skan bez połączenia przepada z komunikatem | `index.html:459, 595` |
-| Jedna rola w panelu | lider zmiany dostaje pełne uprawnienia administratora albo nic ([Z11](00-przeglad.md#założenia-wymagające-potwierdzenia)) | `app.py:278` |
+| Jedna rola w panelu | pełny panel ma tylko administrator; lider zmiany nie ma dostępu, co właściciel projektu uznał za wystarczające ([Z11](00-przeglad.md#ustalenia-potwierdzone)) | `app.py:278` |
 | Eksport tylko dnia dzisiejszego i bieżącego miesiąca | dane z przeszłości przez Historię (maks. 500 wierszy) albo z serwera | BR-54, BR-55 |
-| Alerty bez potwierdzania | kolumna „potwierdzone” zawsze „NIE”; brak listy alertów w panelu (tylko eksport) | `app.py:252`, [04. Integracje](04-integracje.md#adresy-aplikacji-interfejs-http) |
+| Alerty bez potwierdzania | kolumna „potwierdzone” zawsze „NIE”; brak listy alertów w panelu (tylko eksport); potwierdzone jako wystarczające (Z12) | `app.py:252`, [04. Integracje](04-integracje.md#adresy-aplikacji-interfejs-http) |
 | Brak retencji danych osobowych | wpisy, alerty, nadwyżki, korekty i kopie przechowywane bezterminowo | brak mechanizmu w kodzie |
 | Brak edycji nazwisk i nazw stref | zmiana przez usunięcie i ponowne dodanie; stare nazwy zostają w historii | BR-48, BR-50 |
-| Czas lokalny serwera bez strefy w zapisach | zmiana czasu letni/zimowy zaburza pobyty trwające w noc zmiany czasu | `datetime.now()` w całym `app.py` |
+| Czas lokalny serwera bez strefy w zapisach | zmiana czasu letni/zimowy zaburza pobyty trwające w noc zmiany czasu; zaakceptowane: serwer w Europe/Warsaw, czas lokalny wystarcza (Z10) | `datetime.now()` w całym `app.py` |
 
 ## Dług techniczny
 
@@ -164,7 +164,7 @@ widoczne w działaniu aplikacji.
 | # | Problem | Gdzie opisane | Źródło |
 |---|---|---|---|
 | T1 | Nadwyżka tylko przy zamknięciu przerwy przez pracownika; przesunięcie i auto-zamknięcie dają samą flagę | BR-24, [P3](01-procesy/P3-nadwyzki-przerw.md) | `app.py:549` wobec `843, 412` |
-| T2 | Dwa domyślne progi długiego dyżuru: 10 h dla alertu, 12 h dla Live | Z13, [P2](01-procesy/P2-nadzor-i-alerty.md) | `app.py:366, 598` |
+| T2 | Dwa domyślne progi długiego dyżuru: 10 h dla alertu, 12 h dla Live; właściwa wartość to 10 h, więc 12 h jest błędem do poprawy | Z13, [P2](01-procesy/P2-nadzor-i-alerty.md) | `app.py:366, 598` |
 | T3 | Usunięcie pracownika kasuje trwający pobyt bez wpisu; zostawia grafik, nadwyżki, korekty | BR-49 | `app.py:947-955` |
 | T4 | Ponowny skan tej samej strefy rozbija pobyt | BR-12 | `app.py:522-577` |
 | T5 | Porównanie z grafikiem liczy tylko zamknięte wpisy; dzień, który się nie zaczął, ma status „nieobecność” | [P5](01-procesy/P5-grafik-i-obecnosc.md) wyjątki | `app.py:1142-1172` |
@@ -177,7 +177,7 @@ widoczne w działaniu aplikacji.
 | T12 | Równoczesne decyzje dwóch administratorów o tej samej nadwyżce lub korekcie: wygrywa ostatni zapis | [P3](01-procesy/P3-nadwyzki-przerw.md), [P4](01-procesy/P4-korekty-ewidencji.md) wyjątki | `app.py:783-789, 802-808` |
 | T13 | Dane dashboardu zawierają niewyświetlane sumy per strefa i per pracownik | [04. Integracje](04-integracje.md) | `app.py:712-724, 757-758` |
 | T14 | Numery wpisów liczone z liczby linii pliku; wpisy automatyczne bez numeru, formatu czasu i pola korekty | [02. Model danych](02-dane/model-danych.md#spójność-danych) | `app.py:224-229, 405-413` |
-| T15 | Alert `PRZEKROCZENIE_ZMIANY` filtrowany na ekranie, nigdy nietworzony | Z14 | `index.html:617` |
+| T15 | Alert `PRZEKROCZENIE_ZMIANY` filtrowany na ekranie, nigdy nietworzony; pozostałość do usunięcia | Z14 | `index.html:617` |
 
 ### Bezpieczeństwo
 
@@ -189,7 +189,7 @@ Prototyp nie przeszedł przeglądu bezpieczeństwa. Przed jakimkolwiek wdrożeni
 | B2 | Konto startowe `admin` z hasłem `admin123` bez wymuszenia zmiany; dane logowania wypisywane w konsoli | `app.py:314`, `run.py:4, 17` |
 | B3 | Migracja starych skrótów haseł ustawia hasło startowe | `app.py:316-325` |
 | B4 | Podgląd obecności dostępny bez logowania | `app.py:591` |
-| B5 | Przewidywalna treść kodu QR; brak unieważniania kodu zgubionej karty | `app.py:943`, D9 |
+| B5 | Przewidywalna treść kodu QR; brak unieważniania kodu zgubionej karty, a zgubiona karta dostaje duplikat z tym samym kodem (Z3) | `app.py:943`, D9 |
 | B6 | Brak limitu prób logowania i ochrony przed podrobionym żądaniem (CSRF) | `app.py:650-662` |
 | B7 | Konfiguracja zapisuje dowolne klucze; ścieżka kopii może wskazać dowolny katalog serwera | `app.py:995-1000` |
 | B8 | Treść nieznanego kodu trafia do pliku alertów bez oczyszczenia; kod zaczynający się od „=” staje się formułą w Excelu | `app.py:441, 248-252` |
@@ -225,18 +225,21 @@ Kolejność według wpływu na wiarygodność ewidencji i bezpieczeństwo danych
 2. **Wymóg ustawienia klucza sesji** poza trybem demo i **wymuszenie zmiany hasła startowego** (B1–B3);
    limit prób logowania i ochrona CSRF (B6).
 3. **Spójne zamykanie przerw**: nadwyżka niezależnie od tego, kto zamknął przerwę (T1); jeden próg długiego
-   dyżuru (T2).
+   dyżuru 10 h (T2, Z13); usunięcie pozostałości `PRZEKROCZENIE_ZMIANY` (T15, Z14).
 4. **Korekta powiązana z konkretnym wpisem**, która po zatwierdzeniu zmienia ewidencję w obu plikach
    (D6, BR-32, BR-33).
-5. **Polityka retencji danych osobowych** w ewidencji, alertach, nadwyżkach, korektach i kopiach
-   ([Z7](00-przeglad.md#założenia-wymagające-potwierdzenia)) oraz decyzja o anonimizacji danych
+5. **Polityka retencji danych osobowych** w ewidencji, alertach, nadwyżkach i korektach (dla kopii ustalono
+   30 dni, [Z7](00-przeglad.md#ustalenia-potwierdzone)) oraz decyzja o anonimizacji danych
    przykładowych ([Do anonimizacji](00-przeglad.md#do-anonimizacji)).
-6. **Kopia zapasowa niezależna od godziny pracy serwera** z retencją i powiadomieniem o błędzie (T11, D10).
+6. **Kopia zapasowa niezależna od godziny pracy serwera**, na tym samym serwerze, z retencją 30 dni
+   i powiadomieniem o błędzie (T11, D10, Z7).
 7. **Walidacja na serwerze**: strefa i podstrefa ze słownika przy przesunięciach i nadwyżkach (T9), unikalne
    nazwy (T8), zakresy konfiguracji (B7), pliki grafiku (T6).
 8. **Blokada równoczesnej edycji** nadwyżki i korekty przez dwóch administratorów (T12).
-9. **Unieważnianie kodu QR zgubionej karty** (B5) i ustalenie, kto wydaje karty
-   ([Z3](00-przeglad.md#założenia-wymagające-potwierdzenia)).
-10. **Decyzja o zmianach nocnych** ([Z8](00-przeglad.md#założenia-wymagające-potwierdzenia)) i strefie
-    czasowej serwera ([Z10](00-przeglad.md#założenia-wymagające-potwierdzenia)).
-11. **Testy z użytkownikami na zmianie**: prototyp nie był jeszcze sprawdzony w pracy (README).
+9. **Unieważnianie kodu QR zgubionej karty** (B5): dziś administrator drukuje duplikat z tym samym kodem
+   ([Z3](00-przeglad.md#ustalenia-potwierdzone)).
+10. **Ustalenie obowiązujących wartości progów** z kierownikiem magazynu: dzisiejsze 30 min, 5 min, 10 h
+    i 15 min to wartości robocze z prototypu ([Z4](00-przeglad.md#ustalenia-potwierdzone)).
+11. **Osobna instancja produkcyjna** na tym samym serwerze Coolify bez trybu demo, z woluminami na dane
+    i kopie ([Z16](00-przeglad.md#ustalenia-potwierdzone)).
+12. **Testy z użytkownikami na zmianie**: prototyp nie był jeszcze sprawdzony w pracy (README).

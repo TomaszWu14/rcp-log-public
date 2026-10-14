@@ -2,8 +2,8 @@
 
 Dokumentacja przedwdrożeniowa prototypu **RCP Log** odtworzona z kodu aplikacji (`app.py`, `demo_data.py`,
 szablony ekranów, testy akceptacyjne) i z README. Każda reguła i każdy krok procesu mają w tabelach
-kolumnę „Źródło w kodzie”. To, czego z kodu ustalić się nie da, jest zebrane na końcu w sekcji
-[Założenia wymagające potwierdzenia](#założenia-wymagające-potwierdzenia).
+kolumnę „Źródło w kodzie”. To, czego z kodu ustalić się nie da, potwierdził właściciel projektu;
+odpowiedzi są zebrane w sekcji [Ustalenia potwierdzone](#ustalenia-potwierdzone).
 
 Stan na: październik 2026. Status rozwiązania: **prototyp**, nieprzetestowany z użytkownikami na zmianie
 (wg README).
@@ -38,11 +38,11 @@ w Excelu, a nadwyżki przerw i korekty trafiają na listy do decyzji człowieka.
 |---|---|
 | Naliczanie wynagrodzeń, integracja z systemem kadrowo-płacowym | jedynym wyjściem danych jest plik CSV (`app.py:1003-1016`) |
 | Automatyczna poprawka ewidencji po zatwierdzeniu korekty | decyzja zmienia tylko status zgłoszenia (`app.py:798-809`) |
-| Zmiana nocna przechodząca przez północ | pobyt z poprzedniego dnia jest zamykany o 23:59:59 dnia rozpoczęcia (`app.py:396-418`) |
+| Zmiana nocna przechodząca przez północ | pobyt z poprzedniego dnia jest zamykany o 23:59:59 dnia rozpoczęcia (`app.py:396-418`); potwierdzone: zmiany nocne nie występują (Z8) |
 | Uprawnienia na poziomie podstref | uprawnienia to lista stref; podstrefa nie jest sprawdzana (`app.py:501-503`) |
 | Praca skanera bez połączenia z serwerem | każdy skan to zapytanie do serwera; brak bufora po stronie ekranu (`index.html:450-460`) |
-| Role w panelu inne niż administrator | jeden znacznik zalogowania dla wszystkich funkcji panelu (`app.py:278`) |
-| Potwierdzanie (zamykanie) alertów | kolumna „potwierdzone” ma zawsze wartość „NIE” (`app.py:252`) |
+| Role w panelu inne niż administrator | jeden znacznik zalogowania dla wszystkich funkcji panelu (`app.py:278`); potwierdzone: pełny panel ma tylko administrator, lider zmiany nie potrzebuje dostępu (Z11) |
+| Potwierdzanie (zamykanie) alertów | kolumna „potwierdzone” ma zawsze wartość „NIE” (`app.py:252`); potwierdzone: baner i plik wystarczą (Z12) |
 | Retencja i usuwanie danych osobowych | brak jakiegokolwiek mechanizmu kasowania wpisów, alertów i kopii |
 | Baza danych | dane w plikach JSON i CSV (`app.py:18-29`) |
 
@@ -51,14 +51,15 @@ w Excelu, a nadwyżki przerw i korekty trafiają na listy do decyzji człowieka.
 | Aktor | Typ | Kanał | Odpowiedzialność | Źródło w kodzie |
 |---|---|---|---|---|
 | Pracownik magazynu | człowiek | ekran skanera `/`, bez logowania | identyfikuje się kodem, rejestruje wejście do strefy, przerwę i koniec zmiany, zgłasza korektę | `app.py:429-645`, `index.html` |
-| Administrator | człowiek | panel `/admin`, po zalogowaniu | monitoruje obsadę, reaguje na alerty, przesuwa i kończy pobyty, rozlicza nadwyżki i korekty, utrzymuje słowniki, grafik i konfigurację, eksportuje dane | `app.py:650-1187`, `admin.html` |
+| Administrator | człowiek | panel `/admin`, po zalogowaniu | monitoruje obsadę, reaguje na alerty, przesuwa i kończy pobyty, rozlicza nadwyżki i korekty, utrzymuje słowniki, grafik i konfigurację, eksportuje dane; w organizacji: właściciel projektu, który też drukuje i wydaje karty z kodem i nanosi zatwierdzone korekty na pliki CSV (Z1, Z3) | `app.py:650-1187`, `admin.html` |
 | Gość demo | wariant administratora | panel w trybie demo, logowanie automatyczne | ogląda i testuje wszystko poza zmianą słowników, kont, konfiguracji i importem grafiku | `app.py:1200-1251` |
 | Kontrola pobytów | proces automatyczny, co 60 s | wątek serwera | wykrywa długą przerwę i długi dyżur, zamyka pobyty z poprzedniego dnia | `app.py:359-424` |
 | Kopia zapasowa | proces automatyczny, raz na dobę o 02:00 | wątek serwera (nie w trybie demo) | kopiuje wszystkie pliki danych do katalogu kopii | `app.py:332-354` |
 | Odtwarzanie danych demo | proces automatyczny, co N minut | wątek serwera (tylko tryb demo) | kasuje dane i generuje fikcyjny stan | `app.py:1207-1258` |
-| Czytnik kodów QR | urządzenie | pole tekstowe na ekranie skanera | wpisuje kod pracownika jak z klawiatury; po wpisaniu ponad 5 znaków ekran sam wysyła kod po 0,7 s | `index.html:441-448` |
+| Czytnik kodów QR | urządzenie | czytnik USB emulujący klawiaturę na jednym wspólnym komputerze zmiany (Z2) | wpisuje kod pracownika i Enter w pole skanera; po wpisaniu ponad 5 znaków ekran sam wysyła kod po 0,7 s | `index.html:441-448` |
 | Excel (lub inny arkusz) | system zewnętrzny | pliki `.xlsx` i `.csv` | wypełnienie szablonu grafiku; odczyt ewidencji i alertów | `app.py:117-196, 1022-1070` |
-| Kierownik magazynu, lider zmiany | interesariusze poza systemem | brak własnego kanału w kodzie | odbiorcy ewidencji i podglądu; ręczne naniesienie zatwierdzonych korekt (wg README i archiwum) | — (założenie Z1) |
+| Lider zmiany | człowiek, poza aplikacją | brak własnego dostępu do panelu (Z11) | odpowiada za rejestrację i jej poprawność na zmianie (P1, P2) | — (Z1) |
+| Kierownik magazynu | człowiek, poza aplikacją | Excel: szablon grafiku, pliki CSV | przygotowuje grafik w Excelu na podstawie szablonu; odbiorca ewidencji i porównania z grafikiem (P5, P7) | — (Z1, Z6) |
 
 ## Mapa procesów
 
@@ -85,30 +86,30 @@ flowchart LR
     P1 -->|"wpisy ewidencji"| P7
 ```
 
-| Nr | Proces | Zdarzenie inicjujące | Rezultat biznesowy | Właściciel w aplikacji | Dokument |
+| Nr | Proces | Zdarzenie inicjujące | Rezultat biznesowy | Właściciel (Z1) | Dokument |
 |---|---|---|---|---|---|
-| P1 | Rejestracja pobytu w strefie | pracownik podchodzi do skanera z kodem | zamknięty pobyt w ewidencji i otwarty nowy albo zakończona zmiana | pracownik (wykonuje), administrator (nadzoruje) | [P1](01-procesy/P1-rejestracja-pobytu.md) |
-| P2 | Nadzór nad obsadą i alertowanie | trwający pobyt (sprawdzany co 60 s) albo administrator otwiera panel | odchylenie wykryte, zapisane jako alert i obsłużone | administrator | [P2](01-procesy/P2-nadzor-i-alerty.md) |
+| P1 | Rejestracja pobytu w strefie | pracownik podchodzi do skanera z kodem | zamknięty pobyt w ewidencji i otwarty nowy albo zakończona zmiana | lider zmiany; wykonuje pracownik, panel obsługuje administrator | [P1](01-procesy/P1-rejestracja-pobytu.md) |
+| P2 | Nadzór nad obsadą i alertowanie | trwający pobyt (sprawdzany co 60 s) albo administrator otwiera panel | odchylenie wykryte, zapisane jako alert i obsłużone | lider zmiany (poprawność na zmianie); panel obsługuje administrator | [P2](01-procesy/P2-nadzor-i-alerty.md) |
 | P3 | Rozliczanie nadwyżek przerw | pracownik kończy przerwę dłuższą niż próg | nadwyżka przypisana do strefy, która ponosi jej koszt | administrator | [P3](01-procesy/P3-nadwyzki-przerw.md) |
 | P4 | Obsługa korekt ewidencji | pracownik zgłasza błąd w rejestracji | decyzja o korekcie; poprawka ewidencji poza aplikacją | administrator | [P4](01-procesy/P4-korekty-ewidencji.md) |
-| P5 | Planowanie grafiku i kontrola obecności | nowy miesiąc do zaplanowania albo potrzeba kontroli | grafik miesiąca w aplikacji; raport: na czas, spóźnienie, nieobecność | administrator | [P5](01-procesy/P5-grafik-i-obecnosc.md) |
+| P5 | Planowanie grafiku i kontrola obecności | nowy miesiąc do zaplanowania albo potrzeba kontroli | grafik miesiąca w aplikacji; raport: na czas, spóźnienie, nieobecność | kierownik magazynu (planuje grafik, odbiera raport); import wykonuje administrator | [P5](01-procesy/P5-grafik-i-obecnosc.md) |
 | P6 | Utrzymanie słowników i konfiguracji | zmiana w organizacji: nowa osoba, strefa, próg, konto | aktualne słowniki i progi obowiązujące od następnego skanu | administrator | [P6](01-procesy/P6-slowniki-i-konfiguracja.md) |
-| P7 | Raportowanie, eksport i kopia zapasowa | potrzeba danych z ewidencji albo godzina 02:00 | plik CSV u odbiorcy; kopia danych w katalogu kopii | administrator, system | [P7](01-procesy/P7-eksport-i-kopie.md) |
+| P7 | Raportowanie, eksport i kopia zapasowa | potrzeba danych z ewidencji albo godzina 02:00 | plik CSV u odbiorcy; kopia danych w katalogu kopii | administrator; odbiorca plików: kierownik magazynu | [P7](01-procesy/P7-eksport-i-kopie.md) |
 
-Właściciel biznesowy procesów (kto odpowiada za proces w organizacji, nie w aplikacji) nie wynika
-z kodu, patrz założenie Z1.
+Właścicieli procesów potwierdził właściciel projektu (ustalenie Z1). Lider zmiany i kierownik magazynu
+nie mają własnego dostępu do panelu; pełny panel ma tylko administrator (Z11).
 
 ## SIPOC dla całości rozwiązania
 
 | Dostawcy (S) | Wejścia (I) | Proces (P) | Wyjścia (O) | Odbiorcy (C) |
 |---|---|---|---|---|
-| pracownik magazynu | skan kodu, wybór strefy i podstrefy, potwierdzenie, zgłoszenie korekty | **Rejestracja** (P1): skan zamyka poprzedni pobyt i otwiera nowy | wpis ewidencji w pliku dnia i miesiąca; trwający pobyt | administrator; odbiorcy ewidencji (Z1) |
+| pracownik magazynu | skan kodu, wybór strefy i podstrefy, potwierdzenie, zgłoszenie korekty | **Rejestracja** (P1): skan zamyka poprzedni pobyt i otwiera nowy | wpis ewidencji w pliku dnia i miesiąca; trwający pobyt | administrator; kierownik magazynu |
 | zadanie w tle, administrator | trwające pobyty, progi z konfiguracji | **Nadzór** (P2): wykrycie długiej przerwy, długiego dyżuru, pobytu bez końca zmiany | alerty w pliku i w panelu; pobyty zamknięte automatycznie lub ręcznie | administrator |
-| pracownik (przerwa), administrator | zamknięta przerwa ponad próg, wybór strefy | **Rozliczanie nadwyżek** (P3) | lista nadwyżek ze statusem „oczekuje” lub „przypisana” | administrator; rozliczenie kosztu poza systemem (Z5) |
-| pracownik, administrator | opis błędu, decyzja | **Korekty** (P4) | lista zgłoszeń ze statusem; poprawka CSV poza systemem | administrator, kierownik (Z1) |
-| osoba planująca zmiany (Z6), administrator | plik grafiku `.xlsx`, kody zmian, tolerancja spóźnienia | **Grafik i obecność** (P5) | grafik miesiąca; status każdego dnia: na czas, spóźnienie, nieobecność, planowane, wolne | administrator, kierownik (Z1) |
+| pracownik (przerwa), administrator | zamknięta przerwa ponad próg, wybór strefy | **Rozliczanie nadwyżek** (P3) | lista nadwyżek ze statusem „oczekuje” lub „przypisana” | administrator; rozliczenie miesięczne strefy poza aplikacją (Z5) |
+| pracownik, administrator | opis błędu, decyzja | **Korekty** (P4) | lista zgłoszeń ze statusem; poprawka CSV poza systemem | administrator (poprawkę w CSV nanosi sam) |
+| kierownik magazynu (grafik w Excelu, Z6), administrator | plik grafiku `.xlsx`, kody zmian, tolerancja spóźnienia | **Grafik i obecność** (P5) | grafik miesiąca; status każdego dnia: na czas, spóźnienie, nieobecność, planowane, wolne | kierownik magazynu |
 | administrator | nazwy stref i podstref, kody i nazwiska pracowników, uprawnienia, konta, progi | **Słowniki i konfiguracja** (P6) | pliki słowników i konfiguracji | wszystkie pozostałe procesy |
-| administrator, zegar serwera | filtry historii, żądanie eksportu, godzina 02:00 | **Eksport i kopie** (P7) | pliki CSV (dzień, miesiąc, alerty); kopia wszystkich plików danych | administrator, odbiorcy w Excelu (Z1), administrator techniczny (Z7) |
+| administrator, zegar serwera | filtry historii, żądanie eksportu, godzina 02:00 | **Eksport i kopie** (P7) | pliki CSV (dzień, miesiąc, alerty); kopia wszystkich plików danych | administrator; kierownik magazynu w Excelu; kopie: administrator (Z7) |
 
 ## Pozostałe dokumenty
 
@@ -123,37 +124,44 @@ z kodu, patrz założenie Z1.
 
 Numeracja w całej dokumentacji: procesy **P1**–**P7**, podprocesy **P1.1**, reguły biznesowe **BR-1**–**BR-58**
 (numeracja ciągła przez wszystkie procesy), wymagania funkcjonalne **WF-1**–**WF-37**, decyzje **D1**–**D11**,
-założenia **Z1**–**Z16**.
+ustalenia **Z1**–**Z16**.
 
-## Założenia wymagające potwierdzenia
+## Ustalenia potwierdzone
 
-Rzeczy, których nie da się ustalić z kodu. Pochodzą z README, z archiwalnej dokumentacji albo z luk,
-które kod zostawia otwarte.
+Rzeczy, których nie dało się ustalić z kodu, potwierdził właściciel projektu 14 października 2026.
+Numery Z1–Z16 są używane w pozostałych dokumentach jako odsyłacze.
 
-| Nr | Założenie | Skąd pochodzi | Co trzeba potwierdzić |
+| Nr | Pytanie | Ustalenie | Gdzie uwzględnione |
 |---|---|---|---|
-| Z1 | Odbiorcami ewidencji są kierownik magazynu i lider zmiany; oni nanoszą zatwierdzone korekty na pliki CSV | README, archiwum 01 i 02 | właścicieli biznesowych procesów P1–P7 i osobę odpowiedzialną za ręczne poprawki |
-| Z2 | Czytnik kodów QR działa jak klawiatura (wpisuje kod i Enter) na wspólnym stanowisku dla całej zmiany | kod przyjmuje tekst w polu i wysyła po 0,7 s od wpisania ponad 5 znaków (`index.html:441-448`); archiwum D9 | model czytnika, liczba stanowisk, czy stanowisko jest wspólne |
-| Z3 | Treść kodu QR to kod pracownika w formacie `HU_NAZWISKO_IMIE`; znaczenie prefiksu `HU_` | walidacja prefiksu (`app.py:943`); brak innej walidacji | kto drukuje i wydaje kody, co oznacza `HU_`, jak unieważnić zgubioną kartę |
-| Z4 | Próg przerwy 30 min, szybkiej zmiany 5 min, długiego dyżuru 10 h i tolerancja spóźnienia 15 min to wartości robocze, nie wynik regulaminu | wartości domyślne w kodzie (`app.py:52-58`) | obowiązujące w organizacji normy przerw i czasu pracy |
-| Z5 | Przypisanie nadwyżki do strefy służy obciążeniu tej strefy kosztem czasu w rozliczeniu poza aplikacją | archiwum D5; w kodzie przypisanie zmienia tylko status | kto i gdzie wykorzystuje przypisaną nadwyżkę |
-| Z6 | Grafik przygotowuje osoba spoza aplikacji w Excelu na podstawie pobranego szablonu | kod ma import i szablon, ale nie wskazuje autora pliku | kto planuje zmiany i w jakim narzędziu |
-| Z7 | Katalog kopii zapasowych jest na tym samym serwerze; nikt nie usuwa starych kopii | konfiguracja `backup_path` (`app.py:53`), brak retencji w kodzie | docelowe miejsce kopii, retencję, odpowiedzialnego |
-| Z8 | W strefach objętych rejestracją nie ma zmian nocnych przez północ | archiwum D3; kod zamyka pobyty o 23:59:59, choć szablon grafiku zna kod zmiany N 21:00–05:00 (`app.py:91-96`) | czy zmiana nocna wystąpi; jeśli tak, reguła zamykania pobytów musi się zmienić |
-| Z9 | Godziny zmian R 05–13, P 13–21, N 21–05 odpowiadają organizacji pracy | mapa kodów w kodzie (`app.py:91-96`) | aktualne godziny zmian |
-| Z10 | Serwer pracuje w strefie czasowej Europe/Warsaw | kod używa czasu lokalnego serwera; strefa ustawiona tylko w obrazie Docker i konfiguracji Render | strefę czasową docelowego serwera i obsługę zmiany czasu |
-| Z11 | Jedna rola „administrator” wystarcza wszystkim użytkownikom panelu | kod zna jedną rolę (`app.py:278`) | czy lider zmiany ma mieć ograniczony panel (np. tylko Live) |
-| Z12 | Alert ma kiedyś mieć potwierdzenie przez administratora | kolumna „potwierdzone” zawsze „NIE” (`app.py:252`); dane demo wpisują „TAK” dla starych alertów | czy potwierdzanie alertów jest wymagane |
-| Z13 | Zamierzony próg długiego dyżuru dla podglądu Live to 10 h, tak jak dla alertu | konfiguracja mówi 10 h (`app.py:56`), a podgląd Live przy braku wartości w konfiguracji używa 12 h (`app.py:598`) | którą wartość uznać za właściwą |
-| Z14 | Typ alertu „PRZEKROCZENIE_ZMIANY” jest pozostałością po usuniętej funkcji | ekran skanera go filtruje (`index.html:617`), serwer nigdy go nie tworzy | czy funkcja ma wrócić |
-| Z15 | Jedenaście domyślnych stref w kodzie odzwierciedla układ konkretnego magazynu | słownik domyślny (`app.py:38-50`) | czy nazwy mają zostać w kodzie, czy być tylko przykładem (patrz „Do anonimizacji”) |
-| Z16 | Publiczna instancja demo nie będzie użyta produkcyjnie | tryb demo blokuje słowniki i odtwarza dane co 30 min (`app.py:1196-1258`) | plan wdrożenia produkcyjnego i jego środowisko |
+| Z1 | właściciele procesów | rejestracja i jej poprawność (P1, P2): lider zmiany; nadwyżki, korekty i ręczne poprawki w plikach CSV (P3, P4): administrator, czyli właściciel projektu; odbiorca ewidencji i porównania z grafikiem (P5, P7): kierownik magazynu | karty procesów P1–P7, mapa procesów, SIPOC |
+| Z2 | stanowisko skanera | czytnik USB emulujący klawiaturę; jedno wspólne stanowisko na komputerze | aktorzy, P1 krok 1, [04](04-integracje.md) I1, D9 |
+| Z3 | karty i prefiks `HU_` | `HU_` od „handling unit”; karty drukuje i wydaje administrator; zgubiona karta dostaje duplikat z tym samym kodem | P6 granice, [02](02-dane/model-danych.md) słownik pojęć, [05](05-decyzje-i-ograniczenia.md) B5 |
+| Z4 | progi w konfiguracji | wartości robocze z prototypu, nie z regulaminu | nadal otwarte, patrz niżej |
+| Z5 | przypisanie nadwyżki | nadwyżka obciąża czas pracy wskazanej strefy w rozliczeniu miesięcznym poza aplikacją | P3, D5 |
+| Z6 | autor grafiku | kierownik magazynu w Excelu na podstawie pobranego szablonu | P5 |
+| Z7 | kopie zapasowe | na tym samym serwerze; retencja 30 dni (do zbudowania, dziś nic nie usuwa kopii); kontrola: administrator; instancja demo bez kopii | P7, [05](05-decyzje-i-ograniczenia.md) lista przed wdrożeniem |
+| Z8 | zmiany nocne | nie występują i nie są planowane | D3 potwierdzona; kod zmiany N w grafiku pozostaje nieużywany |
+| Z9 | godziny zmian | R 05:00–13:00 i P 13:00–21:00 aktualne | BR-38 |
+| Z10 | strefa czasowa | serwer w Europe/Warsaw; czas lokalny wystarcza, bez specjalnej obsługi zmiany czasu | [04](04-integracje.md) środowisko |
+| Z11 | role w panelu | jedna rola wystarcza; pełny panel ma tylko administrator; lider zmiany bez dostępu | zakres, [05](05-decyzje-i-ograniczenia.md) ograniczenia |
+| Z12 | potwierdzanie alertów | niewymagane; baner i plik wystarczą | [02](02-dane/model-danych.md) encja ALERT, [05](05-decyzje-i-ograniczenia.md) ograniczenia |
+| Z13 | próg długiego dyżuru | 10 h; wartość 12 h w podglądzie Live to błąd do poprawy | P2, [05](05-decyzje-i-ograniczenia.md) T2 |
+| Z14 | alert `PRZEKROCZENIE_ZMIANY` | pozostałość po usuniętej funkcji, do usunięcia z kodu | [05](05-decyzje-i-ograniczenia.md) T15 |
+| Z15 | nazwy stref domyślnych | tylko przykład; można je opisywać w dokumentacji | P6.3, [02](02-dane/model-danych.md), lista do anonimizacji |
+| Z16 | wdrożenie produkcyjne | osobna instancja na tym samym serwerze Coolify, bez trybu demo | [04](04-integracje.md) środowisko, [05](05-decyzje-i-ograniczenia.md) lista przed wdrożeniem |
+
+### Nadal otwarte
+
+| Nr | Pytanie | Kto odpowiada |
+|---|---|---|
+| Z4 | obowiązujące w organizacji wartości progów: dopuszczalna długość przerwy, próg szybkiej zmiany, maksymalny pobyt w jednej strefie, tolerancja spóźnienia (dziś: 30 min, 5 min, 10 h, 15 min jako wartości robocze) | kierownik magazynu z administratorem, przed wdrożeniem produkcyjnym |
 
 ## Do anonimizacji
 
-Dokumentacja nie zawiera nazwisk ani nazw firmowych. Poniższe miejsca w repozytorium zawierają dane,
-które wyglądają na osobowe lub firmowe. Według README wszystkie dane w repozytorium są przykładowe,
-ale decyzja o ich pozostawieniu wymaga potwierdzenia.
+Dokumentacja nie zawiera nazwisk z danych przykładowych. Poniższe miejsca w repozytorium zawierają dane,
+które wyglądają na osobowe. Według README wszystkie dane w repozytorium są przykładowe; nazwy stref
+domyślnych właściciel projektu potwierdził jako przykładowe (Z15), więc nie ma ich na tej liście.
+Decyzja o pozostawieniu poniższych pozycji należy do właściciela projektu.
 
 | Miejsce | Co zawiera | Uwaga |
 |---|---|---|
@@ -163,5 +171,4 @@ ale decyzja o ich pozostawieniu wymaga potwierdzenia.
 | `tests/test_wymagania.py` | kody i nazwisko z danych startowych, nazwisko „Nowy Jan” | testy |
 | `README.md` | kody trzech przykładowych pracowników | instrukcja uruchomienia |
 | `docs/screenshots/*.png`, `demo.gif`, `docs/media/*.mp4` | nazwiska z danych demo widoczne na zrzutach i filmie | materiał prezentacyjny |
-| `app.py:38-50` | nazwy jedenastu stref domyślnych, w tym nazwy sugerujące konkretnych przewoźników lub układ magazynu | słownik domyślny; w dokumentacji wymieniono tylko strefę `PRZERWA`, której nazwa jest częścią logiki (patrz Z15) |
 | `app.py:16`, `app.py:314`, `run.py:4` | domyślny klucz sesji i hasło startowe konta administratora w kodzie i w komunikacie startowym | dane dostępowe, nie osobowe; patrz [05. Decyzje i ograniczenia](05-decyzje-i-ograniczenia.md) |

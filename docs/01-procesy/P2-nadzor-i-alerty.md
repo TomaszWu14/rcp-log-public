@@ -3,7 +3,7 @@
 | Pole | Treść |
 |---|---|
 | **Nazwa procesu** | Nadzór nad obsadą i alertowanie |
-| **Właściciel** | administrator (w aplikacji); właściciel biznesowy do potwierdzenia ([Z1](../00-przeglad.md#założenia-wymagające-potwierdzenia)) |
+| **Właściciel** | lider zmiany odpowiada za poprawność rejestracji na zmianie; panel obsługuje administrator, lider nie ma własnego dostępu ([Z1, Z11](../00-przeglad.md#ustalenia-potwierdzone)) |
 | **Cel biznesowy** | wiedzieć na bieżąco, kto jest w której strefie, i reagować na odchylenia w chwili, gdy trwają: przekroczona przerwa, zbyt długi pobyt w jednej strefie, zapomniany koniec zmiany |
 | **Zdarzenia inicjujące** | (a) upływ 60 sekund, gdy trwa co najmniej jeden pobyt; (b) administrator otwiera panel (podgląd Live i sprawdzanie alertów co 20 s) |
 | **Rezultat końcowy** | odchylenie zapisane jako alert w pliku i pokazane w panelu; pobyt zamknięty automatycznie (koniec dnia) albo skorygowany ręcznie przez administratora |
@@ -129,7 +129,7 @@ flowchart TD
 | Przesunięcie do strefy spoza uprawnień lub spoza słownika | administrator wpisuje dowolną nazwę (poza listą w oknie) | serwer przyjmuje | ewidencja z nazwą spoza słownika | `app.py:812-888` |
 | Podgląd obecności bez logowania | wywołanie adresu stanu bez sesji administratora | brak kontroli dostępu | każdy w sieci widzi, kto jest w pracy | `app.py:591` |
 | Dashboard z błędną datą | data w adresie w złym formacie | brak walidacji, błąd serwera | zakładka nie ładuje się | `app.py:708-709` |
-| Dwa progi długiego dyżuru | brak wartości progu w konfiguracji | alert używa 10 h, oznaczenie w Live 12 h | Live może nie pokazać dyżuru, o którym był alert ([Z13](../00-przeglad.md#założenia-wymagające-potwierdzenia)) | `app.py:366, 598` |
+| Dwa progi długiego dyżuru | brak wartości progu w konfiguracji | alert używa 10 h, oznaczenie w Live 12 h | Live może nie pokazać dyżuru, o którym był alert; właściwa wartość to 10 h, 12 h jest błędem do poprawy ([Z13](../00-przeglad.md#ustalenia-potwierdzone)) | `app.py:366, 598` |
 
 ## Reguły biznesowe
 

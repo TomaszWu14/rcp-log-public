@@ -116,11 +116,11 @@ erDiagram
 |---|---|---|---|---|---|
 | PRACOWNIK | osoba z kartą QR, która rejestruje pobyty | kod (treść kodu QR, prefiks `HU_`), nazwisko i imię | tworzony przez administratora ([P6](../01-procesy/P6-slowniki-i-konfiguracja.md)); nie ma edycji, tylko usunięcie; usunięcie kasuje trwający pobyt, zostawia ewidencję, grafik, nadwyżki i korekty | `pracownicy.json` | `app.py:937-955` |
 | UPRAWNIENIE | prawo pracownika do wejścia do strefy | kod pracownika, nazwa strefy | lista w rekordzie pracownika; zastępowana w całości przy każdym zapisie (edytor lub macierz); nie czyszczona przy usunięciu strefy | `pracownicy.json` | `app.py:957-964` |
-| STREFA | obszar magazynu, w którym mierzony jest czas; `PRZERWA` to też strefa, ze specjalną logiką | nazwa (wielkie litery), kolor kafelka | tworzona przez administratora albo z domyślnego słownika; usunięcie nie czyści uprawnień, pobytów ani ewidencji; brak zmiany nazwy | `strefy.json` | `app.py:38-50, 896-909` |
+| STREFA | obszar magazynu, w którym mierzony jest czas; `PRZERWA` to też strefa, ze specjalną logiką | nazwa (wielkie litery), kolor kafelka | tworzona przez administratora albo z domyślnego słownika jedenastu przykładowych stref (Z15); usunięcie nie czyści uprawnień, pobytów ani ewidencji; brak zmiany nazwy | `strefy.json` | `app.py:38-50, 896-909` |
 | PODSTREFA | doprecyzowanie miejsca w strefie, bez wpływu na uprawnienia | nazwa | lista w rekordzie strefy; dodawana i usuwana przez administratora | `strefy.json` | `app.py:911-930` |
 | POBYT_TRWAJĄCY | pobyt pracownika w strefie, który jeszcze trwa („aktywna sesja”) | kod pracownika (klucz, więc najwyżej jeden pobyt na osobę), strefa, podstrefa, chwila wejścia, znaczniki wysłanych alertów | powstaje przy skanie lub ręcznym starcie; kończy się skanem, końcem zmiany, przesunięciem, usunięciem pracownika albo automatycznie o 23:59:59 dnia wejścia; po zakończeniu staje się wpisem ewidencji (poza usunięciem pracownika) | `aktywne_sesje.json` | `app.py:522-577, 396-418, 953-955` |
 | WPIS_EWIDENCJI | zamknięty pobyt, podstawowa jednostka ewidencji czasu | numer, pracownik, nazwisko, strefa, podstrefa, wejście, wyjście, czas, flaga, pole korekty | tworzony przy zamknięciu pobytu; zapisywany w dwóch plikach: dnia i miesiąca według daty wejścia; nigdy nie zmieniany ani nie usuwany przez aplikację | `ewidencja_RRRR-MM-DD.csv`, `ewidencja_RRRR-MM.csv` | `app.py:33-36, 217-229, 533-547` |
-| ALERT | zdarzenie wymagające uwagi administratora | chwila, pracownik, nazwisko, typ, opis, potwierdzone | dopisywany przez kontrolę w tle i przy skanie; tylko do odczytu; pole „potwierdzone” zawsze „NIE” | `alerty.csv` | `app.py:240-260` |
+| ALERT | zdarzenie wymagające uwagi administratora | chwila, pracownik, nazwisko, typ, opis, potwierdzone | dopisywany przez kontrolę w tle i przy skanie; tylko do odczytu; pole „potwierdzone” zawsze „NIE” i wg ustalenia Z12 zbędne (alerty nie wymagają potwierdzania) | `alerty.csv` | `app.py:240-260` |
 | NADWYŻKA_PRZERWY | czas przerwy ponad próg, do przypisania strefie ponoszącej koszt | numer, pracownik, nazwisko, chwila wejścia na przerwę, czas przerwy, nadwyżka, przypisana strefa, status | powstaje przy zamknięciu przerwy ponad próg przez pracownika ([P1](../01-procesy/P1-rejestracja-pobytu.md), [P3](../01-procesy/P3-nadwyzki-przerw.md)); status „oczekuje” → „przypisana” jednorazowo; nie jest usuwana | `nadwyzki_przerw.json` | `app.py:553-565, 778-790` |
 | KOREKTA | zgłoszenie pracownika o błędzie w rejestracji i decyzja administratora | numer, pracownik, nazwisko, chwila zgłoszenia, opis, status, decyzja | powstaje ze skanera ([P4](../01-procesy/P4-korekty-ewidencji.md)); status „oczekuje” → „zatwierdzona” albo „odrzucona” jednorazowo; nie jest usuwana; nie wskazuje wpisu ewidencji | `korekty.json` | `app.py:634-645, 798-809` |
 | DZIEŃ_GRAFIKU | planowana zmiana albo dzień wolny pracownika | pracownik, data, godzina od, godzina do, typ | powstaje z importu lub edycji komórki ([P5](../01-procesy/P5-grafik-i-obecnosc.md)); nadpisywany przy kolejnym imporcie tego samego dnia; nie jest usuwany | `grafik.json` | `app.py:97-115, 1079-1086, 1110-1124` |
@@ -131,7 +131,7 @@ erDiagram
 
 | Termin biznesowy | Odpowiednik w kodzie i plikach | Uwagi |
 |---|---|---|
-| Pracownik, kod pracownika | `workers`, klucz w `pracownicy.json`; pole `pracownik` w CSV | kod jest treścią kodu QR; prefiks `HU_` wymuszany przy dodawaniu ([Z3](../00-przeglad.md#założenia-wymagające-potwierdzenia)) |
+| Pracownik, kod pracownika | `workers`, klucz w `pracownicy.json`; pole `pracownik` w CSV | kod jest treścią kodu QR; prefiks `HU_` (od „handling unit”) wymuszany przy dodawaniu; karty drukuje administrator ([Z3](../00-przeglad.md#ustalenia-potwierdzone)) |
 | Strefa, podstrefa | `strefy.json`: nazwa → `{kolor, podstrefy[]}` | nazwa zawsze wielkimi literami |
 | Przerwa | strefa o nazwie `PRZERWA` | jedyna strefa z logiką: próg, flaga, nadwyżka, alert |
 | Koniec zmiany | pseudo-strefa `KONIEC_ZMIANY` w żądaniu rejestracji | zamyka pobyt bez otwierania nowego; nie istnieje w słowniku stref |
@@ -142,7 +142,7 @@ erDiagram
 | Czas dziś | `dzien_min`, `dzien_fmt`, `get_dzien_min` | suma zamkniętych pobytów z pliku dnia |
 | Próg przerwy | `prog_przerwa_min` (domyślnie 30), stała `PROG_PRZERWA` | w interfejsie „Próg alertu przerwy” |
 | Szybka zmiana | `ostrzezenie_szybka_zmiana_min` (domyślnie 5), odpowiedź `wymaga_potwierdzenia` | ostrzeżenie, nie blokada |
-| Długi dyżur | `alert_dlugi_dyżur_h` (domyślnie 10), alert `DLUGI_DYZUR`, pole `alert_dyzur` | podgląd Live przy braku wartości używa 12 h ([Z13](../00-przeglad.md#założenia-wymagające-potwierdzenia)) |
+| Długi dyżur | `alert_dlugi_dyżur_h` (domyślnie 10), alert `DLUGI_DYZUR`, pole `alert_dyzur` | podgląd Live przy braku wartości używa 12 h, co jest błędem: właściwa wartość to 10 h ([Z13](../00-przeglad.md#ustalenia-potwierdzone)) |
 | Długa przerwa | flaga `DLUGA_PRZERWA`, alert `DLUGA_PRZERWA` | alert w trakcie (kontrola w tle) i przy zamknięciu (skaner) |
 | Zamknięcie automatyczne | flaga i alert `AUTO_ZAMKNIETO` | pobyt z poprzedniego dnia zamknięty o 23:59:59 dnia wejścia |
 | Nieznany kod | alert `NIEZNANY_KOD` | próba skanu kodem spoza słownika |

@@ -3,7 +3,7 @@
 | Pole | Treść |
 |---|---|
 | **Nazwa procesu** | Rejestracja pobytu w strefie |
-| **Właściciel** | w aplikacji: pracownik magazynu wykonuje, administrator nadzoruje; właściciel biznesowy do potwierdzenia ([Z1](../00-przeglad.md#założenia-wymagające-potwierdzenia)) |
+| **Właściciel** | lider zmiany odpowiada za rejestrację i jej poprawność na zmianie; wykonuje pracownik magazynu; panel obsługuje administrator ([Z1](../00-przeglad.md#ustalenia-potwierdzone)) |
 | **Cel biznesowy** | ciągła oś czasu dnia każdego pracownika podzielona na pobyty w strefach, powstająca bez pracy lidera zmiany i bez formularzy |
 | **Zdarzenie inicjujące** | pracownik z kodem QR podchodzi do stanowiska skanera |
 | **Rezultat końcowy** | poprzedni pobyt zamknięty i zapisany w ewidencji (plik dnia i plik miesiąca), nowy pobyt otwarty albo zmiana zakończona; pracownik widzi potwierdzenie z czasem przepracowanym dziś |
@@ -57,7 +57,7 @@ Sprawdzenie uprawnienia do strefy odbywa się w kroku 7 i kończy proces odmową
 
 | Nr | Krok | Aktor | Wejście | Wyjście | Reguła biznesowa | Źródło w kodzie |
 |---|---|---|---|---|---|---|
-| 1 | Zeskanuj kod QR | pracownik | kod z karty | kod w polu, wysłany po Enter albo samoczynnie 0,7 s po wpisaniu ponad 5 znaków | BR-1 | `index.html:441-448` |
+| 1 | Zeskanuj kod QR | pracownik | kod z karty odczytany czytnikiem USB na wspólnym komputerze zmiany (Z2) | kod w polu, wysłany po Enter albo samoczynnie 0,7 s po wpisaniu ponad 5 znaków | BR-1 | `index.html:441-448` |
 | 2 | Sprawdź kod | system | kod | pracownik rozpoznany albo odmowa z alertem | BR-1, BR-2 | `app.py:434-442` |
 | 3 | Pokaż stan dnia i dozwolone strefy | system | słownik pracownika, trwający pobyt, plik dnia | ekran: imię i nazwisko, bieżąca strefa i podstrefa, czas w strefie, czas dziś, kafelki stref | BR-3, BR-4, BR-11 | `app.py:444-481`, `index.html:462-490` |
 | 4 | Wybierz strefę albo Koniec zmiany | pracownik | kafelki dozwolonych stref, przycisk „Koniec zmiany” | wybrana strefa albo koniec zmiany | BR-3, BR-10 | `index.html:493-524` |

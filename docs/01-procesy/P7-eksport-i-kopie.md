@@ -3,7 +3,7 @@
 | Pole | Treść |
 |---|---|
 | **Nazwa procesu** | Raportowanie, eksport i kopia zapasowa |
-| **Właściciel** | administrator (historia, eksport); administrator techniczny do potwierdzenia dla kopii ([Z7](../00-przeglad.md#założenia-wymagające-potwierdzenia)) |
+| **Właściciel** | administrator (historia, eksport, kontrola kopii); odbiorca plików: kierownik magazynu ([Z1, Z7](../00-przeglad.md#ustalenia-potwierdzone)) |
 | **Cel biznesowy** | ewidencja i alerty są dostępne poza aplikacją w formie, której odbiorcy używali dotąd (plik otwierany w Excelu), a dane przeżyją awarię serwera |
 | **Zdarzenia inicjujące** | administrator potrzebuje danych (podgląd lub plik) albo zegar serwera wskazuje godzinę 02:00 |
 | **Rezultat końcowy** | tabela historii na ekranie; plik CSV pobrany przez administratora; kopia wszystkich plików danych w katalogu kopii |
@@ -45,7 +45,7 @@ flowchart TD
 | 2 | Zbierz wpisy z plików dni | system | pliki dni z zakresu | lista wpisów: najnowsze pierwsze, maks. 500 | BR-55 | `app.py:681-702` |
 | 3 | Pobierz plik CSV | administrator | przycisk „CSV dziś”, „CSV mies.” albo „Alerty” | żądanie pliku | BR-54 | `admin.html:174-177` |
 | 4 | Wyślij plik do pobrania | system | plik dnia dzisiejszego, miesiąca bieżącego albo alertów | plik z oryginalną nazwą | BR-54, BR-58 | `app.py:1003-1016` |
-| 5 | Otwórz plik w Excelu i przetwórz | odbiorca, poza aplikacją | plik CSV | dalsze rozliczenia (poza zakresem) | BR-58 | — |
+| 5 | Otwórz plik w Excelu i przetwórz | kierownik magazynu, poza aplikacją | plik CSV | dalsze rozliczenia (poza zakresem) | BR-58 | — |
 | 6 | Wykonaj kopię zapasową | kopia w tle | wszystkie pliki CSV i JSON w katalogu danych, ścieżka z konfiguracji | kopie z prefiksem daty i godziny | BR-56, BR-57 | `app.py:332-354` |
 
 ## Podprocesy
@@ -93,7 +93,7 @@ flowchart TD
 | A1 | katalog z konfiguracji (domyślnie `backup/` obok kodu), tworzony razem z katalogami nadrzędnymi | `app.py:341-343` |
 | A2 | każdy plik kopiowany z zachowaniem daty modyfikacji; nazwa kopii: `RRRRMMDD_GGMM_` + nazwa oryginału; stare kopie nie są usuwane | `app.py:344-348` |
 | A4 | błąd widoczny tylko w konsoli serwera; próba ponawiana co minutę do końca godziny 02 | `app.py:349-352` |
-| tryb demo | zadanie nie startuje | `app.py:354` |
+| tryb demo | zadanie nie startuje; zgodnie z ustaleniem instancja demo nie potrzebuje kopii (Z7) | `app.py:354` |
 
 ## Ścieżki alternatywne i wyjątki
 
@@ -104,7 +104,7 @@ flowchart TD
 | Więcej niż 500 wpisów w zakresie | szeroki zakres dat przy dużej obsadzie | lista ucięta do 500 najnowszych | starsze wpisy niewidoczne; trzeba zawęzić zakres | `app.py:702` |
 | Serwer wyłączony o 02:00 | przerwa serwisowa, awaria zasilania | brak kopii tego dnia; zadanie nie nadrabia | luka w kopiach | `app.py:339` |
 | Katalog kopii niedostępny | zła ścieżka, brak uprawnień, pełny dysk | błąd w konsoli; ponowne próby co minutę do 03:00 | brak kopii; nikt nie jest powiadomiony | `app.py:349-352` |
-| Rosnący katalog kopii | codzienne kopie wszystkich plików | brak retencji | dysk zapełnia się z czasem ([Z7](../00-przeglad.md#założenia-wymagające-potwierdzenia)) | `app.py:344-348` |
+| Rosnący katalog kopii | codzienne kopie wszystkich plików | brak retencji | dysk zapełnia się z czasem; ustalona retencja to 30 dni na tym samym serwerze, mechanizm do zbudowania ([Z7](../00-przeglad.md#ustalenia-potwierdzone)) | `app.py:344-348` |
 | Formuła w pliku alertów | nieznany kod zaczynający się od „=” zapisany w alercie | brak oczyszczania treści | po otwarciu eksportu alertów w Excelu komórka działa jak formuła | `app.py:441, 248-252` |
 | Eksport w trybie demo | gość demo pobiera plik | działa; dane fikcyjne | — | `app.py:1200-1205` (brak na liście blokad) |
 

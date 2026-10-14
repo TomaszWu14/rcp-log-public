@@ -3,7 +3,7 @@
 | Pole | Treść |
 |---|---|
 | **Nazwa procesu** | Obsługa korekt ewidencji |
-| **Właściciel** | administrator (w aplikacji); naniesienie poprawki na ewidencję: administrator lub kierownik poza aplikacją ([Z1](../00-przeglad.md#założenia-wymagające-potwierdzenia)) |
+| **Właściciel** | administrator; on też nanosi zatwierdzone poprawki na pliki ewidencji poza aplikacją ([Z1](../00-przeglad.md#ustalenia-potwierdzone)) |
 | **Cel biznesowy** | błędy rejestracji (zapomniany skan, zła strefa, zły czas) są zgłaszane przez pracownika i oceniane przez człowieka, a ewidencja nie zmienia się bez decyzji |
 | **Zdarzenie inicjujące** | pracownik zauważa błąd w swojej rejestracji |
 | **Rezultat końcowy** | zgłoszenie ze statusem „zatwierdzona” albo „odrzucona”; po zatwierdzeniu poprawka wpisu w plikach ewidencji wykonana ręcznie poza aplikacją |
@@ -55,7 +55,7 @@ flowchart TD
 | 5 | Przejrzyj zgłoszenia | administrator | zakładka Korekty z licznikiem oczekujących | lista od najnowszych: data, pracownik, opis, status | BR-34 | `admin.html:842-862` |
 | 6 | Zatwierdź albo odrzuć | administrator | opis zgłoszenia; wiedza spoza systemu (ewidencja, rozmowa z pracownikiem) | decyzja ✓ lub ✕ | BR-31 | `admin.html:853-856, 863-867` |
 | 7 | Zapisz decyzję i zmień status | system | numer zgłoszenia, decyzja | status „zatwierdzona” albo „odrzucona”; przyciski znikają | BR-31, BR-32 | `app.py:798-809` |
-| 8 | Popraw wpis w pliku dnia i pliku miesiąca | administrator lub kierownik, poza aplikacją | zatwierdzone zgłoszenie, pliki CSV | poprawiony wpis w **obu** plikach | BR-32 | `app.py:217-222` (dwa pliki) |
+| 8 | Popraw wpis w pliku dnia i pliku miesiąca | administrator, poza aplikacją | zatwierdzone zgłoszenie, pliki CSV | poprawiony wpis w **obu** plikach | BR-32 | `app.py:217-222` (dwa pliki) |
 
 ## Podprocesy
 

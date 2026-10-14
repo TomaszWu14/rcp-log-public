@@ -7,7 +7,7 @@
 | **Cel biznesowy** | rejestracja działa na aktualnych danych organizacji: lista stref i podstref odpowiada układowi magazynu, każdy pracownik ma kod i uprawnienia, progi alertów odpowiadają obowiązującym normom, a dostęp do panelu mają właściwe osoby |
 | **Zdarzenie inicjujące** | zmiana w organizacji: nowa osoba, odejście, nowa strefa, zmiana normy przerwy, nowe konto administratora |
 | **Rezultat końcowy** | zapisany słownik lub konfiguracja; zmiana obowiązuje od następnego skanu lub odświeżenia panelu |
-| **Granice** | od decyzji o zmianie do zapisu; nie obejmuje wydawania kart z kodem QR (poza aplikacją, [Z3](../00-przeglad.md#założenia-wymagające-potwierdzenia)) |
+| **Granice** | od decyzji o zmianie do zapisu; wydawanie kart z kodem QR jest poza aplikacją: karty drukuje i wydaje administrator, zgubiona karta dostaje duplikat z tym samym kodem ([Z3](../00-przeglad.md#ustalenia-potwierdzone)) |
 | **Częstotliwość** | sporadycznie; pierwsze uruchomienie tworzy komplet danych startowych |
 
 ## Diagram procesu
@@ -137,7 +137,7 @@ flowchart TD
 | Krok | Opis | Źródło w kodzie |
 |---|---|---|
 | A1 | katalog `data/` (albo `data_demo/` w trybie demo) obok kodu aplikacji | `app.py:18-20` |
-| A2 | jedenaście stref domyślnych z kolorami i podstrefami, w tym `PRZERWA`; progi: przerwa 30 min, szybka zmiana 5 min, długi dyżur 10 h, tolerancja grafiku 15 min; ścieżka kopii `backup/` obok kodu | `app.py:38-58, 300-305` |
+| A2 | jedenaście przykładowych stref z kolorami i podstrefami: `PICKING`, `PRZYJECIA`, `KURIER1`, `KURIER2`, `BUS`, `EXPORT`, `INV`, `ZWROTY`, `KONTENERY`, `ADMIN_MAG` i `PRZERWA` (nazwy przykładowe, Z15); progi: przerwa 30 min, szybka zmiana 5 min, długi dyżur 10 h, tolerancja grafiku 15 min (wartości robocze z prototypu, Z4); ścieżka kopii `backup/` obok kodu | `app.py:38-58, 300-305` |
 | A3 | trzech przykładowych pracowników z uprawnieniami (patrz [Do anonimizacji](../00-przeglad.md#do-anonimizacji)) | `app.py:308-312` |
 | A4 | konto `admin` z hasłem startowym `admin123`, wypisywane też w komunikacie startowym | `app.py:311-314`, `run.py:17` |
 | A5 | konta z hasłem w starym formacie (64 znaki szesnastkowe) dostają hasło startowe i komunikat w konsoli o konieczności zmiany | `app.py:316-325` |

@@ -3,7 +3,7 @@
 | Pole | Treść |
 |---|---|
 | **Nazwa procesu** | Planowanie grafiku i kontrola obecności |
-| **Właściciel** | administrator (w aplikacji); osoba planująca zmiany do potwierdzenia ([Z6](../00-przeglad.md#założenia-wymagające-potwierdzenia)) |
+| **Właściciel** | kierownik magazynu: planuje zmiany w Excelu na podstawie szablonu i odbiera porównanie z obecnością; import i edycję wykonuje administrator ([Z1, Z6](../00-przeglad.md#ustalenia-potwierdzone)) |
 | **Cel biznesowy** | plan zmian jest w aplikacji obok ewidencji, a porównanie planu z pierwszym skanem dnia pokazuje bez ręcznego liczenia, kto przyszedł na czas, kto się spóźnił, a kogo nie było |
 | **Zdarzenie inicjujące** | nowy miesiąc do zaplanowania albo potrzeba sprawdzenia obecności za miesiąc |
 | **Rezultat końcowy** | grafik miesiąca zapisany w aplikacji; raport: dla każdego pracownika i dnia status „na czas”, „spóźnienie” z liczbą minut, „nieobecność”, „planowane” lub „wolne” z podsumowaniem |
@@ -20,7 +20,7 @@ flowchart TD
         T6["Popraw dni ręcznie w komórkach"]
         T8["Uruchom porównanie z obecnością"]
     end
-    subgraph OUT["Poza aplikacją (Excel)"]
+    subgraph OUT["Kierownik magazynu (Excel)"]
         T2["Wypełnij grafik kodami zmian"]
     end
     subgraph SYS["RCP Log"]
@@ -47,7 +47,7 @@ administrator uzupełnia ręcznie w komórkach tabeli.
 | Nr | Krok | Aktor | Wejście | Wyjście | Reguła biznesowa | Źródło w kodzie |
 |---|---|---|---|---|---|---|
 | 1 | Pobierz szablon grafiku | administrator | słownik pracowników, bieżący miesiąc | plik `.xlsx`: kolumna „Pracownik”, kolumny dni miesiąca, wiersz legendy, wiersz na każdego pracownika | BR-35 | `app.py:1022-1070` |
-| 2 | Wypełnij grafik kodami zmian | osoba planująca, poza aplikacją | szablon | plik z kodami R, P, N, W lub zakresami godzin | BR-38 | — |
+| 2 | Wypełnij grafik kodami zmian | kierownik magazynu, poza aplikacją | szablon | plik z kodami R, P, W lub zakresami godzin; godziny zmian R 05–13 i P 13–21 aktualne (Z9) | BR-38 | — |
 | 3 | Importuj plik grafiku | administrator | plik `.xlsx` | plik przesłany do serwera | — | `admin.html:388, 1177-1194` |
 | 4 | Rozpoznaj daty, dopasuj pracowników, odczytaj kody zmian | system | arkusz | dni grafiku per pracownik; lista błędów | BR-36, BR-37, BR-38 | `app.py:117-196` |
 | 5 | Pokaż listę nierozpoznanych wierszy | system | lista błędów | komunikat z liczbą wpisów i pracowników; okno z listą błędów | BR-37 | `app.py:1088-1089`, `admin.html:1180-1187` |
@@ -122,7 +122,7 @@ flowchart TD
 | Pracownik jeszcze w pierwszej strefie dnia | porównanie uruchomione w trakcie zmiany | tylko zamknięte wpisy są brane pod uwagę | status „nieobecność” mimo obecności | `app.py:1142-1155` |
 | Dzień, który jeszcze się nie zaczął | porównanie o 08:00 przy zmianie od 13:00 | dzisiejsza data liczy się jako miniona | status „nieobecność” do pierwszego zamkniętego wpisu | `app.py:1170` |
 | Obecność w dniu wolnym, wcześniejsze wyjście | skan w dniu „W” albo wyjście przed końcem zmiany | nieoceniane | raport tego nie pokazuje | `app.py:1164-1167` |
-| Zmiana nocna | kod N (21:00–05:00) | porównanie liczy tylko godzinę rozpoczęcia tego samego dnia | pobyt po północy należy do następnego dnia ([Z8](../00-przeglad.md#założenia-wymagające-potwierdzenia)) | `app.py:1176-1181` |
+| Zmiana nocna | kod N (21:00–05:00) | porównanie liczy tylko godzinę rozpoczęcia tego samego dnia | pobyt po północy należy do następnego dnia; zmiany nocne nie występują, więc przypadek jest teoretyczny ([Z8](../00-przeglad.md#ustalenia-potwierdzone)) | `app.py:1176-1181` |
 | Plik w starym formacie `.xls` lub uszkodzony | pole wyboru dopuszcza `.xls`, biblioteka czyta tylko `.xlsx` | błąd serwera bez komunikatu na ekranie | import nie wykonany | `admin.html:388`, `app.py:123` |
 | Wpis ręczny dla nieistniejącego pracownika lub złej daty | żądanie poza ekranem | brak sprawdzenia | wpis w grafiku bez pracownika w słowniku; kod nie jest zamieniany na wielkie litery | `app.py:1114-1123` |
 | Import w trybie demo | gość demo wybiera plik | odmowa „Niedostępne w trybie demo”; edycja komórek działa | — | `app.py:1200-1205` |

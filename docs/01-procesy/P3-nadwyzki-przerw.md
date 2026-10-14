@@ -3,10 +3,10 @@
 | Pole | Treść |
 |---|---|
 | **Nazwa procesu** | Rozliczanie nadwyżek przerw |
-| **Właściciel** | administrator (w aplikacji); właściciel biznesowy do potwierdzenia ([Z1](../00-przeglad.md#założenia-wymagające-potwierdzenia)) |
+| **Właściciel** | administrator ([Z1](../00-przeglad.md#ustalenia-potwierdzone)) |
 | **Cel biznesowy** | każda przerwa dłuższa niż dopuszczalny próg ma wskazaną strefę, która ponosi koszt nadwyżki czasu; żadna nadwyżka nie ginie w ewidencji |
 | **Zdarzenie inicjujące** | pracownik kończy skanem przerwę dłuższą niż próg (domyślnie 30 min) |
-| **Rezultat końcowy** | nadwyżka ze statusem „przypisana” i nazwą strefy; wykorzystanie tej informacji w rozliczeniu odbywa się poza aplikacją ([Z5](../00-przeglad.md#założenia-wymagające-potwierdzenia)) |
+| **Rezultat końcowy** | nadwyżka ze statusem „przypisana” i nazwą strefy; nadwyżka obciąża czas pracy wskazanej strefy w rozliczeniu miesięcznym prowadzonym poza aplikacją ([Z5](../00-przeglad.md#ustalenia-potwierdzone)) |
 | **Granice** | od zamknięcia przerwy do przypisania strefy; sam zapis pobytu przerwy należy do [P1](P1-rejestracja-pobytu.md), alert w trakcie przerwy do [P2](P2-nadzor-i-alerty.md) |
 | **Częstotliwość** | zależna od liczby przekroczonych przerw; w danych demo kilka na dziesięć dni roboczych |
 
@@ -51,7 +51,7 @@ flowchart TD
 | 6 | Przejrzyj nadwyżki | administrator | zakładka Przerwy z licznikiem oczekujących | lista: pracownik, czas przerwy, nadwyżka, data, przypisana strefa | BR-28 | `admin.html:745-770` |
 | 7 | Wybierz strefę dla nadwyżki | administrator | okno „Przypisz strefę do nadwyżki” z listą stref ze słownika | wybrana strefa | BR-26 | `admin.html:772-792` |
 | 8 | Zmień status na przypisana | system | numer nadwyżki, nazwa strefy | nadwyżka ze strefą i statusem „przypisana”; licznik oczekujących maleje | BR-26, BR-27 | `app.py:778-790` |
-| 9 | Uwzględnij nadwyżkę w rozliczeniu strefy | poza aplikacją | lista nadwyżek | rozliczenie kosztu czasu (do potwierdzenia, Z5) | — | — |
+| 9 | Uwzględnij nadwyżkę w rozliczeniu strefy | administrator, poza aplikacją | lista nadwyżek | czas pracy strefy obciążony nadwyżką w rozliczeniu miesięcznym (Z5) | — | — |
 
 ## Podprocesy
 

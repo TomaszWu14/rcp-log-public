@@ -78,7 +78,7 @@ flowchart TD
 
 | Dokument | Zawartość |
 |---|---|
-| [00. Przegląd](docs/00-przeglad.md) | cel biznesowy, zakres, aktorzy, mapa procesów, SIPOC, założenia do potwierdzenia, lista do anonimizacji |
+| [00. Przegląd](docs/00-przeglad.md) | cel biznesowy, zakres, aktorzy, mapa procesów, SIPOC, ustalenia potwierdzone z właścicielem projektu, lista do anonimizacji |
 | [P1. Rejestracja pobytu w strefie](docs/01-procesy/P1-rejestracja-pobytu.md) | skan, wybór strefy i podstrefy, potwierdzenie, zamknięcie pobytu, koniec zmiany |
 | [P2. Nadzór nad obsadą i alertowanie](docs/01-procesy/P2-nadzor-i-alerty.md) | kontrola w tle, alerty, Live, Dashboard, ręczne przesunięcia |
 | [P3. Rozliczanie nadwyżek przerw](docs/01-procesy/P3-nadwyzki-przerw.md) | nadwyżka ponad próg i przypisanie strefy |
