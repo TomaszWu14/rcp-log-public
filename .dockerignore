@@ -1,0 +1,22 @@
+# Do obrazu trafiają tylko pliki wskazane w Dockerfile; reszta nie wchodzi do kontekstu budowania.
+.git
+.gitignore
+.venv
+venv
+env
+__pycache__
+*.pyc
+*.pyo
+data
+data_demo
+backup
+docs
+graphify-out
+tests
+render.yaml
+*.md
+.env
+.env.*
+.idea
+.vscode
+.DS_Store
