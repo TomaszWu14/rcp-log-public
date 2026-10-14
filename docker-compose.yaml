@@ -1,0 +1,33 @@
+# RCP Log — publiczne demo na Coolify (https://coolify.io) pod adresem https://rcp.log.twapp.pl
+#
+# Coolify → projekt → + New Resource → Public Repository → to repozytorium (gałąź main),
+# Build Pack: Docker Compose, plik: /docker-compose.yaml.
+# Domenę https://rcp.log.twapp.pl wpisz w panelu Coolify (rekord DNS A musi wskazywać serwer
+# Coolify; certyfikat Let's Encrypt wystawia proxy Coolify). Zmienne SERVICE_* to "magiczne"
+# zmienne Coolify: SERVICE_FQDN_* wiąże domenę z portem 5050, SERVICE_PASSWORD_64_* losuje klucz.
+#
+# Poza Coolify (lokalnie): docker compose up --build  →  http://localhost:5050
+services:
+  rcp-log:
+    build: .
+    restart: unless-stopped
+    environment:
+      # Coolify: domena zasobu i port, na który proxy kieruje ruch.
+      - SERVICE_FQDN_RCPLOG_5050
+      # Tryb demo: panel bez logowania, fikcyjne dane odtwarzane co RCP_DEMO_RESET_MIN minut.
+      - RCP_DEMO=1
+      - RCP_DEMO_RESET_MIN=30
+      - TZ=Europe/Warsaw
+      # Coolify generuje 64-znakowy klucz; poza Coolify podaj własny w pliku .env.
+      - RCP_SECRET_KEY=${SERVICE_PASSWORD_64_RCPLOG}
+    expose:
+      - "5050"
+    # Tryb produkcyjny (RCP_DEMO=0, logowanie admin/admin123 — zmień hasło po starcie):
+    # odkomentuj woluminy, żeby ewidencja i kopie zapasowe przeżyły redeploy.
+    # volumes:
+    #   - rcp-data:/app/data
+    #   - rcp-backup:/app/backup
+
+# volumes:
+#   rcp-data:
+#   rcp-backup:

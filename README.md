@@ -23,7 +23,7 @@ widzi obsadę na żywo, alert przekroczonej przerwy, korekty i porównanie grafi
 | 1:19 | grafik z Excela porównany z pierwszym skanem dnia |
 | 1:29 | zakres projektu i linki |
 
-**Demo bez logowania:** <DO UZUPEŁNIENIA: adres instancji na Render> — dane fikcyjne, odtwarzane co 30 min. Lokalnie: [tryb demo](#tryb-demo).
+**Demo bez logowania:** [rcp.log.twapp.pl](https://rcp.log.twapp.pl) — dane fikcyjne, odtwarzane co 30 min. Lokalnie: [tryb demo](#tryb-demo).
 
 ## Problem → rozwiązanie
 
@@ -98,9 +98,34 @@ RCP_DEMO=1 .venv/bin/python run.py          # Linux / macOS
 $env:RCP_DEMO = "1"; .venv\Scripts\python run.py   # Windows (PowerShell)
 ```
 
-Publiczną instancję opisuje [`render.yaml`](render.yaml): w [Render](https://render.com) wybierz
-**New → Blueprint** i wskaż to repozytorium. Darmowy plan usypia usługę bez ruchu — pierwsze wejście
-budzi ją w około minutę.
+### Publiczna instancja: Coolify, rcp.log.twapp.pl
+
+Demo pod adresem [rcp.log.twapp.pl](https://rcp.log.twapp.pl) działa na [Coolify](https://coolify.io)
+z plików [`Dockerfile`](Dockerfile) i [`docker-compose.yaml`](docker-compose.yaml):
+
+1. **DNS:** rekord `A` dla `rcp.log.twapp.pl` wskazujący adres IP serwera z Coolify.
+2. **Coolify:** projekt → **+ New Resource → Public Repository**, adres
+   `https://github.com/TomaszWu14/rcp-log-public`, gałąź `main`, **Build Pack: Docker Compose**
+   (plik `/docker-compose.yaml`).
+3. **Domena:** w ustawieniach zasobu wpisz `https://rcp.log.twapp.pl` — certyfikat Let's Encrypt wystawi
+   proxy Coolify. Zmienne `RCP_DEMO`, `RCP_DEMO_RESET_MIN`, `TZ` i losowany `RCP_SECRET_KEY` są już
+   w pliku compose.
+4. **Deploy.** Obraz ma healthcheck na `/`; Coolify pokaże status *healthy*, gdy dane demo się wygenerują.
+   Każdy push do `main` wdraża nową wersję, jeśli w zasobie włączysz **Auto Deploy** (webhook GitHub).
+
+Build Pack **Dockerfile** też zadziała — wtedy port `5050` i zmienne z tabeli poniżej ustaw ręcznie
+w panelu. Dane demo są odtwarzane z kodu, więc kontener nie potrzebuje woluminu; dla trybu produkcyjnego
+(`RCP_DEMO=0`) odkomentuj woluminy `data` i `backup` w `docker-compose.yaml`.
+
+Alternatywa bez własnego serwera: [`render.yaml`](render.yaml) dla [Render](https://render.com)
+(**New → Blueprint**); darmowy plan usypia usługę bez ruchu, pierwsze wejście budzi ją w około minutę.
+
+Lokalnie w Dockerze:
+
+```bash
+docker build -t rcp-log .
+docker run --rm -p 5050:5050 -e RCP_DEMO=1 rcp-log
+```
 
 | Zmienna | Znaczenie |
 |---|---|
@@ -121,7 +146,9 @@ python -m unittest discover tests
 app.py              cała logika i API (Flask) — świadomie jeden plik, patrz D1
 run.py              start produkcyjny (Waitress)
 demo_data.py        generator fikcyjnych danych dla trybu demo
-render.yaml         konfiguracja publicznego demo na Render
+Dockerfile          obraz produkcyjny (Python 3.12 slim + Waitress) dla Coolify i Dockera
+docker-compose.yaml konfiguracja publicznego demo na Coolify (rcp.log.twapp.pl)
+render.yaml         konfiguracja demo na Render (alternatywa)
 templates/          skaner (index.html), panel (admin.html), logowanie
 tests/              testy akceptacyjne wymagań z docs/05
 docs/               dokumentacja analityczna 01–07 i zrzuty ekranu; docs/media: logo, film, miniatura
