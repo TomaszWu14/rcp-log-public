@@ -8,11 +8,11 @@ Aplikacja ma dwie części:
 
 | Skaner — ekran pracownika (2) | Panel — Live (5.2) |
 |---|---|
-| ![Ekran pracownika](screenshots/skaner-pracownik.png) | ![Panel Live](screenshots/panel-live.png) |
+| ![Ekran pracownika](../screenshots/skaner-pracownik.png) | ![Panel Live](../screenshots/panel-live.png) |
 
 Porównanie grafiku z obecnością (5.10):
 
-![Porównanie grafiku](screenshots/panel-grafik.png)
+![Porównanie grafiku](../screenshots/panel-grafik.png)
 
 ## Mapa
 
