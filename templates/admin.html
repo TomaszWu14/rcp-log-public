@@ -861,8 +861,10 @@ async function loadKorekty() {
   }).join('');
 }
 async function decKorekta(id, dec) {
-  await fetch(`/admin/api/korekty/${id}`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({decyzja:dec})});
-  toast(dec==='tak'?'Korekta zatwierdzona':'Korekta odrzucona', dec==='tak');
+  const r = await fetch(`/admin/api/korekty/${id}`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({decyzja:dec})});
+  const d = await r.json();
+  if (d.ok) toast(dec==='tak'?'Korekta zatwierdzona':'Korekta odrzucona', dec==='tak');
+  else toast(d.error, false);   // np. „Zgłoszenie już rozpatrzone” przez innego administratora
   loadKorekty();
 }
 

@@ -36,13 +36,13 @@ w Excelu, a nadwyżki przerw i korekty trafiają na listy do decyzji człowieka.
 
 | Poza zakresem | Jak to wynika z kodu |
 |---|---|
-| Naliczanie wynagrodzeń, integracja z systemem kadrowo-płacowym | jedynym wyjściem danych jest plik CSV (`app.py:1080-1093`) |
-| Automatyczna poprawka ewidencji po zatwierdzeniu korekty | decyzja zmienia tylko status zgłoszenia (`app.py:899-910`) |
-| Zmiana nocna przechodząca przez północ | pobyt z poprzedniego dnia jest zamykany o 23:59:59 dnia rozpoczęcia (`app.py:508-520`); potwierdzone: zmiany nocne nie występują (Z8) |
-| Uprawnienia na poziomie podstref | uprawnienia to lista stref; podstrefa nie jest sprawdzana (`app.py:608-609`) |
+| Naliczanie wynagrodzeń, integracja z systemem kadrowo-płacowym | jedynym wyjściem danych jest plik CSV (`app.py:1090-1103`) |
+| Automatyczna poprawka ewidencji po zatwierdzeniu korekty | decyzja zmienia tylko status zgłoszenia (`app.py:908-920`) |
+| Zmiana nocna przechodząca przez północ | pobyt z poprzedniego dnia jest zamykany o 23:59:59 dnia rozpoczęcia (`app.py:515-527`); potwierdzone: zmiany nocne nie występują (Z8) |
+| Uprawnienia na poziomie podstref | uprawnienia to lista stref; podstrefa nie jest sprawdzana (`app.py:615-616`) |
 | Praca skanera bez połączenia z serwerem | każdy skan to zapytanie do serwera; brak bufora po stronie ekranu (`index.html:450-460`) |
-| Role w panelu inne niż administrator | jeden znacznik zalogowania dla wszystkich funkcji panelu (`app.py:309`); potwierdzone: pełny panel ma tylko administrator, lider zmiany nie potrzebuje dostępu (Z11) |
-| Potwierdzanie (zamykanie) alertów | kolumna „potwierdzone” ma zawsze wartość „NIE” (`app.py:283`); potwierdzone: baner i plik wystarczą (Z12) |
+| Role w panelu inne niż administrator | jeden znacznik zalogowania dla wszystkich funkcji panelu (`app.py:316`); potwierdzone: pełny panel ma tylko administrator, lider zmiany nie potrzebuje dostępu (Z11) |
+| Potwierdzanie (zamykanie) alertów | kolumna „potwierdzone” ma zawsze wartość „NIE” (`app.py:290`); potwierdzone: baner i plik wystarczą (Z12) |
 | Retencja i usuwanie danych osobowych | brak jakiegokolwiek mechanizmu kasowania wpisów, alertów i kopii |
 | Baza danych | dane w plikach JSON i CSV (`app.py:40-51`) |
 
@@ -50,14 +50,14 @@ w Excelu, a nadwyżki przerw i korekty trafiają na listy do decyzji człowieka.
 
 | Aktor | Typ | Kanał | Odpowiedzialność | Źródło w kodzie |
 |---|---|---|---|---|
-| Pracownik magazynu | człowiek | ekran skanera `/`, bez logowania | identyfikuje się kodem, rejestruje wejście do strefy, przerwę i koniec zmiany, zgłasza korektę | `app.py:536-713`, `index.html` |
-| Administrator | człowiek | panel `/admin`, po zalogowaniu | monitoruje obsadę, reaguje na alerty, przesuwa i kończy pobyty, rozlicza nadwyżki i korekty, utrzymuje słowniki, grafik i konfigurację, eksportuje dane; w organizacji: właściciel projektu, który też drukuje i wydaje karty z kodem i nanosi zatwierdzone korekty na pliki CSV (Z1, Z3) | `app.py:718-1264`, `admin.html` |
-| Gość demo | wariant administratora | panel w trybie demo, logowanie automatyczne | ogląda i testuje wszystko poza zmianą słowników, kont, konfiguracji i importem grafiku | `app.py:1277-1328` |
-| Kontrola pobytów | proces automatyczny, co 60 s | wątek serwera | wykrywa długą przerwę i długi dyżur, zamyka pobyty z poprzedniego dnia | `app.py:525-531` |
-| Kopia zapasowa | proces automatyczny, raz na dobę o 02:00 | wątek serwera (nie w trybie demo) | kopiuje wszystkie pliki danych do katalogu kopii | `app.py:446-468` |
-| Odtwarzanie danych demo | proces automatyczny, co N minut | wątek serwera (tylko tryb demo) | kasuje dane i generuje fikcyjny stan | `app.py:1284-1335` |
+| Pracownik magazynu | człowiek | ekran skanera `/`, bez logowania | identyfikuje się kodem, rejestruje wejście do strefy, przerwę i koniec zmiany, zgłasza korektę | `app.py:543-721`, `index.html` |
+| Administrator | człowiek | panel `/admin`, po zalogowaniu | monitoruje obsadę, reaguje na alerty, przesuwa i kończy pobyty, rozlicza nadwyżki i korekty, utrzymuje słowniki, grafik i konfigurację, eksportuje dane; w organizacji: właściciel projektu, który też drukuje i wydaje karty z kodem i nanosi zatwierdzone korekty na pliki CSV (Z1, Z3) | `app.py:726-1274`, `admin.html` |
+| Gość demo | wariant administratora | panel w trybie demo, logowanie automatyczne | ogląda i testuje wszystko poza zmianą słowników, kont, konfiguracji i importem grafiku | `app.py:1287-1338` |
+| Kontrola pobytów | proces automatyczny, co 60 s | wątek serwera | wykrywa długą przerwę i długi dyżur, zamyka pobyty z poprzedniego dnia | `app.py:532-538` |
+| Kopia zapasowa | proces automatyczny, raz na dobę o 02:00 | wątek serwera (nie w trybie demo) | kopiuje wszystkie pliki danych do katalogu kopii | `app.py:453-475` |
+| Odtwarzanie danych demo | proces automatyczny, co N minut | wątek serwera (tylko tryb demo) | kasuje dane i generuje fikcyjny stan | `app.py:1294-1345` |
 | Czytnik kodów QR | urządzenie | czytnik USB emulujący klawiaturę na jednym wspólnym komputerze zmiany (Z2) | wpisuje kod pracownika i Enter w pole skanera; po wpisaniu ponad 5 znaków ekran sam wysyła kod po 0,7 s | `index.html:441-448` |
-| Excel (lub inny arkusz) | system zewnętrzny | pliki `.xlsx` i `.csv` | wypełnienie szablonu grafiku; odczyt ewidencji i alertów | `app.py:143-222, 1099-1147` |
+| Excel (lub inny arkusz) | system zewnętrzny | pliki `.xlsx` i `.csv` | wypełnienie szablonu grafiku; odczyt ewidencji i alertów | `app.py:150-229, 1109-1157` |
 | Lider zmiany | człowiek, poza aplikacją | brak własnego dostępu do panelu (Z11) | odpowiada za rejestrację i jej poprawność na zmianie (P1, P2) | — (Z1) |
 | Kierownik magazynu | człowiek, poza aplikacją | Excel: szablon grafiku, pliki CSV | przygotowuje grafik w Excelu na podstawie szablonu; odbiorca ewidencji i porównania z grafikiem (P5, P7) | — (Z1, Z6) |
 
@@ -165,7 +165,7 @@ Decyzja o pozostawieniu poniższych pozycji należy do właściciela projektu.
 
 | Miejsce | Co zawiera | Uwaga |
 |---|---|---|
-| `app.py:424-428` | trzech przykładowych pracowników z imieniem i nazwiskiem w danych startowych | tworzone przy pierwszym uruchomieniu w pustym katalogu |
+| `app.py:431-435` | trzech przykładowych pracowników z imieniem i nazwiskiem w danych startowych | tworzone przy pierwszym uruchomieniu w pustym katalogu |
 | `demo_data.py:17-30` | dwunastu fikcyjnych pracowników z imionami i nazwiskami; kod testowy `HU_TEST_123` | dane trybu demo |
 | `demo_data.py:213-217` | treści przykładowych korekt z nazwami stref i godzinami | dane trybu demo |
 | `tests/test_wymagania.py` | kody i nazwisko z danych startowych, nazwisko „Nowy Jan” | testy |

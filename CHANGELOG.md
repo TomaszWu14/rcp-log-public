@@ -15,6 +15,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie 
   (stary format czytany w locie).
 
 ### Fixed
+- US-006: zapis plików JSON przez plik tymczasowy i `os.replace` (przerwany zapis nie uszkadza danych); zgłoszenia
+  korekt oraz decyzje o nadwyżkach i korektach pod blokadą — równoczesne zgłoszenia mają różne numery, druga decyzja
+  o tej samej pozycji dostaje 409, nieistniejący numer 404 (T12); panel pokazuje komunikat.
 - US-005: jedno miejsce zamykania pobytu (`zamknij_pobyt`) — nadwyżka przerwy powstaje także przy zamknięciu przez
   administratora i auto-zamknięciu (T1); wpis automatyczny ma numer i format czasu (T14); jeden próg długiego dyżuru 10 h
   (T2); przesunięcie, ręczny start i przypisanie nadwyżki sprawdzają słownik stref i uprawnienia (T9); usunięty martwy
