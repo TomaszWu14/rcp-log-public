@@ -149,8 +149,8 @@ flowchart LR
 | Nieznany kod | kod spoza słownika pracowników | odmowa „Nieznany kod QR. Skontaktuj się z liderem.” i alert `NIEZNANY_KOD` | proces kończy się na kroku 2; ślad w alertach | `app.py:460-462` |
 | Strefa spoza uprawnień | żądanie zapisu do strefy spoza listy pracownika (możliwe tylko poza ekranem) | odmowa „Brak uprawnień do strefy X” | nic nie zapisano | `app.py:521-523` |
 | Pracownik bez uprawnienia do strefy PRZERWA | lista uprawnień bez `PRZERWA` | brak kafelka przerwy | pracownik nie zarejestruje przerwy; czas przerwy wliczy się do strefy pracy | `app.py:471-478` |
-| Pracownik z pustą listą stref | nowo dodany pracownik bez uprawnień | ekran pokazuje tylko „Koniec zmiany” | rejestracja niemożliwa do czasu nadania uprawnień ([P6](P6-slowniki-i-konfiguracja.md)) | `app.py:991` |
-| Strefa z uprawnień nieobecna w słowniku stref | strefa usunięta ze słownika, ale zostawiona w uprawnieniach | kafelek z domyślnym kolorem, bez podstref; zapis przechodzi | ewidencja ze strefą, której nie ma w słowniku | `app.py:473-478, 952-956` |
+| Pracownik z pustą listą stref | nowo dodany pracownik bez uprawnień | ekran pokazuje tylko „Koniec zmiany” | rejestracja niemożliwa do czasu nadania uprawnień ([P6](P6-slowniki-i-konfiguracja.md)) | `app.py:992` |
+| Strefa z uprawnień nieobecna w słowniku stref | strefa usunięta ze słownika, ale zostawiona w uprawnieniach | kafelek z domyślnym kolorem, bez podstref; zapis przechodzi | ewidencja ze strefą, której nie ma w słowniku | `app.py:473-478, 953-957` |
 | Szybka zmiana | trwający pobyt krótszy niż próg (domyślnie 5 min), także przy końcu zmiany | ostrzeżenie; zapis dopiero po „Tak, zmień strefę” | pomyłkowy skan zatrzymany; prawdziwa zmiana po dodatkowym kliknięciu | `app.py:529-540`, `index.html:584-603` |
 | Ponowny skan tej samej strefy | pracownik wybiera strefę, w której już jest | brak blokady | jeden pobyt rozbity na dwa wpisy | `app.py:542-597` |
 | Brak połączenia | serwer nie odpowiada | komunikat „Błąd połączenia”; ekran zostaje na wyborze | skan do powtórzenia; nic nie zapisano | `index.html:459, 595` |

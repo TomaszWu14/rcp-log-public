@@ -95,6 +95,7 @@ class Wymagania(unittest.TestCase):
     def test_SES_01_najwyzej_jedna_otwarta_sesja(self):
         self.rejestruj("PICKING")
         self.rejestruj("PRZYJECIA")
+        self.login()
         status = self.c.get("/api/status").json
         self.assertEqual([(w["pracownik"], w["strefa"]) for w in status],
                          [("HU_KOWALSKI_JAN", "PRZYJECIA")])
@@ -178,6 +179,13 @@ class Wymagania(unittest.TestCase):
     # ── Bezpieczeństwo i start ───────────────────────────────────────────────
     def test_SYS_02_haslo_nie_jest_zapisane_jawnie(self):
         self.assertNotIn("admin123", (self.tmp / "data" / "admins.json").read_text(encoding="utf-8"))
+
+    def test_ADM_01_status_bez_sesji_401(self):
+        self.rejestruj("PICKING")
+        r = self.c.get("/api/status")
+        self.assertEqual((r.status_code, r.data), (401, b""))
+        self.login()
+        self.assertEqual(self.c.get("/api/status").json[0]["pracownik"], "HU_KOWALSKI_JAN")
 
     def test_SYS_04_start_bez_klucza_sesji_konczy_sie_bledem(self):
         env = {k: v for k, v in os.environ.items() if k not in ("RCP_SECRET_KEY", "RCP_DEMO")}

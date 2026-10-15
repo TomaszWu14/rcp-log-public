@@ -30,6 +30,7 @@ Given brak sesji administratora
 When  GET /api/status
 Then  401 i puste ciało
 ```
+**Zrealizowane** (PR #21): `test_ADM_01_status_bez_sesji_401`; skaner nie korzystał z tego adresu, więc bez zmian w `index.html`.
 
 ### US-003 Ochrona logowania i formularzy (B6, B8, R5, R6, R8)
 **Jako** administrator **chcę** limitu prób logowania, bezpiecznych ciasteczek i ochrony CSV, **aby** hasła

@@ -5,6 +5,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie 
 ## [Unreleased]
 
 ### Security
+- US-002: `/api/status` (obecność z nazwiskami) wymaga sesji administratora; bez niej 401 z pustym ciałem (B4).
 - US-001: poza trybem demo `RCP_SECRET_KEY` jest wymagany (≥ 32 znaki) — brak kończy start błędem; usunięty klucz
   domyślny z kodu (B1). Hasło startowe `admin` z `RCP_ADMIN_PASSWORD` albo losowe wypisane raz w konsoli;
   pierwsze logowanie wymusza zmianę na `/admin/haslo` (B2, B3). `admins.json` trzyma skrót i znacznik zmiany

@@ -610,6 +610,7 @@ def api_rejestruj():
 
 @app.route("/api/status")
 def api_status():
+    if not is_admin(): return "", 401   # obecność z nazwiskami tylko dla administratora (US-002)
     state   = load_state()
     workers        = load_workers()
     now            = datetime.now()

@@ -11,7 +11,7 @@ flowchart LR
     P[Pracownik przy skanerze] -->|kod QR, bez uwierzytelnienia| S["/api/scan, /api/rejestruj, /api/korekta"]
     A[Administrator] -->|login + hasło, sesja cookie| L["/admin/login"]
     A -->|sesja| M["/admin/api/*"]
-    X[Każdy w sieci] -->|bez uwierzytelnienia| ST["/api/status"]
+    X[Każdy w sieci] -->|bez sesji: 401| ST["/api/status"]
     G[Gość internetu] -->|auto-sesja admina, RCP_DEMO=1| DM["instancja demo rcp.log.twapp.pl"]
     S --> F[(JSON + CSV w data/)]
     M --> F
@@ -28,7 +28,7 @@ flowchart LR
 | Skaner → rejestracja | rejestracja w cudzym imieniu — kod przewidywalny, duplikat karty z tym samym kodem (Z3) | Spoofing | R4 / B5 | brak; *Could* US-008 |
 | Skaner → korekta | opis wolnego tekstu bez limitu długości | Tampering / DoS | — | escapowany w panelu; brak limitu (niska) |
 | Skaner → alerty.csv | nieznany kod z `=` jako formuła w Excelu | Tampering | R8 / B8 | brak; US-003 |
-| Każdy → /api/status | wyciek obecności z nazwiskami | Information disclosure | R3 / B4 | brak; US-002 |
+| Każdy → /api/status | wyciek obecności z nazwiskami | Information disclosure | R3 (zamknięte) | sesja administratora wymagana, bez niej 401 (US-002) |
 | Admin → logowanie | brute force | Spoofing / Elevation | R5 / B6 | hash werkzeug; hasło startowe jednorazowe z wymuszoną zmianą (US-001); limit prób — US-003 |
 | Cookie sesji | podrobienie sesji dzięki domyślnemu kluczowi | Spoofing / Elevation | R1 (zamknięte) | klucz wymagany poza demo, ≥ 32 znaki; demo losuje (US-001) |
 | Admin → zmiana hasła | CSRF na formularz `/admin/haslo`; przejęcie hasła startowego z logu | Tampering / Spoofing | R6, R11 | min. 12 znaków, powtórzenie; CSRF — US-003; R11 zaakceptowane |
