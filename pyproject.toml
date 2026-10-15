@@ -11,10 +11,6 @@ line-length = 120
 select = ["E4", "E9", "F", "W", "I", "B", "SIM"]
 # E7 (wiele instrukcji w linii) pominięte: zwięzły styl `if …: return` w całym app.py.
 
-[tool.ruff.lint.per-file-ignores]
-# Dług DEV-3 z docs/AUDYT.md: `except: pass` bez logowania — do zastąpienia logowaniem w osobnej historyjce.
-"app.py" = ["E722", "B904", "SIM105"]
-
 [tool.bandit]
 # B104 (nasłuch na 0.0.0.0) — zamierzone: skanery łączą się z sieci lokalnej magazynu.
 # Ryzyko R9 w docs/bezpieczenstwo/RYZYKA.md; kontener stoi za proxy Coolify.

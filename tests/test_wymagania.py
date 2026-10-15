@@ -6,7 +6,6 @@ Uruchomienie: python -m unittest discover tests
 app.py przy imporcie tworzy katalog data/ obok siebie, dlatego każdy test
 ładuje kopię aplikacji w katalogu tymczasowym — prawdziwe dane nie są ruszane.
 """
-import contextlib
 import importlib.util
 import io
 import os
@@ -370,17 +369,43 @@ class Wymagania(unittest.TestCase):
 
     def test_SYS_06_bez_zmiennej_haslo_startowe_losowe_i_wypisane_raz(self):
         os.environ.pop("RCP_ADMIN_PASSWORD")
-        buf = io.StringIO()
-        with contextlib.redirect_stdout(buf):
+        with self.assertLogs("rcp", level="WARNING") as cm:
             A, tmp = load_app()
         self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
-        m = re.search(r"Hasło startowe konta 'admin': (\S+)", buf.getvalue())
-        self.assertIsNotNone(m, buf.getvalue())
+        m = re.search(r"Hasło startowe konta 'admin': (\S+)", "\n".join(cm.output))
+        self.assertIsNotNone(m, cm.output)
         c = A.app.test_client()
         tok = re.search(r'name="csrf" value="([0-9a-f]+)"', c.get("/admin/login").get_data(as_text=True)).group(1)
         c.post("/admin/login", data={"username": "admin", "password": m.group(1), "csrf": tok})
         self.assertEqual(c.get("/admin").headers["Location"].split("?")[0], "/admin/haslo")
         self.assertNotIn(m.group(1), (tmp / "data" / "admins.json").read_text(encoding="utf-8"))
+
+    def test_SYS_01_kopia_zapasowa_kopiuje_csv_i_json_z_prefiksem(self):
+        self.rejestruj("PICKING")
+        cfg = self.A.load_config(); cfg["backup_path"] = str(self.tmp / "kopie"); self.A.save_config(cfg)
+        with self.assertLogs("rcp", level="INFO"):
+            self.A.kopia_zapasowa(datetime(2026, 10, 15, 2, 0))
+        nazwy = sorted(p.name for p in (self.tmp / "kopie").iterdir())
+        self.assertIn("20261015_0200_aktywne_sesje.json", nazwy)
+        self.assertIn("20261015_0200_alerty.csv", nazwy)
+        self.assertTrue(all(n.startswith("20261015_0200_") for n in nazwy))
+
+    def test_SYS_10_blad_w_zadaniu_w_tle_trafia_do_logu_i_nie_zabija_watku(self):
+        with self.assertLogs("rcp", level="ERROR") as cm:
+            ok = self.A._przebieg("kontrola pobytów", lambda: 1 / 0)
+        self.assertFalse(ok)
+        self.assertIn("kontrola pobytów: błąd przebiegu, wątek działa dalej", cm.output[0])
+        self.assertIn("ZeroDivisionError", "\n".join(cm.output))
+        self.assertTrue(self.A._przebieg("ok", lambda: None))
+
+    def test_SYS_11_uszkodzony_json_jest_logowany_a_nie_cicho_pusty(self):
+        (self.tmp / "data" / "config.json").write_text("{to nie jest json", encoding="utf-8")
+        with self.assertLogs("rcp", level="ERROR") as cm:
+            cfg = self.A.load_config()
+        self.assertEqual(cfg["prog_przerwa_min"], 30)           # wartość domyślna
+        self.assertIn("config.json", cm.output[0])
+        with self.assertNoLogs("rcp"):                          # brak pliku to nie błąd
+            self.assertEqual(self.A.read_csv_rows(self.tmp / "data" / "nie_ma.csv"), [])
 
     def test_SYS_03_start_bez_przygotowania_danych(self):
         self.assertEqual(len(self.A.load_workers()), 3)

@@ -1,7 +1,7 @@
 # 02. Model danych
 
 Aplikacja nie używa bazy danych. Stan jest zapisany w plikach JSON i CSV w katalogu danych
-(`app.py:40-51`), tworzonych automatycznie przy pierwszym uruchomieniu (`app.py:423-448`).
+(`app.py:45-56`), tworzonych automatycznie przy pierwszym uruchomieniu (`app.py:422-447`).
 Poniższy model jest **modelem logicznym**: relacje są w plikach zapisane jako listy i powtórzone
 nazwy, bez kluczy obcych pilnowanych przez silnik bazy. Linia ciągła na diagramie oznacza relację
 zapisaną wprost (klucz słownika albo kod pracownika w rekordzie), linia przerywana powiązanie wyłącznie
@@ -114,18 +114,18 @@ erDiagram
 
 | Encja | Znaczenie biznesowe | Kluczowe atrybuty | Cykl życia | Plik | Źródło w kodzie |
 |---|---|---|---|---|---|
-| PRACOWNIK | osoba z kartą QR, która rejestruje pobyty | kod (treść kodu QR, prefiks `HU_`), nazwisko i imię | tworzony przez administratora ([P6](../01-procesy/P6-slowniki-i-konfiguracja.md)); nie ma edycji, tylko usunięcie; usunięcie kasuje trwający pobyt, zostawia ewidencję, grafik, nadwyżki i korekty | `pracownicy.json` | `app.py:1024-1042` |
-| UPRAWNIENIE | prawo pracownika do wejścia do strefy | kod pracownika, nazwa strefy | lista w rekordzie pracownika; zastępowana w całości przy każdym zapisie (edytor lub macierz); nie czyszczona przy usunięciu strefy | `pracownicy.json` | `app.py:1044-1051` |
-| STREFA | obszar magazynu, w którym mierzony jest czas; `PRZERWA` to też strefa, ze specjalną logiką | nazwa (wielkie litery), kolor kafelka | tworzona przez administratora albo z domyślnego słownika jedenastu przykładowych stref (Z15); usunięcie nie czyści uprawnień, pobytów ani ewidencji; brak zmiany nazwy | `strefy.json` | `app.py:61-73, 983-996` |
-| PODSTREFA | doprecyzowanie miejsca w strefie, bez wpływu na uprawnienia | nazwa | lista w rekordzie strefy; dodawana i usuwana przez administratora | `strefy.json` | `app.py:998-1017` |
-| POBYT_TRWAJĄCY | pobyt pracownika w strefie, który jeszcze trwa („aktywna sesja”) | kod pracownika (klucz, więc najwyżej jeden pobyt na osobę), strefa, podstrefa, chwila wejścia, znaczniki wysłanych alertów | powstaje przy skanie lub ręcznym starcie; kończy się skanem, końcem zmiany, przesunięciem, usunięciem pracownika albo automatycznie o 23:59:59 dnia wejścia; po zakończeniu staje się wpisem ewidencji (poza usunięciem pracownika) | `aktywne_sesje.json` | `app.py:635-651, 515-527, 1040-1042` |
-| WPIS_EWIDENCJI | zamknięty pobyt, podstawowa jednostka ewidencji czasu | numer, pracownik, nazwisko, strefa, podstrefa, wejście, wyjście, czas, flaga, pole korekty | tworzony przy zamknięciu pobytu; zapisywany w dwóch plikach: dnia i miesiąca według daty wejścia; nigdy nie zmieniany ani nie usuwany przez aplikację | `ewidencja_RRRR-MM-DD.csv`, `ewidencja_RRRR-MM.csv` | `app.py:56-59, 254-267, 380-392` |
-| ALERT | zdarzenie wymagające uwagi administratora | chwila, pracownik, nazwisko, typ, opis, potwierdzone | dopisywany przez kontrolę w tle i przy skanie; tylko do odczytu; pole „potwierdzone” zawsze „NIE” i wg ustalenia Z12 zbędne (alerty nie wymagają potwierdzania) | `alerty.csv` | `app.py:278-298` |
-| NADWYŻKA_PRZERWY | czas przerwy ponad próg, do przypisania strefie ponoszącej koszt | numer, pracownik, nazwisko, chwila wejścia na przerwę, czas przerwy, nadwyżka, przypisana strefa, status | powstaje przy zamknięciu przerwy ponad próg przez pracownika ([P1](../01-procesy/P1-rejestracja-pobytu.md), [P3](../01-procesy/P3-nadwyzki-przerw.md)); status „oczekuje” → „przypisana” jednorazowo; nie jest usuwana | `nadwyzki_przerw.json` | `app.py:396-408, 886-900` |
-| KOREKTA | zgłoszenie pracownika o błędzie w rejestracji i decyzja administratora | numer, pracownik, nazwisko, chwila zgłoszenia, opis, status, decyzja | powstaje ze skanera ([P4](../01-procesy/P4-korekty-ewidencji.md)); status „oczekuje” → „zatwierdzona” albo „odrzucona” jednorazowo; nie jest usuwana; nie wskazuje wpisu ewidencji | `korekty.json` | `app.py:703-721, 908-920` |
-| DZIEŃ_GRAFIKU | planowana zmiana albo dzień wolny pracownika | pracownik, data, godzina od, godzina do, typ | powstaje z importu lub edycji komórki ([P5](../01-procesy/P5-grafik-i-obecnosc.md)); nadpisywany przy kolejnym imporcie tego samego dnia; nie jest usuwany | `grafik.json` | `app.py:130-148, 1166-1173, 1197-1211` |
-| ADMINISTRATOR | konto dostępu do panelu | login, skrót hasła, znacznik wymuszonej zmiany hasła | tworzone przy pierwszym uruchomieniu (`admin`, hasło startowe) i przez administratora; usuwane przez innego administratora; zmiana własnego hasła na `/admin/haslo` (wymuszona po haśle startowym); stary format pliku (sam skrót) czytany w locie | `admins.json` | `app.py:107-110, 352-359, 436-446, 759-776, 1059-1074` |
-| KONFIGURACJA | progi alertów i ścieżka kopii zapasowej | próg przerwy, próg szybkiej zmiany, próg długiego dyżuru, tolerancja grafiku, ścieżka kopii | tworzona z wartości domyślnych; nadpisywana przez zakładkę Config; brak historii zmian | `config.json` | `app.py:75-81, 1077-1087` |
+| PRACOWNIK | osoba z kartą QR, która rejestruje pobyty | kod (treść kodu QR, prefiks `HU_`), nazwisko i imię | tworzony przez administratora ([P6](../01-procesy/P6-slowniki-i-konfiguracja.md)); nie ma edycji, tylko usunięcie; usunięcie kasuje trwający pobyt, zostawia ewidencję, grafik, nadwyżki i korekty | `pracownicy.json` | `app.py:1026-1044` |
+| UPRAWNIENIE | prawo pracownika do wejścia do strefy | kod pracownika, nazwa strefy | lista w rekordzie pracownika; zastępowana w całości przy każdym zapisie (edytor lub macierz); nie czyszczona przy usunięciu strefy | `pracownicy.json` | `app.py:1046-1053` |
+| STREFA | obszar magazynu, w którym mierzony jest czas; `PRZERWA` to też strefa, ze specjalną logiką | nazwa (wielkie litery), kolor kafelka | tworzona przez administratora albo z domyślnego słownika jedenastu przykładowych stref (Z15); usunięcie nie czyści uprawnień, pobytów ani ewidencji; brak zmiany nazwy | `strefy.json` | `app.py:66-78, 985-998` |
+| PODSTREFA | doprecyzowanie miejsca w strefie, bez wpływu na uprawnienia | nazwa | lista w rekordzie strefy; dodawana i usuwana przez administratora | `strefy.json` | `app.py:1000-1019` |
+| POBYT_TRWAJĄCY | pobyt pracownika w strefie, który jeszcze trwa („aktywna sesja”) | kod pracownika (klucz, więc najwyżej jeden pobyt na osobę), strefa, podstrefa, chwila wejścia, znaczniki wysłanych alertów | powstaje przy skanie lub ręcznym starcie; kończy się skanem, końcem zmiany, przesunięciem, usunięciem pracownika albo automatycznie o 23:59:59 dnia wejścia; po zakończeniu staje się wpisem ewidencji (poza usunięciem pracownika) | `aktywne_sesje.json` | `app.py:639-655, 520-532, 1042-1044` |
+| WPIS_EWIDENCJI | zamknięty pobyt, podstawowa jednostka ewidencji czasu | numer, pracownik, nazwisko, strefa, podstrefa, wejście, wyjście, czas, flaga, pole korekty | tworzony przy zamknięciu pobytu; zapisywany w dwóch plikach: dnia i miesiąca według daty wejścia; nigdy nie zmieniany ani nie usuwany przez aplikację | `ewidencja_RRRR-MM-DD.csv`, `ewidencja_RRRR-MM.csv` | `app.py:61-64, 241-270, 379-391` |
+| ALERT | zdarzenie wymagające uwagi administratora | chwila, pracownik, nazwisko, typ, opis, potwierdzone | dopisywany przez kontrolę w tle i przy skanie; tylko do odczytu; pole „potwierdzone” zawsze „NIE” i wg ustalenia Z12 zbędne (alerty nie wymagają potwierdzania) | `alerty.csv` | `app.py:283-299` |
+| NADWYŻKA_PRZERWY | czas przerwy ponad próg, do przypisania strefie ponoszącej koszt | numer, pracownik, nazwisko, chwila wejścia na przerwę, czas przerwy, nadwyżka, przypisana strefa, status | powstaje przy zamknięciu przerwy ponad próg przez pracownika ([P1](../01-procesy/P1-rejestracja-pobytu.md), [P3](../01-procesy/P3-nadwyzki-przerw.md)); status „oczekuje” → „przypisana” jednorazowo; nie jest usuwana | `nadwyzki_przerw.json` | `app.py:395-407, 888-902` |
+| KOREKTA | zgłoszenie pracownika o błędzie w rejestracji i decyzja administratora | numer, pracownik, nazwisko, chwila zgłoszenia, opis, status, decyzja | powstaje ze skanera ([P4](../01-procesy/P4-korekty-ewidencji.md)); status „oczekuje” → „zatwierdzona” albo „odrzucona” jednorazowo; nie jest usuwana; nie wskazuje wpisu ewidencji | `korekty.json` | `app.py:707-725, 910-922` |
+| DZIEŃ_GRAFIKU | planowana zmiana albo dzień wolny pracownika | pracownik, data, godzina od, godzina do, typ | powstaje z importu lub edycji komórki ([P5](../01-procesy/P5-grafik-i-obecnosc.md)); nadpisywany przy kolejnym imporcie tego samego dnia; nie jest usuwany | `grafik.json` | `app.py:138-156, 1168-1175, 1199-1213` |
+| ADMINISTRATOR | konto dostępu do panelu | login, skrót hasła, znacznik wymuszonej zmiany hasła | tworzone przy pierwszym uruchomieniu (`admin`, hasło startowe) i przez administratora; usuwane przez innego administratora; zmiana własnego hasła na `/admin/haslo` (wymuszona po haśle startowym); stary format pliku (sam skrót) czytany w locie | `admins.json` | `app.py:115-118, 353-360, 435-445, 763-780, 1061-1076` |
+| KONFIGURACJA | progi alertów i ścieżka kopii zapasowej | próg przerwy, próg szybkiej zmiany, próg długiego dyżuru, tolerancja grafiku, ścieżka kopii | tworzona z wartości domyślnych; nadpisywana przez zakładkę Config; brak historii zmian | `config.json` | `app.py:80-86, 1079-1089` |
 
 ## Słownik pojęć domenowych
 
@@ -162,16 +162,16 @@ erDiagram
 
 | Pole | Wartości | Źródło w kodzie |
 |---|---|---|
-| `WPIS_EWIDENCJI.flaga` | pusta, `DLUGA_PRZERWA`, `AUTO_ZAMKNIETO` | `app.py:379, 522` |
-| `WPIS_EWIDENCJI.korekta_info` | pusta, `ADMIN:<login>`, `ADMIN:<login>:start_override`; przy skanie wartość z żądania (ekran wysyła pustą) | `app.py:603, 944, 972` |
-| `ALERT.typ` | `DLUGA_PRZERWA`, `DLUGI_DYZUR`, `AUTO_ZAMKNIETO`, `NIEZNANY_KOD` | `app.py:502, 510, 524, 555` |
-| `ALERT.potwierdzone` | zawsze `NIE` | `app.py:290` |
-| `NADWYZKA_PRZERWY.status` | `oczekuje`, `przypisana` | `app.py:407, 898` |
-| `KOREKTA.status` | `oczekuje`, `zatwierdzona`, `odrzucona` | `app.py:717, 917` |
-| `KOREKTA.decyzja` | `tak` → zatwierdzona; każda inna wartość (ekran wysyła `nie`) → odrzucona | `app.py:912-919` |
-| `DZIEN_GRAFIKU.typ` | `P` praca, `W` wolne | `app.py:130-148` |
-| status dnia w porównaniu | `na_czas`, `spoznienie`, `nieobecnosc`, `planowane`, `wolne`, `obecny` | `app.py:1251-1273` |
-| strefy specjalne | `PRZERWA` (logika przerw), `KONIEC_ZMIANY` (pseudo-strefa zamykająca pobyt) | `app.py:378, 615` |
+| `WPIS_EWIDENCJI.flaga` | pusta, `DLUGA_PRZERWA`, `AUTO_ZAMKNIETO` | `app.py:378, 527` |
+| `WPIS_EWIDENCJI.korekta_info` | pusta, `ADMIN:<login>`, `ADMIN:<login>:start_override`; przy skanie wartość z żądania (ekran wysyła pustą) | `app.py:607, 946, 974` |
+| `ALERT.typ` | `DLUGA_PRZERWA`, `DLUGI_DYZUR`, `AUTO_ZAMKNIETO`, `NIEZNANY_KOD` | `app.py:507, 515, 529, 559` |
+| `ALERT.potwierdzone` | zawsze `NIE` | `app.py:295` |
+| `NADWYZKA_PRZERWY.status` | `oczekuje`, `przypisana` | `app.py:406, 900` |
+| `KOREKTA.status` | `oczekuje`, `zatwierdzona`, `odrzucona` | `app.py:721, 919` |
+| `KOREKTA.decyzja` | `tak` → zatwierdzona; każda inna wartość (ekran wysyła `nie`) → odrzucona | `app.py:914-921` |
+| `DZIEN_GRAFIKU.typ` | `P` praca, `W` wolne | `app.py:138-156` |
+| status dnia w porównaniu | `na_czas`, `spoznienie`, `nieobecnosc`, `planowane`, `wolne`, `obecny` | `app.py:1254-1276` |
+| strefy specjalne | `PRZERWA` (logika przerw), `KONIEC_ZMIANY` (pseudo-strefa zamykająca pobyt) | `app.py:377, 619` |
 
 ## Spójność danych
 
@@ -179,24 +179,24 @@ Pilnowana przez kod:
 
 | Reguła | Mechanizm | Źródło w kodzie |
 |---|---|---|
-| najwyżej jeden trwający pobyt na pracownika | kod pracownika jest kluczem pliku pobytów | `app.py:650` |
-| nowy pobyt zawsze zamyka poprzedni | zamknięcie i otwarcie w jednej sekwencji pod blokadą | `app.py:635-651` |
-| dwa równoczesne skany nie nadpiszą się | wspólna blokada dla skanera, panelu i kontroli w tle | `app.py:84, 487, 635, 938, 968` |
-| kod pracownika zaczyna się od `HU_` | walidacja przy dodawaniu | `app.py:1030` |
-| pracownik rejestruje tylko dozwolone strefy | walidacja przy rejestracji ze skanera | `app.py:615-616` |
-| usunięcie pracownika usuwa jego trwający pobyt | kasowanie wpisu w pliku pobytów | `app.py:1040-1042` |
+| najwyżej jeden trwający pobyt na pracownika | kod pracownika jest kluczem pliku pobytów | `app.py:654` |
+| nowy pobyt zawsze zamyka poprzedni | zamknięcie i otwarcie w jednej sekwencji pod blokadą | `app.py:639-655` |
+| dwa równoczesne skany nie nadpiszą się | wspólna blokada dla skanera, panelu i kontroli w tle | `app.py:89, 492, 639, 940, 970` |
+| kod pracownika zaczyna się od `HU_` | walidacja przy dodawaniu | `app.py:1032` |
+| pracownik rejestruje tylko dozwolone strefy | walidacja przy rejestracji ze skanera | `app.py:619-620` |
+| usunięcie pracownika usuwa jego trwający pobyt | kasowanie wpisu w pliku pobytów | `app.py:1042-1044` |
 
 Niepilnowana (znane niespójności, każda opisana w wyjątkach odpowiedniego procesu):
 
 | Obserwacja | Skutek | Źródło w kodzie |
 |---|---|---|
-| nazwa strefy w pobycie i wpisie to wolny tekst (uprawnienia pracownika zamiast słownika na skanerze) | strefa usunięta ze słownika może zostać w uprawnieniach; przy przesunięciach, ręcznym starcie i nadwyżkach serwer sprawdza słownik (US-005) | `app.py:615-616, 413-420, 891` |
-| podstrefa nie jest sprawdzana | dowolna wartość w ewidencji | `app.py:602, 650` |
-| nazwisko kopiowane do wpisów, nadwyżek i korekt | zmiana nazwiska nie aktualizuje historii | `app.py:383, 400, 714` |
-| korekta nie wskazuje wpisu | powiązanie tylko przez opis | `app.py:703-720` |
-| numer wpisu to liczba linii w pliku miesiąca; wpisy automatyczne nie mają numeru, czasu w formacie gg:mm:ss ani pola korekty | luki i powtórzenia numerów możliwe po ręcznej edycji pliku | `app.py:262-267, 522` |
-| numery nadwyżek i korekt to długość listy plus jeden, zapis bez blokady | powtórzony numer przy równoczesnym zapisie | `app.py:398, 712` |
-| wpis trafia do pliku dnia wejścia | pobyt przez północ (po przesunięciu przez administratora po północy) liczy się do dnia poprzedniego | `app.py:392` |
-| pracownik, strefa, konto o istniejącej nazwie nadpisują rekord | utrata uprawnień, podstref lub hasła | `app.py:989, 1031, 1018` |
-| wpis grafiku bez sprawdzenia pracownika i daty; kod nie jest zamieniany na wielkie litery | wiersz grafiku bez pracownika | `app.py:1201-1210` |
-| uszkodzony plik JSON czytany jak pusty | cicha utrata danych przy uszkodzeniu pliku; zapis jest atomowy od US-006 (plik tymczasowy + `os.replace`) | `app.py:86-101` |
+| nazwa strefy w pobycie i wpisie to wolny tekst (uprawnienia pracownika zamiast słownika na skanerze) | strefa usunięta ze słownika może zostać w uprawnieniach; przy przesunięciach, ręcznym starcie i nadwyżkach serwer sprawdza słownik (US-005) | `app.py:619-620, 412-419, 893` |
+| podstrefa nie jest sprawdzana | dowolna wartość w ewidencji | `app.py:606, 654` |
+| nazwisko kopiowane do wpisów, nadwyżek i korekt | zmiana nazwiska nie aktualizuje historii | `app.py:382, 399, 718` |
+| korekta nie wskazuje wpisu | powiązanie tylko przez opis | `app.py:707-724` |
+| numer wpisu to liczba linii w pliku miesiąca; wpisy automatyczne nie mają numeru, czasu w formacie gg:mm:ss ani pola korekty | luki i powtórzenia numerów możliwe po ręcznej edycji pliku | `app.py:265-270, 527` |
+| numery nadwyżek i korekt to długość listy plus jeden, zapis bez blokady | powtórzony numer przy równoczesnym zapisie | `app.py:397, 716` |
+| wpis trafia do pliku dnia wejścia | pobyt przez północ (po przesunięciu przez administratora po północy) liczy się do dnia poprzedniego | `app.py:391` |
+| pracownik, strefa, konto o istniejącej nazwie nadpisują rekord | utrata uprawnień, podstref lub hasła | `app.py:991, 1033, 1020` |
+| wpis grafiku bez sprawdzenia pracownika i daty; kod nie jest zamieniany na wielkie litery | wiersz grafiku bez pracownika | `app.py:1203-1212` |
+| uszkodzony plik JSON czytany jak pusty | wpis ERROR w logu, aplikacja działa na wartości domyślnej (US-010); zapis atomowy od US-006 | `app.py:91-109` |
