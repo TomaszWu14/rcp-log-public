@@ -27,12 +27,12 @@ flowchart LR
 |---|---|---|---|---|
 | Skaner → rejestracja | rejestracja w cudzym imieniu — kod przewidywalny, duplikat karty z tym samym kodem (Z3) | Spoofing | R4 / B5 | brak; *Could* US-008 |
 | Skaner → korekta | opis wolnego tekstu bez limitu długości | Tampering / DoS | — | escapowany w panelu; brak limitu (niska) |
-| Skaner → alerty.csv | nieznany kod z `=` jako formuła w Excelu | Tampering | R8 / B8 | brak; US-003 |
+| Skaner → alerty.csv | nieznany kod z `=` jako formuła w Excelu | Tampering | R8 (zamknięte) | apostrof przed `= + - @` i tabulatorem w każdym zapisie CSV (US-003) |
 | Każdy → /api/status | wyciek obecności z nazwiskami | Information disclosure | R3 (zamknięte) | sesja administratora wymagana, bez niej 401 (US-002) |
-| Admin → logowanie | brute force | Spoofing / Elevation | R5 / B6 | hash werkzeug; hasło startowe jednorazowe z wymuszoną zmianą (US-001); limit prób — US-003 |
+| Admin → logowanie | brute force | Spoofing / Elevation | R5 (zamknięte), R12 | hash werkzeug; hasło startowe jednorazowe (US-001); 5 prób / 10 min z adresu → 429 na 15 min (US-003); ograniczenia limitu: R12 |
 | Cookie sesji | podrobienie sesji dzięki domyślnemu kluczowi | Spoofing / Elevation | R1 (zamknięte) | klucz wymagany poza demo, ≥ 32 znaki; demo losuje (US-001) |
-| Admin → zmiana hasła | CSRF na formularz `/admin/haslo`; przejęcie hasła startowego z logu | Tampering / Spoofing | R6, R11 | min. 12 znaków, powtórzenie; CSRF — US-003; R11 zaakceptowane |
-| Admin → formularze | CSRF (logowanie, import xlsx, wylogowanie GET) | Tampering | R6 / B6 | brak `SameSite`; US-003 |
+| Admin → zmiana hasła | CSRF na formularz `/admin/haslo`; przejęcie hasła startowego z logu | Tampering / Spoofing | R6, R11 | min. 12 znaków, powtórzenie; token CSRF (US-003); R11 zaakceptowane |
+| Admin → formularze | CSRF (logowanie, import xlsx, wylogowanie GET) | Tampering | R6 (zamknięte) | token CSRF w sesji na formularzach i nagłówku importu; `SameSite=Lax`, `HttpOnly`, `Secure` za proxy (US-003); wylogowanie GET bez tokenu — skutek tylko wylogowanie |
 | Admin → import grafiku | spreparowany/duży xlsx | DoS | R9 | brak `MAX_CONTENT_LENGTH` |
 | Admin → config | dowolne klucze, `backup_path` dowolny katalog | Tampering | R7 / B7 | brak walidacji; w demo zablokowane |
 | Admin → operacje wrażliwe | brak dziennika kto co zmienił (poza `korekta_info`) | Repudiation | R10 | częściowo (`ADMIN:<login>`) |

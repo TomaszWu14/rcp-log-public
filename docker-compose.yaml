@@ -20,6 +20,8 @@ services:
       - TZ=Europe/Warsaw
       # Coolify generuje 64-znakowy klucz; poza Coolify podaj własny w pliku .env.
       - RCP_SECRET_KEY=${SERVICE_PASSWORD_64_RCPLOG}
+      # Za proxy TLS Coolify: ciasteczko sesji tylko po HTTPS, adres klienta z X-Forwarded-For.
+      - RCP_PROXY=1
     expose:
       - "5050"
     # Tryb produkcyjny (RCP_DEMO=0; RCP_SECRET_KEY wymagany; hasło startowe admina z RCP_ADMIN_PASSWORD

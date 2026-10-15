@@ -46,10 +46,17 @@ class Wymagania(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
 
-    def login(self):
+    def csrf(self):
+        """Token CSRF z formularza logowania (ustawia też ciasteczko sesji)."""
+        html = self.c.get("/admin/login").get_data(as_text=True)
+        return re.search(r'name="csrf" value="([0-9a-f]+)"', html).group(1)
+
+    def login(self, password="admin123"):
         """Logowanie hasłem startowym i wymuszona zmiana — dopiero potem panel jest dostępny."""
-        self.c.post("/admin/login", data={"username": "admin", "password": "admin123"})
-        self.c.post("/admin/haslo", data={"password": NOWE_HASLO, "password2": NOWE_HASLO})
+        self.token = self.csrf()
+        r = self.c.post("/admin/login", data={"username": "admin", "password": password, "csrf": self.token})
+        self.c.post("/admin/haslo", data={"password": NOWE_HASLO, "password2": NOWE_HASLO, "csrf": self.token})
+        return r
 
     def rejestruj(self, strefa, force=True, kod="HU_KOWALSKI_JAN"):
         return self.c.post("/api/rejestruj", json={"pracownik": kod, "strefa": strefa, "force": force})
@@ -139,7 +146,7 @@ class Wymagania(unittest.TestCase):
     def test_ADM_01_panel_tylko_po_zalogowaniu(self):
         self.assertEqual(self.c.get("/admin").status_code, 302)
         self.assertEqual(self.c.get("/admin/api/status").status_code, 401)
-        r = self.c.post("/admin/login", data={"username": "admin", "password": "zle"})
+        r = self.c.post("/admin/login", data={"username": "admin", "password": "zle", "csrf": self.csrf()})
         self.assertIn("Nieprawidłowy login lub hasło", r.get_data(as_text=True))
 
     def test_ADM_07_kod_pracownika_z_prefiksem_HU(self):
@@ -187,6 +194,43 @@ class Wymagania(unittest.TestCase):
         self.login()
         self.assertEqual(self.c.get("/api/status").json[0]["pracownik"], "HU_KOWALSKI_JAN")
 
+    def test_ADM_11_limit_prob_logowania(self):
+        token = self.csrf()
+        for _ in range(5):
+            r = self.c.post("/admin/login", data={"username": "admin", "password": "zle", "csrf": token})
+            self.assertEqual(r.status_code, 200)
+        r = self.c.post("/admin/login", data={"username": "admin", "password": "admin123", "csrf": token})
+        self.assertEqual(r.status_code, 429)
+        self.assertIn("Zbyt wiele nieudanych prób", r.get_data(as_text=True))
+        self.assertEqual(self.c.get("/admin").status_code, 302)   # poprawne hasło w blokadzie nie loguje
+
+    def test_ADM_12_csrf_formularzy_i_importu(self):
+        r = self.c.post("/admin/login", data={"username": "admin", "password": "admin123"})
+        self.assertEqual(r.status_code, 403)
+        self.login()
+        xlsx = io.BytesIO()
+        openpyxl.Workbook().save(xlsx)
+        bez = self.c.post("/admin/api/grafik/import", data={"file": (io.BytesIO(xlsx.getvalue()), "g.xlsx")},
+                          content_type="multipart/form-data")
+        self.assertEqual(bez.status_code, 403)
+        z = self.c.post("/admin/api/grafik/import", data={"file": (io.BytesIO(xlsx.getvalue()), "g.xlsx")},
+                        content_type="multipart/form-data", headers={"X-CSRF-Token": self.token})
+        self.assertNotEqual(z.status_code, 403)
+
+    def test_ADM_13_ciasteczko_sesji_samesite_httponly(self):
+        self.assertEqual(self.A.app.config["SESSION_COOKIE_SAMESITE"], "Lax")
+        cookie = self.c.get("/admin/login").headers.get("Set-Cookie", "")
+        self.assertIn("SameSite=Lax", cookie)
+        self.assertIn("HttpOnly", cookie)
+
+    def test_REJ_09_kod_z_formula_nie_trafia_do_csv_jako_formula(self):
+        self.c.post("/api/scan", json={"kod": "=1+1"})
+        self.assertEqual(self.A.read_alerts()[0]["pracownik"], "'=1+1")
+        self.rejestruj("PICKING")
+        self.c.post("/api/rejestruj", json={"pracownik": "HU_KOWALSKI_JAN", "strefa": "PRZYJECIA",
+                                            "force": True, "korekta_info": "-2+3"})
+        self.assertEqual(self.ewidencja_dzis()[0]["korekta_info"], "'-2+3")
+
     def test_SYS_04_start_bez_klucza_sesji_konczy_sie_bledem(self):
         env = {k: v for k, v in os.environ.items() if k not in ("RCP_SECRET_KEY", "RCP_DEMO")}
         r = subprocess.run([sys.executable, "-c", "import app"], cwd=self.tmp, env=env,
@@ -199,19 +243,21 @@ class Wymagania(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
 
     def test_SYS_05_haslo_startowe_wymusza_zmiane(self):
-        self.c.post("/admin/login", data={"username": "admin", "password": "admin123"})
+        t = self.csrf()
+        self.c.post("/admin/login", data={"username": "admin", "password": "admin123", "csrf": t})
         self.assertEqual(self.c.get("/admin").headers["Location"].split("?")[0], "/admin/haslo")
         self.assertEqual(self.c.get("/admin/api/status").status_code, 302)
-        r = self.c.post("/admin/haslo", data={"password": "krotkie", "password2": "krotkie"})
+        r = self.c.post("/admin/haslo", data={"password": "krotkie", "password2": "krotkie", "csrf": t})
         self.assertIn("co najmniej 12", r.get_data(as_text=True))
-        r = self.c.post("/admin/haslo", data={"password": NOWE_HASLO, "password2": NOWE_HASLO})
+        r = self.c.post("/admin/haslo", data={"password": NOWE_HASLO, "password2": NOWE_HASLO, "csrf": t})
         self.assertEqual(r.headers["Location"], "/admin")
         self.assertEqual(self.c.get("/admin").status_code, 200)
         self.assertFalse(self.A.load_admins()["admin"]["must_change"])
         self.c.get("/admin/logout")
-        self.c.post("/admin/login", data={"username": "admin", "password": "admin123"})
+        t = self.csrf()   # wylogowanie kasuje sesję razem z tokenem
+        self.c.post("/admin/login", data={"username": "admin", "password": "admin123", "csrf": t})
         self.assertEqual(self.c.get("/admin").status_code, 302)   # stare hasło już nie działa
-        self.c.post("/admin/login", data={"username": "admin", "password": NOWE_HASLO})
+        self.c.post("/admin/login", data={"username": "admin", "password": NOWE_HASLO, "csrf": t})
         self.assertEqual(self.c.get("/admin").status_code, 200)
 
     def test_SYS_06_bez_zmiennej_haslo_startowe_losowe_i_wypisane_raz(self):
@@ -223,7 +269,8 @@ class Wymagania(unittest.TestCase):
         m = re.search(r"Hasło startowe konta 'admin': (\S+)", buf.getvalue())
         self.assertIsNotNone(m, buf.getvalue())
         c = A.app.test_client()
-        c.post("/admin/login", data={"username": "admin", "password": m.group(1)})
+        tok = re.search(r'name="csrf" value="([0-9a-f]+)"', c.get("/admin/login").get_data(as_text=True)).group(1)
+        c.post("/admin/login", data={"username": "admin", "password": m.group(1), "csrf": tok})
         self.assertEqual(c.get("/admin").headers["Location"].split("?")[0], "/admin/haslo")
         self.assertNotIn(m.group(1), (tmp / "data" / "admins.json").read_text(encoding="utf-8"))
 
@@ -239,7 +286,7 @@ class Wymagania(unittest.TestCase):
         buf = io.BytesIO()
         wb.save(buf)
         r = self.c.post("/admin/api/grafik/import", data={"file": (io.BytesIO(buf.getvalue()), "g.xlsx")},
-                        content_type="multipart/form-data")
+                        content_type="multipart/form-data", headers={"X-CSRF-Token": self.token})
         self.assertEqual(r.json["bledy"], ["Wiersz 2: nie znaleziono pracownika 'LEGENDA →'"])
 
 

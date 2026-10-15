@@ -1177,7 +1177,7 @@ async function importGrafik(input){
   if(!file) return;
   const fd = new FormData();
   fd.append('file', file);
-  const r = await fetch('/admin/api/grafik/import',{method:'POST',body:fd});
+  const r = await fetch('/admin/api/grafik/import',{method:'POST',headers:{'X-CSRF-Token':'{{ csrf_token() }}'},body:fd});
   const d = await r.json();
   if(d.ok){
     toast(`Zaimportowano ${d.zaimportowano} wpisów dla ${d.pracownicy} pracowników`+(d.bledy.length?` | ${d.bledy.length} błędów`:''));

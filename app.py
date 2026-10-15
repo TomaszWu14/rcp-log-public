@@ -26,6 +26,10 @@ def _secret_key():
     return key
 
 app.secret_key = _secret_key()
+
+# Za proxy TLS (Coolify): ciasteczko tylko po HTTPS, adres klienta z X-Forwarded-For (US-003)
+PROXY = os.environ.get("RCP_PROXY") == "1"
+app.config.update(SESSION_COOKIE_SAMESITE="Lax", SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SECURE=PROXY)
 BASE_DIR     = Path(__file__).parent
 DATA_DIR     = BASE_DIR / ("data_demo" if DEMO else "data")
 DATA_DIR.mkdir(exist_ok=True)
@@ -228,8 +232,13 @@ def ensure_csv(path):
         with open(path, "w", newline="", encoding="utf-8-sig") as f:
             csv.writer(f, delimiter=";").writerow(CSV_HEADERS)
 
+def _csv_safe(v):
+    """Pole zaczynające się od = + - @ lub tabulatora dostaje apostrof — Excel nie wykona go jako formuły (B8)."""
+    return "'" + v if isinstance(v, str) and v and v[0] in "=+-@\t\r" else v
+
 def append_csv_row(row: dict, ts: datetime):
     daily, monthly = get_csv_paths(ts)
+    row = {k: _csv_safe(v) for k, v in row.items()}
     for path in (daily, monthly):
         ensure_csv(path)
         with open(path, "a", newline="", encoding="utf-8-sig") as f:
@@ -263,7 +272,7 @@ def append_alert(pracownik, imie, typ, opis):
     ensure_alerts()
     with open(ALERTS_FILE_PATH, "a", newline="", encoding="utf-8-sig") as f:
         csv.writer(f, delimiter=";").writerow(
-            [datetime.now().isoformat(), pracownik, imie, typ, opis, "NIE"])
+            [_csv_safe(v) for v in (datetime.now().isoformat(), pracownik, imie, typ, opis, "NIE")])
 
 def read_alerts(limit=100):
     rows = []
@@ -290,6 +299,40 @@ def mins_since(ts_str):
 def hash_pw(pw): return generate_password_hash(pw)
 def verify_pw(pw, hashed): return check_password_hash(hashed, pw)
 def is_admin():  return session.get("admin_logged") is True
+
+# ── Ochrona logowania i formularzy (US-003) ───────────────────────────────────
+LOGIN_LIMIT, LOGIN_WINDOW_MIN, LOGIN_BLOCK_MIN = 5, 10, 15
+_login_fail = {}   # adres -> czasy nieudanych prób; ponytail: pamięć jednego procesu, przy replikach wspólny magazyn
+
+def _client_ip():
+    if PROXY and request.headers.get("X-Forwarded-For"):
+        return request.headers["X-Forwarded-For"].split(",")[0].strip()
+    return request.remote_addr or "?"
+
+def _login_blocked(ip):
+    fails = _login_fail.get(ip, [])
+    return len(fails) >= LOGIN_LIMIT and time_module.time() - fails[-1] < LOGIN_BLOCK_MIN * 60
+
+def _login_failed(ip):
+    now = time_module.time()
+    _login_fail[ip] = [t for t in _login_fail.get(ip, []) if now - t < LOGIN_WINDOW_MIN * 60] + [now]
+
+def csrf_token():
+    if "csrf" not in session:
+        session["csrf"] = secrets.token_hex(16)
+    return session["csrf"]
+
+app.jinja_env.globals["csrf_token"] = csrf_token
+
+# Formularze HTML i multipart z panelu; JSON API chroni SameSite=Lax i wymóg Content-Type: application/json
+CSRF_FORMS = {"admin_login", "admin_haslo", "adm_grafik_import"}
+
+@app.before_request
+def sprawdz_csrf():
+    if request.method == "POST" and request.endpoint in CSRF_FORMS:
+        token = request.form.get("csrf") or request.headers.get("X-CSRF-Token")
+        if not token or token != session.get("csrf"):
+            return "Nieprawidłowy token formularza — odśwież stronę i spróbuj ponownie.", 403
 
 def _konto_startowe(user):
     """Hasło startowe z RCP_ADMIN_PASSWORD; bez zmiennej losowe, wypisane raz w logu (US-001).
@@ -672,14 +715,20 @@ def api_korekta():
 def admin_login():
     err = None
     if request.method == "POST":
+        ip = _client_ip()
+        if _login_blocked(ip):
+            return render_template("admin_login.html",
+                error=f"Zbyt wiele nieudanych prób. Spróbuj ponownie za {LOGIN_BLOCK_MIN} min."), 429
         user = request.form.get("username","").strip()
         pw   = request.form.get("password","")
         adm  = load_admins()
         if user in adm and verify_pw(pw, adm[user]["hash"]):
+            _login_fail.pop(ip, None)
             session["admin_logged"] = True
             session["admin_user"]   = user
             session["must_change"]  = adm[user]["must_change"]
             return redirect(url_for("admin_panel"))
+        _login_failed(ip)
         err = "Nieprawidłowy login lub hasło"
     return render_template("admin_login.html", error=err)
 
