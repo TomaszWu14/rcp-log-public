@@ -90,8 +90,15 @@ def _r(path, default=None):
         return default if default is not None else {}
 
 def _w(path, data):
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+    # Zapis przez plik tymczasowy i os.replace — przerwany zapis nie uszkadza pliku (US-006)
+    tmp = Path(str(path) + ".tmp")
+    try:
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        os.replace(tmp, path)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
 
 def load_workers():  return _r(WORKERS_FILE, {})
 def save_workers(d): _w(WORKERS_FILE, d)
@@ -699,17 +706,18 @@ def api_korekta():
     workers = load_workers()
     if kod not in workers:
         return jsonify({"ok":False,"error":"Nieznany pracownik"}), 403
-    korekty = load_korekty()
-    korekty.append({
-        "id":        len(korekty)+1,
-        "pracownik": kod,
-        "imie":      workers[kod]["imie"],
-        "ts_zgloszenia": datetime.now().isoformat(timespec="seconds"),
-        "opis":      d.get("opis",""),
-        "status":    "oczekuje",
-        "decyzja":   None,
-    })
-    save_korekty(korekty)
+    with _lock:   # numer zgłoszenia i zapis pod blokadą — równoczesne zgłoszenia nie kolidują (US-006)
+        korekty = load_korekty()
+        korekty.append({
+            "id":        len(korekty)+1,
+            "pracownik": kod,
+            "imie":      workers[kod]["imie"],
+            "ts_zgloszenia": datetime.now().isoformat(timespec="seconds"),
+            "opis":      d.get("opis",""),
+            "status":    "oczekuje",
+            "decyzja":   None,
+        })
+        save_korekty(korekty)
     return jsonify({"ok":True})
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -881,13 +889,14 @@ def adm_nadwyzka_przypisz(nid):
     strefa = (request.json or {}).get("strefa","").strip().upper()
     if not strefa: return jsonify({"ok":False,"error":"Brak strefy"}), 400
     if strefa not in load_strefy(): return jsonify({"ok":False,"error":f"Nieznana strefa {strefa}"}), 400
-    nadwyzki = load_nadwyzki()
-    for n in nadwyzki:
-        if n["id"] == nid:
-            n["przypisana_strefa"] = strefa
-            n["status"] = "przypisana"
-            break
-    save_nadwyzki(nadwyzki)
+    with _lock:   # decyzja pod blokadą; druga decyzja o tej samej pozycji dostaje 409 (T12, US-006)
+        nadwyzki = load_nadwyzki()
+        n = next((n for n in nadwyzki if n["id"] == nid), None)
+        if not n: return jsonify({"ok":False,"error":"Nie znaleziono nadwyżki"}), 404
+        if n["status"] != "oczekuje": return jsonify({"ok":False,"error":"Nadwyżka już rozliczona"}), 409
+        n["przypisana_strefa"] = strefa
+        n["status"] = "przypisana"
+        save_nadwyzki(nadwyzki)
     return jsonify({"ok":True})
 
 # Korekty
@@ -900,13 +909,14 @@ def adm_korekty():
 def adm_korekta_decyzja(kid):
     if not is_admin(): return jsonify({"error":"Brak dostępu"}), 401
     decyzja = (request.json or {}).get("decyzja","")
-    korekty = load_korekty()
-    for k in korekty:
-        if k["id"] == kid:
-            k["status"]  = "zatwierdzona" if decyzja=="tak" else "odrzucona"
-            k["decyzja"] = decyzja
-            break
-    save_korekty(korekty)
+    with _lock:   # jak przy nadwyżce: 404 / 409 zamiast cichego nadpisania (T12, US-006)
+        korekty = load_korekty()
+        k = next((k for k in korekty if k["id"] == kid), None)
+        if not k: return jsonify({"ok":False,"error":"Nie znaleziono zgłoszenia"}), 404
+        if k["status"] != "oczekuje": return jsonify({"ok":False,"error":"Zgłoszenie już rozpatrzone"}), 409
+        k["status"]  = "zatwierdzona" if decyzja=="tak" else "odrzucona"
+        k["decyzja"] = decyzja
+        save_korekty(korekty)
     return jsonify({"ok":True})
 
 # ── ADMIN: ręczne zarządzanie sesjami ────────────────────────────────────────

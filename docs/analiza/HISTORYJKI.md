@@ -75,7 +75,12 @@ Przy okazji: jeden próg długiego dyżuru 10 h (T2, Z13), spłata ignorowanych 
 Given dwa równoczesne zgłoszenia korekty
 When  oba zapisane
 Then  lista ma dwa wpisy o różnych id
+
+Given nadwyżka już przypisana przez pierwszego administratora
+When  drugi administrator przypisuje ją ponownie
+Then  409 „Nadwyżka już rozliczona”, decyzja pierwszego zostaje
 ```
+**Zrealizowane** (PR #25): `test_KOR_04` (20 równoczesnych zgłoszeń, 20 różnych id), `test_KOR_05` i `test_PRZ_05` (409 / 404), `test_SYS_09` (przerwany zapis nie uszkadza pliku); komunikat 409 widoczny w panelu.
 
 ### US-007 RODO i retencja (A3, R10, Z7)
 `bezpieczenstwo/RODO.md`: podstawa przetwarzania, informacja dla pracowników, retencja ewidencji, alertów,

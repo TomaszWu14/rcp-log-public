@@ -212,6 +212,44 @@ class Wymagania(unittest.TestCase):
         self.assertEqual(r.status_code, 403)
         self.assertEqual(self.A.load_korekty(), [])
 
+    def test_KOR_04_rownoczesne_zgloszenia_maja_rozne_id(self):
+        import threading
+        def zglos(i):
+            self.A.app.test_client().post("/api/korekta", json={"pracownik": "HU_KOWALSKI_JAN", "opis": f"z{i}"})
+        watki = [threading.Thread(target=zglos, args=(i,)) for i in range(20)]
+        for t in watki: t.start()
+        for t in watki: t.join()
+        ids = [k["id"] for k in self.A.load_korekty()]
+        self.assertEqual((len(ids), len(set(ids))), (20, 20))
+
+    def test_KOR_05_druga_decyzja_o_tej_samej_korekcie_409(self):
+        self.c.post("/api/korekta", json={"pracownik": "HU_KOWALSKI_JAN", "opis": "x"})
+        self.login()
+        self.assertEqual(self.c.post("/admin/api/korekty/1", json={"decyzja": "tak"}).status_code, 200)
+        r = self.c.post("/admin/api/korekty/1", json={"decyzja": "nie"})
+        self.assertEqual((r.status_code, r.json["error"]), (409, "Zgłoszenie już rozpatrzone"))
+        self.assertEqual(self.A.load_korekty()[0]["status"], "zatwierdzona")
+        self.assertEqual(self.c.post("/admin/api/korekty/99", json={"decyzja": "tak"}).status_code, 404)
+
+    def test_PRZ_05_druga_decyzja_o_tej_samej_nadwyzce_409(self):
+        self._przerwa_od(42)
+        self.rejestruj("PICKING")
+        self.login()
+        self.assertEqual(self.c.post("/admin/api/nadwyzki/1/przypisz", json={"strefa": "PICKING"}).status_code, 200)
+        r = self.c.post("/admin/api/nadwyzki/1/przypisz", json={"strefa": "BUS"})
+        self.assertEqual((r.status_code, r.json["error"]), (409, "Nadwyżka już rozliczona"))
+        self.assertEqual(self.A.load_nadwyzki()[0]["przypisana_strefa"], "PICKING")
+        self.assertEqual(self.c.post("/admin/api/nadwyzki/99/przypisz", json={"strefa": "PICKING"}).status_code, 404)
+
+    def test_SYS_09_przerwany_zapis_nie_uszkadza_pliku(self):
+        path = self.tmp / "data" / "config.json"
+        przed = path.read_text(encoding="utf-8")
+        with self.assertRaises(TypeError):
+            self.A._w(path, {"zly": object()})      # json.dump pada w połowie
+        self.assertEqual(path.read_text(encoding="utf-8"), przed)
+        self.assertEqual(self.A.load_config()["prog_przerwa_min"], 30)
+        self.assertEqual(list((self.tmp / "data").glob("*.tmp")), [])
+
     # ── Panel administratora ─────────────────────────────────────────────────
     def test_ADM_01_panel_tylko_po_zalogowaniu(self):
         self.assertEqual(self.c.get("/admin").status_code, 302)
