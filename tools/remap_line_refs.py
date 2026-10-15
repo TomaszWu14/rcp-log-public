@@ -13,6 +13,13 @@ base = sys.argv[1]
 files = sys.argv[2:] or [str(p) for p in pathlib.Path("docs").rglob("*.md") if "archiwum" not in p.parts] + ["README.md"]
 
 diff = subprocess.run(["git", "diff", "-U0", base, "--", "*.py"], capture_output=True, text=True, encoding="utf-8").stdout
+
+# Blokada przed podwójnym uruchomieniem na tym samym diffie — drugi przebieg dublowałby przesunięcia.
+STAMP = pathlib.Path(".remap_line_refs.last")
+digest = __import__("hashlib").sha1(diff.encode("utf-8")).hexdigest()
+if STAMP.exists() and STAMP.read_text() == digest:
+    sys.exit("Ten diff już został zastosowany do dokumentacji — pomijam (usuń .remap_line_refs.last, żeby wymusić).")
+STAMP.write_text(digest)
 hunks = {}   # plik -> [(old_start, old_len, new_start, new_len)]
 cur = None
 for line in diff.splitlines():
