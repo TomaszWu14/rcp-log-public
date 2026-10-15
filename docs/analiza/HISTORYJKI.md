@@ -48,6 +48,7 @@ Given skan kodu "=1+1"
 When  wiersz trafia do alerty.csv
 Then  pole zaczyna się od apostrofu, nie od "="
 ```
+**Zrealizowane** (PR #22): `test_ADM_11` (limit), `test_ADM_12` (CSRF formularzy i importu), `test_ADM_13` (ciasteczko), `test_REJ_09` (CSV); założenie Z27; ryzyko R12 zaakceptowane.
 
 ### US-004 CI i przypięte zależności (DEV-6, DEV-7)
 Zrealizowane w PR ze szkieletem procesu — [SLEDZENIE](SLEDZENIE.md).

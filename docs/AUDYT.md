@@ -44,16 +44,16 @@ Publiczne demo z danymi fikcyjnymi: [rcp.log.twapp.pl](https://rcp.log.twapp.pl)
 
 | # | Ustalenie | Waga | Gdzie |
 |---|---|---|---|
-| DEV-1 | Logika zamykania pobytu skopiowana trzykrotnie (skan, przesunięcie, ręczny start) — bezpośrednia przyczyna T1 i T9. Jedna funkcja `zamknij_pobyt()` naprawia oba. | wysoka | `app.py:549-589, 878-893, 918-933` |
-| DEV-2 | Zapisy JSON nieatomowe; `_lock` chroni tylko plik pobytów. Korekty i nadwyżki nadają `id = len+1` bez blokady — dwa równoczesne zgłoszenia mogą dostać to samo `id` albo jedno zginie (szerzej niż T12). | wysoka | `app.py:80-82, 655-665, 572-585` |
+| DEV-1 | Logika zamykania pobytu skopiowana trzykrotnie (skan, przesunięcie, ręczny start) — bezpośrednia przyczyna T1 i T9. Jedna funkcja `zamknij_pobyt()` naprawia oba. | wysoka | `app.py:635-676, 978-993, 1018-1033` |
+| DEV-2 | Zapisy JSON nieatomowe; `_lock` chroni tylko plik pobytów. Korekty i nadwyżki nadają `id = len+1` bez blokady — dwa równoczesne zgłoszenia mogą dostać to samo `id` albo jedno zginie (szerzej niż T12). | wysoka | `app.py:88-90, 749-759, 659-672` |
 | DEV-3 | 17 miejsc `except: pass` bez logowania; wątek alertów ginie po cichu przy nieprzewidzianym wyjątku. | średnia | [05 — obsługa błędów](05-decyzje-i-ograniczenia.md#obsługa-błędów-i-walidacja) |
-| DEV-4 | Efekty uboczne przy imporcie modułu: tworzenie katalogów, plików startowych, 2–3 wątków (D10). Wiele procesów = zdublowane alerty. | średnia | `app.py:31, 347, 374, 444` |
+| DEV-4 | Efekty uboczne przy imporcie modułu: tworzenie katalogów, plików startowych, 2–3 wątków (D10). Wiele procesów = zdublowane alerty. | średnia | `app.py:39, 433, 460, 530` |
 | DEV-5 | Jeden plik 1262 linie (D1) i `admin.html` z całym JS inline. OK dla prototypu; podział na moduły przy DEV-1. | niska | `app.py`, `templates/admin.html` |
 | DEV-6 | Zależności były nieprzypięte (`>=`) — **naprawione w tym PR** (`requirements.txt`, `requirements-dev.txt`). | — | — |
 | DEV-7 | Brak CI, lintera, pre-commit — **naprawione w tym PR** (ruff, unittest, bandit, pip-audit, gitleaks, trivy). | — | `.github/workflows/ci.yml` |
-| DEV-8 | Konfiguracja przez env: `RCP_SECRET_KEY`, `RCP_ADMIN_PASSWORD`, `PORT`, `RCP_DEMO*`; ścieżki danych i kopii nadal w kodzie/konfiguracji. Dockerfile: slim, użytkownik bez roota, healthcheck — dobrze. | niska | `app.py:16-28, 294-301`, `Dockerfile` |
+| DEV-8 | Konfiguracja przez env: `RCP_SECRET_KEY`, `RCP_ADMIN_PASSWORD`, `PORT`, `RCP_DEMO*`; ścieżki danych i kopii nadal w kodzie/konfiguracji. Dockerfile: slim, użytkownik bez roota, healthcheck — dobrze. | niska | `app.py:16-28, 380-387`, `Dockerfile` |
 | DEV-9 | Brak CHANGELOG i CONTRIBUTING — **dodane w tym PR**. | — | — |
-| DEV-10 | Martwy kod: sumy dashboardu (T13), alert `PRZEKROCZENIE_ZMIANY` (T15, Z14). | niska | `app.py:760-772`, `index.html:617` |
+| DEV-10 | Martwy kod: sumy dashboardu (T13), alert `PRZEKROCZENIE_ZMIANY` (T15, Z14). | niska | `app.py:860-872`, `index.html:617` |
 
 Testy: 18 akceptacyjnych (`unittest`, bez zależności). Brakuje testów jednostkowych logiki czystej
 (`parse_shift`, `fmt_czas`, `get_flaga`), testu „brak dostępu" dla **każdego** endpointu `/admin/api/*`
@@ -74,10 +74,10 @@ przetwarza wyłącznie dane fikcyjne, więc ryzyka poniżej dotyczą **planowane
 | R2 | ~~Konto `admin/admin123` bez wymuszenia zmiany; migracja hashy ustawiała to samo hasło~~ — **naprawione w US-001**: hasło startowe z env lub losowe wypisane raz, zmiana wymuszona przy pierwszym logowaniu. | ~~krytyczna~~ | B2, B3 | zamknięte |
 | R3 | ~~`/api/status` bez logowania zwracał nazwiska obecnych, strefę i godzinę wejścia~~ — **naprawione w US-002**: bez sesji 401 z pustym ciałem. | ~~wysoka~~ | B4 | zamknięte |
 | R4 | Kody QR przewidywalne (`HU_NAZWISKO_IMIE`), zgubiona karta dostaje duplikat z tym samym kodem (Z3) — rejestracja w cudzym imieniu. | **wysoka** | B5 | losowy token na karcie, unieważnianie |
-| R5 | Brak limitu prób logowania. | **wysoka** | B6 | limit per IP/login |
-| R6 | CSRF: logowanie, import grafiku (`multipart`), wylogowanie GET; cookie bez `SameSite`/`Secure`. | **średnia** | B6 | `SameSite=Lax`, `Secure`, token CSRF |
+| R5 | ~~Brak limitu prób logowania~~ — **naprawione w US-003**: 5 prób / 10 min z adresu → blokada 15 min. | ~~wysoka~~ | B6 | zamknięte |
+| R6 | ~~CSRF formularzy; cookie bez `SameSite`/`Secure`~~ — **naprawione w US-003**: token na formularzach i imporcie, `SameSite=Lax`, `HttpOnly`, `Secure` za proxy (`RCP_PROXY=1`); wylogowanie GET zostaje (skutek: tylko wylogowanie). | ~~średnia~~ | B6 | zamknięte |
 | R7 | Konfiguracja przyjmuje dowolne klucze; `backup_path` może wskazać dowolny katalog serwera. | **średnia** | B7 | biała lista, ścieżka tylko z env |
-| R8 | CSV injection: nieznany kod ze skanu trafia do `alerty.csv`; `=` staje się formułą w Excelu. | **średnia** | B8 | neutralizacja `= + - @` |
+| R8 | ~~CSV injection przez nieznany kod~~ — **naprawione w US-003**: apostrof przed `= + - @` i tabulatorem we wszystkich zapisach CSV. | ~~średnia~~ | B8 | zamknięte |
 | R9 | Brak `MAX_CONTENT_LENGTH` i walidacji xlsx (DoS jednym plikiem); brak nagłówków CSP / X-Content-Type-Options / Referrer-Policy; TLS tylko z proxy Coolify. Na publicznym demo każdy jest administratorem i może edytować grafik bez limitu — DoS instancji demo. | **średnia** | nowe | limit żądania, nagłówki w `after_request` |
 | R10 | Brak retencji (poza kopiami, Z7) i dziennika audytu operacji administratora (poza `korekta_info`). | **średnia** | A3 | polityka retencji, audit log |
 
@@ -88,7 +88,7 @@ Pozytywnie: opis korekty i kod ze skanu są escapowane; hasła hashowane; ekspor
 
 **Weto SEC:** zdjęte 2026-10-15 — R1, R2 (US-001) i R3 (US-002) zamknięte. Przed instancją produkcyjną (Z16)
 pozostają warunki z listy „przed wdrożeniem" w [05](05-decyzje-i-ograniczenia.md#co-trzeba-zrobić-przed-wdrożeniem-produkcyjnym),
-w szczególności R5/R6 (US-003) i retencja (US-007). Demo publiczne jest w porządku,
+w szczególności retencja (US-007) i walidacja na serwerze (R7, T9). Demo publiczne jest w porządku,
 dopóki zawiera wyłącznie dane fikcyjne.
 
 ---

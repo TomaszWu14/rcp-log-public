@@ -5,6 +5,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie 
 ## [Unreleased]
 
 ### Security
+- US-003: limit prób logowania (5 / 10 min z adresu → 429 na 15 min); token CSRF na formularzach logowania,
+  zmiany hasła i imporcie grafiku; ciasteczko sesji `SameSite=Lax`, `HttpOnly`, `Secure` przy `RCP_PROXY=1`;
+  pola CSV zaczynające się od `= + - @` lub tabulatora dostają apostrof (B6, B8).
 - US-002: `/api/status` (obecność z nazwiskami) wymaga sesji administratora; bez niej 401 z pustym ciałem (B4).
 - US-001: poza trybem demo `RCP_SECRET_KEY` jest wymagany (≥ 32 znaki) — brak kończy start błędem; usunięty klucz
   domyślny z kodu (B1). Hasło startowe `admin` z `RCP_ADMIN_PASSWORD` albo losowe wypisane raz w konsoli;

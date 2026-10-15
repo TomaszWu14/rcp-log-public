@@ -36,7 +36,7 @@ administrator widzi obsadę na żywo, a przerwa ponad próg wywołuje alert i tr
 ## Dokumentacja analityczna
 
 Dokumentacja przedwdrożeniowa odtworzona z kodu: procesy P1–P7 z diagramami BPMN w Mermaid i torami
-aktorów, reguły biznesowe BR-1–BR-58, wymagania WF-1–WF-38 z kryteriami Given/When/Then, model danych,
+aktorów, reguły biznesowe BR-1–BR-58, wymagania WF-1–WF-39 z kryteriami Given/When/Then, model danych,
 user flow, integracje i dziennik decyzji. Główny proces poniżej, reszta w [`docs/`](docs/00-przeglad.md).
 
 ```mermaid
@@ -197,6 +197,7 @@ docker run --rm -p 5050:5050 -e RCP_DEMO=1 rcp-log
 | `RCP_DEMO_RESET_MIN` | co ile minut odtworzyć dane demo (domyślnie 30) |
 | `RCP_SECRET_KEY` | klucz podpisu sesji, co najmniej 32 znaki; **wymagany** poza trybem demo (bez niego aplikacja nie startuje) |
 | `RCP_ADMIN_PASSWORD` | hasło startowe konta `admin` przy pierwszym starcie; bez niej hasło jest losowane i wypisane raz w konsoli; w obu wypadkach zmiana wymuszona przy pierwszym logowaniu |
+| `RCP_PROXY` | `1`, gdy aplikacja stoi za proxy z TLS (Coolify): ciasteczko sesji tylko po HTTPS, adres klienta z `X-Forwarded-For` |
 | `PORT` | port serwera (domyślnie 5050) |
 
 Testy akceptacyjne (18 testów, bez dodatkowych zależności; nazwy testów to identyfikatory wymagań
