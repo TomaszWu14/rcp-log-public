@@ -113,8 +113,8 @@ widoczne w działaniu aplikacji.
 - **Wybór i uzasadnienie.** Skaner otwarty. Logowanie hasłem przy każdej zmianie strefy byłoby
   niepraktyczne na wspólnym urządzeniu.
 - **Konsekwencje.** ➕ Rejestracja to jeden skan. ➖ Kod QR ma przewidywalną treść (`HU_NAZWISKO_IMIE`):
-  kto zna nazwisko, może zarejestrować kogoś innego. ➖ Podgląd obecności jest dostępny bez logowania
-  (`app.py:611`).
+  kto zna nazwisko, może zarejestrować kogoś innego. ➖ ~~Podgląd obecności dostępny bez logowania~~ —
+  od US-002 wymaga sesji administratora (`app.py:611-613`).
 
 ### D10. Zadania cykliczne jako wątki wewnątrz serwera
 
