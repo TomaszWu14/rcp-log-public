@@ -44,16 +44,16 @@ Publiczne demo z danymi fikcyjnymi: [rcp.log.twapp.pl](https://rcp.log.twapp.pl)
 
 | # | Ustalenie | Waga | Gdzie |
 |---|---|---|---|
-| DEV-1 | Logika zamykania pobytu skopiowana trzykrotnie (skan, przesunięcie, ręczny start) — bezpośrednia przyczyna T1 i T9. Jedna funkcja `zamknij_pobyt()` naprawia oba. | wysoka | `app.py:635-676, 978-993, 1018-1033` |
-| DEV-2 | Zapisy JSON nieatomowe; `_lock` chroni tylko plik pobytów. Korekty i nadwyżki nadają `id = len+1` bez blokady — dwa równoczesne zgłoszenia mogą dostać to samo `id` albo jedno zginie (szerzej niż T12). | wysoka | `app.py:88-90, 749-759, 659-672` |
+| DEV-1 | ~~Logika zamykania pobytu skopiowana trzykrotnie~~ — **naprawione w US-005**: `zamknij_pobyt()` + `sprawdz_strefe()`; kontrola w tle wydzielona do `kontrola_pobytow()` i przetestowana. | ~~wysoka~~ | `app.py:365-413, 473-523` |
+| DEV-2 | Zapisy JSON nieatomowe; `_lock` chroni tylko plik pobytów. Korekty i nadwyżki nadają `id = len+1` bez blokady — dwa równoczesne zgłoszenia mogą dostać to samo `id` albo jedno zginie (szerzej niż T12). | wysoka | `app.py:92-94, 702-712, 388-401` |
 | DEV-3 | 17 miejsc `except: pass` bez logowania; wątek alertów ginie po cichu przy nieprzewidzianym wyjątku. | średnia | [05 — obsługa błędów](05-decyzje-i-ograniczenia.md#obsługa-błędów-i-walidacja) |
-| DEV-4 | Efekty uboczne przy imporcie modułu: tworzenie katalogów, plików startowych, 2–3 wątków (D10). Wiele procesów = zdublowane alerty. | średnia | `app.py:39, 433, 460, 530` |
-| DEV-5 | Jeden plik 1262 linie (D1) i `admin.html` z całym JS inline. OK dla prototypu; podział na moduły przy DEV-1. | niska | `app.py`, `templates/admin.html` |
+| DEV-4 | Efekty uboczne przy imporcie modułu: tworzenie katalogów, plików startowych, 2–3 wątków (D10). Wiele procesów = zdublowane alerty. | średnia | `app.py:42, 441, 468, 531` |
+| DEV-5 | Jeden plik ~1340 linii (D1) i `admin.html` z całym JS inline. OK dla prototypu; podział na moduły, gdy pojawi się druga domena. Reguły ruff spłacone poza `except: pass` (DEV-3). | niska | `app.py`, `templates/admin.html` |
 | DEV-6 | Zależności były nieprzypięte (`>=`) — **naprawione w tym PR** (`requirements.txt`, `requirements-dev.txt`). | — | — |
 | DEV-7 | Brak CI, lintera, pre-commit — **naprawione w tym PR** (ruff, unittest, bandit, pip-audit, gitleaks, trivy). | — | `.github/workflows/ci.yml` |
-| DEV-8 | Konfiguracja przez env: `RCP_SECRET_KEY`, `RCP_ADMIN_PASSWORD`, `PORT`, `RCP_DEMO*`; ścieżki danych i kopii nadal w kodzie/konfiguracji. Dockerfile: slim, użytkownik bez roota, healthcheck — dobrze. | niska | `app.py:16-28, 380-387`, `Dockerfile` |
+| DEV-8 | Konfiguracja przez env: `RCP_SECRET_KEY`, `RCP_ADMIN_PASSWORD`, `PORT`, `RCP_DEMO*`; ścieżki danych i kopii nadal w kodzie/konfiguracji. Dockerfile: slim, użytkownik bez roota, healthcheck — dobrze. | niska | `app.py:23-35, 345-352`, `Dockerfile` |
 | DEV-9 | Brak CHANGELOG i CONTRIBUTING — **dodane w tym PR**. | — | — |
-| DEV-10 | Martwy kod: sumy dashboardu (T13), alert `PRZEKROCZENIE_ZMIANY` (T15, Z14). | niska | `app.py:860-872`, `index.html:617` |
+| DEV-10 | Martwy kod: sumy dashboardu (T13); ~~alert `PRZEKROCZENIE_ZMIANY`~~ usunięty (US-005). | niska | `app.py:813-825` |
 
 Testy: 18 akceptacyjnych (`unittest`, bez zależności). Brakuje testów jednostkowych logiki czystej
 (`parse_shift`, `fmt_czas`, `get_flaga`), testu „brak dostępu" dla **każdego** endpointu `/admin/api/*`

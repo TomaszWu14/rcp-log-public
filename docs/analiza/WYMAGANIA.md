@@ -7,7 +7,7 @@ pozostają źródłem prawdy. Tu są **wymagania niefunkcjonalne** (luka A1). Sk
 | ID | Wymaganie | Kryterium | Status |
 |---|---|---|---|
 | NFR-001 | Czas odpowiedzi skanu | `/api/scan` i `/api/rejestruj` odpowiadają w < 1 s przy 60 trwających pobytach i 1000 wpisów dnia | do zmierzenia |
-| NFR-002 | Równoczesność | skaner i 2 administratorów jednocześnie nie gubią ani nie duplikują wpisów | niespełnione (DEV-2, T12) |
+| NFR-002 | Równoczesność | skaner i 2 administratorów jednocześnie nie gubią ani nie duplikują wpisów | częściowo: zamykanie pobytu pod jedną blokadą (US-005); korekty i nadwyżki bez blokady (DEV-2, T12) |
 | NFR-003 | Trwałość danych | przerwany zapis nie uszkadza pliku; po restarcie trwające pobyty są zachowane | częściowo (zapis nieatomowy) |
 | NFR-004 | Przeglądarki | skaner i panel działają w aktualnym Chrome i Edge bez kroku budowania | spełnione |
 | NFR-005 | Dostępność skanera | obsługa klawiaturą (czytnik USB jako klawiatura, Z2), czytelne kontrasty | do sprawdzenia |

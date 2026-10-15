@@ -136,6 +136,76 @@ class Wymagania(unittest.TestCase):
         self.assertAlmostEqual(n["nadwyzka_min"], 12, delta=0.1)
         self.assertEqual(n["status"], "oczekuje")
 
+    def _przerwa_od(self, minut, kod="HU_KOWALSKI_JAN"):
+        start = (datetime.now() - timedelta(minutes=minut)).isoformat(timespec="seconds")
+        self.A.save_state({kod: {"strefa": "PRZERWA", "podstrefa": "", "ts_wejscia": start}})
+
+    def test_PRZ_03_zamkniecie_przerwy_przez_administratora_tworzy_nadwyzke(self):
+        self._przerwa_od(42)
+        self.login()
+        r = self.c.post("/admin/api/move", json={"pracownik": "HU_KOWALSKI_JAN", "strefa": "PICKING"})
+        self.assertEqual(r.status_code, 200)
+        wpis = self.ewidencja_dzis()[0]
+        self.assertEqual((wpis["flaga"], wpis["korekta_info"]), ("DLUGA_PRZERWA", "ADMIN:admin"))
+        n = self.A.load_nadwyzki()[0]
+        self.assertAlmostEqual(n["nadwyzka_min"], 12, delta=0.1)
+        self.assertEqual(n["status"], "oczekuje")
+
+    def test_PRZ_04_nadwyzka_tylko_do_strefy_ze_slownika(self):
+        self._przerwa_od(42)
+        self.rejestruj("PICKING")
+        self.login()
+        r = self.c.post("/admin/api/nadwyzki/1/przypisz", json={"strefa": "XYZ"})
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(r.json["error"], "Nieznana strefa XYZ")
+        r = self.c.post("/admin/api/nadwyzki/1/przypisz", json={"strefa": "picking"})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(self.A.load_nadwyzki()[0]["przypisana_strefa"], "PICKING")
+
+    def test_ADM_04_przesuniecie_sprawdza_uprawnienia_i_slownik(self):
+        self.rejestruj("PICKING")
+        self.login()
+        r = self.c.post("/admin/api/move", json={"pracownik": "HU_KOWALSKI_JAN", "strefa": "BUS"})
+        self.assertEqual((r.status_code, r.json["error"]), (403, "Brak uprawnień do strefy BUS"))
+        r = self.c.post("/admin/api/move", json={"pracownik": "HU_KOWALSKI_JAN", "strefa": "XYZ"})
+        self.assertEqual((r.status_code, r.json["error"]), (400, "Nieznana strefa XYZ"))
+        r = self.c.post("/admin/api/start", json={"pracownik": "HU_KOWALSKI_JAN", "strefa": "XYZ"})
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(self.A.load_state()["HU_KOWALSKI_JAN"]["strefa"], "PICKING")   # nic nie zamknięto
+        self.assertEqual(self.ewidencja_dzis(), [])
+        r = self.c.post("/admin/api/move", json={"pracownik": "HU_KOWALSKI_JAN", "strefa": "KONIEC_ZMIANY"})
+        self.assertEqual((r.status_code, r.json["akcja"]), (200, "koniec_zmiany"))
+
+    def test_ADM_05_reczny_start_zamyka_poprzedni_pobyt_wpisem(self):
+        self.rejestruj("PICKING")
+        self.login()
+        r = self.c.post("/admin/api/start", json={"pracownik": "HU_KOWALSKI_JAN", "strefa": "PRZYJECIA"})
+        self.assertEqual(r.status_code, 200)
+        wpis = self.ewidencja_dzis()[0]
+        self.assertEqual((wpis["strefa"], wpis["korekta_info"]), ("PICKING", "ADMIN:admin:start_override"))
+        self.assertEqual(self.A.load_state()["HU_KOWALSKI_JAN"]["strefa"], "PRZYJECIA")
+
+    def test_SES_04_auto_zamkniecie_o_23_59_59_dnia_wejscia(self):
+        wczoraj = datetime.now().replace(hour=20, minute=0, second=0, microsecond=0) - timedelta(days=1)
+        self.A.save_state({"HU_KOWALSKI_JAN": {"strefa": "PRZERWA", "podstrefa": "", "ts_wejscia": wczoraj.isoformat(timespec="seconds")}})
+        self.A.kontrola_pobytow()
+        daily, _ = self.A.get_csv_paths(wczoraj)
+        wpis = self.A.read_csv_rows(daily)[0]
+        self.assertEqual(wpis["ts_wyjscia"], wczoraj.replace(hour=23, minute=59, second=59).isoformat(timespec="seconds"))
+        self.assertEqual((wpis["flaga"], wpis["id"], wpis["czas_min"]), ("AUTO_ZAMKNIETO", "1", "239.98"))   # T14: numer i czas jak w każdym wpisie
+        self.assertEqual(self.A.load_state(), {})
+        self.assertEqual(self.A.read_alerts()[0]["typ"], "AUTO_ZAMKNIETO")
+        self.assertEqual(self.A.load_nadwyzki()[0]["status"], "oczekuje")   # przerwa 240 min > próg → nadwyżka także tu
+
+    def test_SES_05_jeden_prog_dlugiego_dyzuru_10h(self):
+        cfg = self.A.load_config(); cfg.pop("alert_dlugi_dyżur_h", None); self.A.save_config(cfg)
+        start = (datetime.now() - timedelta(hours=11)).isoformat(timespec="seconds")
+        self.A.save_state({"HU_KOWALSKI_JAN": {"strefa": "PICKING", "podstrefa": "", "ts_wejscia": start}})
+        self.login()
+        self.assertTrue(self.c.get("/api/status").json[0]["alert_dyzur"])
+        self.A.kontrola_pobytow()
+        self.assertEqual(self.A.read_alerts()[0]["typ"], "DLUGI_DYZUR")
+
     # ── Korekty ──────────────────────────────────────────────────────────────
     def test_KOR_02_korekta_tylko_od_znanego_pracownika(self):
         r = self.c.post("/api/korekta", json={"pracownik": "HU_NIEMA", "opis": "x"})

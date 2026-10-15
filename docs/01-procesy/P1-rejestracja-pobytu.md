@@ -58,16 +58,16 @@ Sprawdzenie uprawnienia do strefy odbywa się w kroku 7 i kończy proces odmową
 | Nr | Krok | Aktor | Wejście | Wyjście | Reguła biznesowa | Źródło w kodzie |
 |---|---|---|---|---|---|---|
 | 1 | Zeskanuj kod QR | pracownik | kod z karty odczytany czytnikiem USB na wspólnym komputerze zmiany (Z2) | kod w polu, wysłany po Enter albo samoczynnie 0,7 s po wpisaniu ponad 5 znaków | BR-1 | `index.html:441-448` |
-| 2 | Sprawdź kod | system | kod | pracownik rozpoznany albo odmowa z alertem | BR-1, BR-2 | `app.py:540-548` |
-| 3 | Pokaż stan dnia i dozwolone strefy | system | słownik pracownika, trwający pobyt, plik dnia | ekran: imię i nazwisko, bieżąca strefa i podstrefa, czas w strefie, czas dziś, kafelki stref | BR-3, BR-4, BR-11 | `app.py:550-587`, `index.html:462-490` |
+| 2 | Sprawdź kod | system | kod | pracownik rozpoznany albo odmowa z alertem | BR-1, BR-2 | `app.py:541-549` |
+| 3 | Pokaż stan dnia i dozwolone strefy | system | słownik pracownika, trwający pobyt, plik dnia | ekran: imię i nazwisko, bieżąca strefa i podstrefa, czas w strefie, czas dziś, kafelki stref | BR-3, BR-4, BR-11 | `app.py:551-588`, `index.html:462-490` |
 | 4 | Wybierz strefę albo Koniec zmiany | pracownik | kafelki dozwolonych stref, przycisk „Koniec zmiany” | wybrana strefa albo koniec zmiany | BR-3, BR-10 | `index.html:493-524` |
 | 5 | Wybierz podstrefę lub pomiń | pracownik | lista podstref wybranej strefy, opcja „Bez podstrefy” | podstrefa albo pusta | BR-5 | `index.html:528-546` |
 | 6 | Potwierdź wybór | pracownik | okno „Potwierdź przejście do strefy…” albo „Zakończ zmianę” | żądanie rejestracji wysłane do serwera | — | `index.html:549-566, 570-596` |
-| 7 | Sprawdź uprawnienie i czas trwania pobytu | system | lista uprawnień, trwający pobyt, próg szybkiej zmiany | zgoda, odmowa „Brak uprawnień do strefy” albo ostrzeżenie wymagające potwierdzenia | BR-3, BR-6 | `app.py:599-626` |
+| 7 | Sprawdź uprawnienie i czas trwania pobytu | system | lista uprawnień, trwający pobyt, próg szybkiej zmiany | zgoda, odmowa „Brak uprawnień do strefy” albo ostrzeżenie wymagające potwierdzenia | BR-3, BR-6 | `app.py:600-626` |
 | 8 | Odpowiedz na ostrzeżenie | pracownik | komunikat „Byłeś w X tylko mm:ss. Na pewno zmieniasz strefę?” | „Zostań” (powrót do wyboru) albo „Tak, zmień strefę” | BR-6 | `index.html:584-603` |
-| 9 | Zamknij trwający pobyt i zapisz wpis | system | trwający pobyt, chwila skanu, próg przerwy | wiersz ewidencji w pliku dnia i pliku miesiąca; przy długiej przerwie flaga, nadwyżka i alert | BR-7, BR-8, BR-9, BR-13 | `app.py:628-676` |
-| 10 | Otwórz nowy pobyt albo zakończ zmianę | system | wybrana strefa i podstrefa | trwający pobyt od chwili skanu albo brak pobytu | BR-7, BR-10, BR-12 | `app.py:678-684` |
-| 11 | Pokaż potwierdzenie | system | wynik rejestracji | ekran: nowa strefa, „Dziś przepracowano” albo „Łączny czas”, ramka z alertem przerwy; „OK — Gotowe” wraca do ekranu startu | BR-9, BR-11 | `app.py:686-696`, `index.html:606-625` |
+| 9 | Zamknij trwający pobyt i zapisz wpis | system | trwający pobyt, chwila skanu, próg przerwy | wiersz ewidencji w pliku dnia i pliku miesiąca; przy długiej przerwie flaga, nadwyżka i alert | BR-7, BR-8, BR-9, BR-13 | `app.py:628-648` |
+| 10 | Otwórz nowy pobyt albo zakończ zmianę | system | wybrana strefa i podstrefa | trwający pobyt od chwili skanu albo brak pobytu | BR-7, BR-10, BR-12 | `app.py:638-644` |
+| 11 | Pokaż potwierdzenie | system | wynik rejestracji | ekran: nowa strefa, „Dziś przepracowano” albo „Łączny czas”, ramka z alertem przerwy; „OK — Gotowe” wraca do ekranu startu | BR-9, BR-11 | `app.py:646-656`, `index.html:606-625` |
 
 ## Podprocesy
 
@@ -91,14 +91,14 @@ flowchart TD
 
 | Krok | Opis | Źródło w kodzie |
 |---|---|---|
-| A1 | kod z pola jest przycinany i zamieniany na wielkie litery, więc `hu_x` i `HU_X` to ten sam pracownik | `app.py:541` |
-| A2 | próba z nieznanym kodem zostaje w pliku alertów z treścią kodu | `app.py:546-548` |
-| A3 | lista stref pochodzi z uprawnień pracownika; kolor i podstrefy ze słownika stref; strefa spoza słownika dostaje kolor domyślny i brak podstref | `app.py:557-564` |
-| A4 | czas w strefie = teraz minus chwila wejścia trwającego pobytu | `app.py:566-567` |
-| A5 | czas dnia to suma minut zamkniętych pobytów z pliku dnia; trwający pobyt nie jest wliczany | `app.py:388-398, 555` |
+| A1 | kod z pola jest przycinany i zamieniany na wielkie litery, więc `hu_x` i `HU_X` to ten sam pracownik | `app.py:542` |
+| A2 | próba z nieznanym kodem zostaje w pliku alertów z treścią kodu | `app.py:547-549` |
+| A3 | lista stref pochodzi z uprawnień pracownika; kolor i podstrefy ze słownika stref; strefa spoza słownika dostaje kolor domyślny i brak podstref | `app.py:558-565` |
+| A4 | czas w strefie = teraz minus chwila wejścia trwającego pobytu | `app.py:567-568` |
+| A5 | czas dnia to suma minut zamkniętych pobytów z pliku dnia; trwający pobyt nie jest wliczany | `app.py:353-363, 556` |
 
 Serwer zwraca przy skanie także informację, czy trwający pobyt jest krótszy niż próg szybkiej zmiany,
-ale ekran jej nie wyświetla; ostrzeżenie pojawia się dopiero przy potwierdzeniu (`app.py:569-572`,
+ale ekran jej nie wyświetla; ostrzeżenie pojawia się dopiero przy potwierdzeniu (`app.py:570-573`,
 `index.html:584-589`).
 
 ### P1.2 Zamknięcie pobytu i zapis ewidencji
@@ -124,11 +124,11 @@ flowchart TD
 
 | Krok | Opis | Źródło w kodzie |
 |---|---|---|
-| A1 | blokada wspólna dla skanera, przesunięć administratora i kontroli w tle | `app.py:80, 628` |
-| A2 | czas w minutach z dokładnością do setnych; flaga `DLUGA_PRZERWA` tylko dla strefy `PRZERWA` ponad próg | `app.py:635-638, 400-405` |
-| A3 | wpis ma numer, kod i nazwisko, strefę, podstrefę, chwilę wejścia i wyjścia, czas, flagę i pole korekty; trafia do pliku dnia i miesiąca **według daty wejścia** | `app.py:639-653, 248-261` |
-| A4 | nadwyżka = czas przerwy minus próg; alert z czasem przerwy i nadwyżką; komunikat dołączony do odpowiedzi dla ekranu | `app.py:655-676` |
-| A5, A6 | koniec zmiany usuwa pobyt; inaczej nowy pobyt zaczyna się dokładnie w chwili zamknięcia poprzedniego | `app.py:678-684` |
+| A1 | blokada wspólna dla skanera, przesunięć administratora i kontroli w tle | `app.py:84, 628` |
+| A2 | czas w minutach z dokładnością do setnych; flaga `DLUGA_PRZERWA` tylko dla strefy `PRZERWA` ponad próg | `app.py:632-636, 369-372` |
+| A3 | wpis ma numer, kod i nazwisko, strefę, podstrefę, chwilę wejścia i wyjścia, czas, flagę i pole korekty; trafia do pliku dnia i miesiąca **według daty wejścia** | `app.py:373-385, 247-260` |
+| A4 | nadwyżka = czas przerwy minus próg; alert z czasem przerwy i nadwyżką; komunikat dołączony do odpowiedzi dla ekranu | `app.py:386-404` |
+| A5, A6 | koniec zmiany usuwa pobyt; inaczej nowy pobyt zaczyna się dokładnie w chwili zamknięcia poprzedniego | `app.py:638-644` |
 
 ## Ścieżki alternatywne i wyjątki
 
@@ -145,35 +145,35 @@ flowchart LR
 
 | Wyjątek | Warunek wystąpienia | Obsługa | Skutek dla procesu | Źródło w kodzie |
 |---|---|---|---|---|
-| Pusty kod | pole wysłane bez treści | ekran nie wysyła pustego kodu; serwer odrzuca go komunikatem „Pusty kod QR” | brak | `index.html:451`, `app.py:542-543` |
-| Nieznany kod | kod spoza słownika pracowników | odmowa „Nieznany kod QR. Skontaktuj się z liderem.” i alert `NIEZNANY_KOD` | proces kończy się na kroku 2; ślad w alertach | `app.py:546-548` |
-| Strefa spoza uprawnień | żądanie zapisu do strefy spoza listy pracownika (możliwe tylko poza ekranem) | odmowa „Brak uprawnień do strefy X” | nic nie zapisano | `app.py:607-609` |
-| Pracownik bez uprawnienia do strefy PRZERWA | lista uprawnień bez `PRZERWA` | brak kafelka przerwy | pracownik nie zarejestruje przerwy; czas przerwy wliczy się do strefy pracy | `app.py:557-564` |
-| Pracownik z pustą listą stref | nowo dodany pracownik bez uprawnień | ekran pokazuje tylko „Koniec zmiany” | rejestracja niemożliwa do czasu nadania uprawnień ([P6](P6-slowniki-i-konfiguracja.md)) | `app.py:1092` |
-| Strefa z uprawnień nieobecna w słowniku stref | strefa usunięta ze słownika, ale zostawiona w uprawnieniach | kafelek z domyślnym kolorem, bez podstref; zapis przechodzi | ewidencja ze strefą, której nie ma w słowniku | `app.py:559-564, 1053-1057` |
+| Pusty kod | pole wysłane bez treści | ekran nie wysyła pustego kodu; serwer odrzuca go komunikatem „Pusty kod QR” | brak | `index.html:451`, `app.py:543-544` |
+| Nieznany kod | kod spoza słownika pracowników | odmowa „Nieznany kod QR. Skontaktuj się z liderem.” i alert `NIEZNANY_KOD` | proces kończy się na kroku 2; ślad w alertach | `app.py:547-549` |
+| Strefa spoza uprawnień | żądanie zapisu do strefy spoza listy pracownika (możliwe tylko poza ekranem) | odmowa „Brak uprawnień do strefy X” | nic nie zapisano | `app.py:608-609` |
+| Pracownik bez uprawnienia do strefy PRZERWA | lista uprawnień bez `PRZERWA` | brak kafelka przerwy | pracownik nie zarejestruje przerwy; czas przerwy wliczy się do strefy pracy | `app.py:558-565` |
+| Pracownik z pustą listą stref | nowo dodany pracownik bez uprawnień | ekran pokazuje tylko „Koniec zmiany” | rejestracja niemożliwa do czasu nadania uprawnień ([P6](P6-slowniki-i-konfiguracja.md)) | `app.py:1021` |
+| Strefa z uprawnień nieobecna w słowniku stref | strefa usunięta ze słownika, ale zostawiona w uprawnieniach | kafelek z domyślnym kolorem, bez podstref; zapis przechodzi | ewidencja ze strefą, której nie ma w słowniku | `app.py:560-565, 982-986` |
 | Szybka zmiana | trwający pobyt krótszy niż próg (domyślnie 5 min), także przy końcu zmiany | ostrzeżenie; zapis dopiero po „Tak, zmień strefę” | pomyłkowy skan zatrzymany; prawdziwa zmiana po dodatkowym kliknięciu | `app.py:615-626`, `index.html:584-603` |
-| Ponowny skan tej samej strefy | pracownik wybiera strefę, w której już jest | brak blokady | jeden pobyt rozbity na dwa wpisy | `app.py:628-684` |
+| Ponowny skan tej samej strefy | pracownik wybiera strefę, w której już jest | brak blokady | jeden pobyt rozbity na dwa wpisy | `app.py:628-644` |
 | Brak połączenia | serwer nie odpowiada | komunikat „Błąd połączenia”; ekran zostaje na wyborze | skan do powtórzenia; nic nie zapisano | `index.html:459, 595` |
-| Pobyt niezamknięty do końca dnia | brak skanu „Koniec zmiany” | zamknięcie automatyczne o 23:59:59 dnia wejścia ([P2](P2-nadzor-i-alerty.md), BR-17) | czas do północy liczony jako pobyt; alert dla administratora | `app.py:502-524` |
+| Pobyt niezamknięty do końca dnia | brak skanu „Koniec zmiany” | zamknięcie automatyczne o 23:59:59 dnia wejścia ([P2](P2-nadzor-i-alerty.md), BR-17) | czas do północy liczony jako pobyt; alert dla administratora | `app.py:508-520` |
 | Ekran zostawiony na widoku pracownika | pracownik odchodzi bez „OK — Gotowe” albo „✕” | brak samoczynnego powrotu do startu | kolejna osoba może zarejestrować pobyt w cudzym imieniu | `index.html:655-663` |
 
 ## Reguły biznesowe
 
 | ID | Warunek → działanie | Źródło w kodzie |
 |---|---|---|
-| BR-1 | Kod odebrany ze skanera → usuń spacje z brzegów i zamień na wielkie litery przed każdym sprawdzeniem | `app.py:541, 592` |
-| BR-2 | Kod spoza słownika pracowników → odmów rejestracji i zapisz alert `NIEZNANY_KOD` z treścią próby | `app.py:546-548` |
-| BR-3 | Pracownik ma listę uprawnień → pokazuj tylko te strefy i odrzucaj zapis do innych; „Koniec zmiany” nie wymaga uprawnienia | `app.py:557-564, 607-609` |
-| BR-4 | Strefa z listy uprawnień nie istnieje w słowniku stref → pokaż ją z kolorem domyślnym i bez podstref, zapis dozwolony | `app.py:559-564` |
-| BR-5 | Strefa ma podstrefy → zaproponuj wybór podstrefy, ale pozwól pominąć; podstrefa nie jest sprawdzana ze słownikiem | `app.py:594, 683`, `index.html:528-546` |
+| BR-1 | Kod odebrany ze skanera → usuń spacje z brzegów i zamień na wielkie litery przed każdym sprawdzeniem | `app.py:542, 593` |
+| BR-2 | Kod spoza słownika pracowników → odmów rejestracji i zapisz alert `NIEZNANY_KOD` z treścią próby | `app.py:547-549` |
+| BR-3 | Pracownik ma listę uprawnień → pokazuj tylko te strefy i odrzucaj zapis do innych; „Koniec zmiany” nie wymaga uprawnienia | `app.py:558-565, 608-609` |
+| BR-4 | Strefa z listy uprawnień nie istnieje w słowniku stref → pokaż ją z kolorem domyślnym i bez podstref, zapis dozwolony | `app.py:560-565` |
+| BR-5 | Strefa ma podstrefy → zaproponuj wybór podstrefy, ale pozwól pominąć; podstrefa nie jest sprawdzana ze słownikiem | `app.py:595, 643`, `index.html:528-546` |
 | BR-6 | Trwający pobyt krótszy niż próg szybkiej zmiany (domyślnie 5 min) → wstrzymaj zapis do dodatkowego potwierdzenia; dotyczy też końca zmiany | `app.py:615-626` |
-| BR-7 | Pracownik rejestruje nową strefę → zamknij trwający pobyt chwilą skanu i otwórz nowy w tej samej chwili; najwyżej jeden trwający pobyt na pracownika | `app.py:628-684` |
-| BR-8 | Pobyt zamknięty → zapisz wiersz do pliku dnia i pliku miesiąca według daty **wejścia**; numer wpisu to kolejny numer w pliku miesiąca | `app.py:248-261, 639-653` |
-| BR-9 | Zamykany pobyt w strefie `PRZERWA` trwał dłużej niż próg przerwy (domyślnie 30 min) → flaga `DLUGA_PRZERWA`, nadwyżka = czas minus próg ze statusem „oczekuje”, alert, komunikat dla pracownika | `app.py:400-405, 655-676` |
-| BR-10 | Wybrano „Koniec zmiany” → zamknij pobyt bez otwierania nowego; pracownik znika z podglądu Live | `app.py:678-690` |
-| BR-11 | Ekran pokazuje „Dziś” → suma zamkniętych pobytów z pliku dnia; trwający pobyt nie jest wliczony | `app.py:388-398` |
-| BR-12 | Wybrano strefę, w której pracownik już jest → zamknij i otwórz pobyt w tej samej strefie (brak blokady) | `app.py:628-684` |
-| BR-13 | Logika przerwy → obowiązuje wyłącznie dla strefy o nazwie `PRZERWA`; zmiana nazwy wyłącza kontrolę przerw | `app.py:400-405, 486` |
+| BR-7 | Pracownik rejestruje nową strefę → zamknij trwający pobyt chwilą skanu i otwórz nowy w tej samej chwili; najwyżej jeden trwający pobyt na pracownika | `app.py:628-644` |
+| BR-8 | Pobyt zamknięty → zapisz wiersz do pliku dnia i pliku miesiąca według daty **wejścia**; numer wpisu to kolejny numer w pliku miesiąca | `app.py:247-260, 373-385` |
+| BR-9 | Zamykany pobyt w strefie `PRZERWA` trwał dłużej niż próg przerwy (domyślnie 30 min) → flaga `DLUGA_PRZERWA`, nadwyżka = czas minus próg ze statusem „oczekuje”, alert, komunikat dla pracownika | `app.py:369-372, 386-404` |
+| BR-10 | Wybrano „Koniec zmiany” → zamknij pobyt bez otwierania nowego; pracownik znika z podglądu Live | `app.py:638-650` |
+| BR-11 | Ekran pokazuje „Dziś” → suma zamkniętych pobytów z pliku dnia; trwający pobyt nie jest wliczony | `app.py:353-363` |
+| BR-12 | Wybrano strefę, w której pracownik już jest → zamknij i otwórz pobyt w tej samej strefie (brak blokady) | `app.py:628-644` |
+| BR-13 | Logika przerwy → obowiązuje wyłącznie dla strefy o nazwie `PRZERWA`; zmiana nazwy wyłącza kontrolę przerw | `app.py:369-372, 493` |
 
 ## Wymagania funkcjonalne
 

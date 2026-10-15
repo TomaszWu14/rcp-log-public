@@ -6,8 +6,10 @@ albo wypisane raz w konsoli przy pierwszym starcie; zmiana wymuszona przy pierws
 Tryb demo (bez logowania, dane fikcyjne): RCP_DEMO=1 python run.py
 """
 import os
+
 from waitress import serve
-from app import app, DEMO
+
+from app import DEMO, app
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5050))

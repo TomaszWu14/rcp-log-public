@@ -44,3 +44,4 @@ data_demo/
 
 # graphify — cache ekstrakcji (graf i raport są wersjonowane)
 graphify-out/cache/
+.remap_line_refs.last
