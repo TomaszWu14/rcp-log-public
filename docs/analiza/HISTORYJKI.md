@@ -68,6 +68,7 @@ When  administrator przesuwa go do BUS
 Then  403 „Brak uprawnień do strefy BUS"
 ```
 Przy okazji: jeden próg długiego dyżuru 10 h (T2, Z13), spłata ignorowanych reguł ruff z `pyproject.toml`.
+**Zrealizowane** (PR #23): `test_PRZ_03` (nadwyżka przy zamknięciu przez administratora), `test_PRZ_04` (strefa nadwyżki ze słownika), `test_ADM_04` (400/403 przy przesunięciu i starcie), `test_ADM_05` (charakteryzujący: `start_override`), `test_SES_04` (auto-zamknięcie z nadwyżką, T14), `test_SES_05` (jeden próg 10 h); T15 usunięty; ruff bez wyjątków poza `except: pass`.
 
 ### US-006 Atomowy zapis i identyfikatory bez kolizji (DEV-2, T12)
 ```gherkin

@@ -614,7 +614,7 @@ function showConfirmScreen(d) {
     : `➜ <strong>${d.nowa_strefa}${d.podstrefa ? ' / '+d.podstrefa : ''}</strong><br>Dziś przepracowano: <strong>${d.dzien_fmt || '—'}</strong>`;
 
   const alertEl = document.getElementById('cfAlert');
-  const alerty  = (d.alerts||[]).filter(a => a.typ !== 'PRZEKROCZENIE_ZMIANY');
+  const alerty  = d.alerts||[];
   if (alerty.length) {
     alertEl.textContent = alerty.map(a=>a.opis).join('\n');
     alertEl.style.display = 'block';

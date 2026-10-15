@@ -30,7 +30,7 @@ flowchart TB
 |---|---|
 | Stan w plikach, `threading.Lock` tylko dla pobytów | poprawne przy jednym procesie; wiele replik = duplikaty alertów i wyścigi (DEV-2, DEV-4) |
 | Wątki startują przy imporcie modułu | testy importują `app` z działającymi wątkami; `init_files()` tworzy katalog danych |
-| Brak warstwy domenowej | zamykanie pobytu w trzech miejscach (DEV-1) — cel US-005 |
+| Zalążek warstwy domenowej | `zamknij_pobyt()`, `sprawdz_strefe()`, `kontrola_pobytow()` — jedno miejsce reguł zamykania pobytu (US-005); reszta logiki nadal w widokach |
 | Tryb demo przez `before_request` | każdy gość jest administratorem; `DEMO_BLOCKED` zamyka słowniki, konta, konfigurację, import |
 | Frontend bez builda | zero zależności JS; cały JS inline w szablonach |
 

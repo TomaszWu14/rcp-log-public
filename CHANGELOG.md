@@ -14,6 +14,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie 
   pierwsze logowanie wymusza zmianę na `/admin/haslo` (B2, B3). `admins.json` trzyma skrót i znacznik zmiany
   (stary format czytany w locie).
 
+### Fixed
+- US-005: jedno miejsce zamykania pobytu (`zamknij_pobyt`) — nadwyżka przerwy powstaje także przy zamknięciu przez
+  administratora i auto-zamknięciu (T1); wpis automatyczny ma numer i format czasu (T14); jeden próg długiego dyżuru 10 h
+  (T2); przesunięcie, ręczny start i przypisanie nadwyżki sprawdzają słownik stref i uprawnienia (T9); usunięty martwy
+  filtr `PRZEKROCZENIE_ZMIANY` (T15). Kontrola w tle wydzielona do `kontrola_pobytow()`.
+- Odwołania `app.py:linia` w dokumentacji naprawione po podwójnym przeliczeniu w US-003; skrypt blokuje drugi przebieg.
+
 ### Added
 - `tools/remap_line_refs.py` — przelicza odwołania `app.py:linia` w dokumentacji po zmianie kodu.
 - Proces zespołu BA / DEV / SEC: `CONTRIBUTING.md`, `SECURITY.md`, szablony issue i PR, CODEOWNERS.

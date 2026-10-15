@@ -1,16 +1,23 @@
 """
 RCP Log v3
 """
-from flask import (Flask, request, jsonify, render_template,
-                   session, redirect, url_for, send_file)
-from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, date, timedelta
-from pathlib import Path
+import csv
+import json
+import os
+import re
+import secrets
+import shutil
+import threading
+import time as time_module
+from datetime import date, datetime, timedelta
 from io import BytesIO
-import csv, json, threading, time as time_module, shutil, os, re, secrets
+from pathlib import Path
+
 import openpyxl
-from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
+from flask import Flask, jsonify, redirect, render_template, request, send_file, session, url_for
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
+from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask(__name__)
 DEMO = os.environ.get("RCP_DEMO") == "1"   # tryb demo — opis w sekcji DEMO na końcu pliku
@@ -43,7 +50,8 @@ KOREKTY_FILE = DATA_DIR / "korekty.json"
 NADWYZKI_FILE= DATA_DIR / "nadwyzki_przerw.json"
 GRAFIK_FILE  = DATA_DIR / "grafik.json"
 
-PROG_PRZERWA = 30  # alert po X min przerwy
+PROG_PRZERWA  = 30  # alert po X min przerwy
+ALERT_DYZUR_H = 10  # jeden próg długiego dyżuru dla alertu i podglądu Live (Z13)
 
 CSV_HEADERS = [
     "id","pracownik","imie_nazwisko","strefa","podstrefa",
@@ -354,12 +362,55 @@ def get_dzien_min(pracownik, dt=None):
     except: pass
     return total
 
-def get_flaga(strefa, czas_min):
-    cfg = load_config()
-    prog = cfg.get("prog_przerwa_min", PROG_PRZERWA)
-    if strefa == "PRZERWA" and czas_min > prog:
-        return "DLUGA_PRZERWA"
-    return ""
+def zamknij_pobyt(kod, imie, sesja, ts_wyj, korekta_info="", flaga=None):
+    """Jedno miejsce zamykania pobytu dla skanera, administratora i auto-zamknięcia (US-005):
+    wpis ewidencji, flaga długiej przerwy, nadwyżka i alert — niezależnie od tego, kto zamyka.
+    Wywoływać pod _lock. Zwraca listę alertów dla ekranu potwierdzenia."""
+    ts_in  = datetime.fromisoformat(sesja["ts_wejscia"])
+    czas_m = round((ts_wyj - ts_in).total_seconds() / 60, 2)
+    prog   = load_config().get("prog_przerwa_min", PROG_PRZERWA)
+    dluga  = sesja["strefa"] == "PRZERWA" and czas_m > prog
+    append_csv_row({
+        "id":            next_id(ts_in),
+        "pracownik":     kod,
+        "imie_nazwisko": imie,
+        "strefa":        sesja["strefa"],
+        "podstrefa":     sesja.get("podstrefa", ""),
+        "ts_wejscia":    sesja["ts_wejscia"],
+        "ts_wyjscia":    ts_wyj.isoformat(timespec="seconds"),
+        "czas_min":      czas_m,
+        "czas_fmt":      fmt_czas(czas_m),
+        "flaga":         flaga or ("DLUGA_PRZERWA" if dluga else ""),
+        "korekta_info":  korekta_info,
+    }, ts_in)
+    if not dluga:
+        return []
+    nadwyzka_min = round(czas_m - prog, 2)
+    nadwyzki = load_nadwyzki()
+    nadwyzki.append({
+        "id":               len(nadwyzki) + 1,
+        "pracownik":        kod,
+        "imie":             imie,
+        "ts_przerwy":       sesja["ts_wejscia"],
+        "czas_przerwy_min": czas_m,
+        "czas_przerwy_fmt": fmt_czas(czas_m),
+        "nadwyzka_min":     nadwyzka_min,
+        "nadwyzka_fmt":     fmt_czas(nadwyzka_min),
+        "przypisana_strefa": None,
+        "status":           "oczekuje",
+    })
+    save_nadwyzki(nadwyzki)
+    append_alert(kod, imie, "DLUGA_PRZERWA", f"{imie} przerwa {fmt_czas(czas_m)} | nadwyzka {fmt_czas(nadwyzka_min)}")
+    return [{"typ": "DLUGA_PRZERWA", "opis": f"Przerwa trwała {fmt_czas(czas_m)} (nadwyżka: {fmt_czas(nadwyzka_min)})"}]
+
+def sprawdz_strefe(worker, strefa):
+    """Strefa docelowa musi istnieć w słowniku i być na liście uprawnień pracownika (T9).
+    Zwraca (komunikat, kod HTTP) albo None, gdy wszystko gra."""
+    if strefa not in load_strefy():
+        return f"Nieznana strefa {strefa}", 400
+    if strefa not in [s.upper() for s in worker.get("strefy", [])]:
+        return f"Brak uprawnień do strefy {strefa}", 403
+    return None
 
 # ── INIT ───────────────────────────────────────────────────────────────────────
 def init_files():
@@ -419,69 +470,62 @@ if not DEMO: threading.Thread(target=backup_job, daemon=True).start()
 # ── ALERT CHECKER ──────────────────────────────────────────────────────────────
 _active_alerts = {}   # {pracownik: True} — alerty które jeszcze nie były "odczytane"
 
+def kontrola_pobytow(now=None):
+    """Jeden przebieg kontroli w tle: alerty długiej przerwy i dyżuru, auto-zamknięcie pobytów
+    z poprzednich dni o 23:59:59 dnia wejścia. Wydzielone z pętli, żeby dało się przetestować."""
+    workers       = load_workers()
+    cfg           = load_config()
+    prog_przerwa  = cfg.get("prog_przerwa_min", PROG_PRZERWA)
+    alert_dyżur_h = cfg.get("alert_dlugi_dyżur_h", ALERT_DYZUR_H)
+    now           = now or datetime.now()
+    today         = now.date()
+    with _lock:
+        state    = _r(STATE_FILE, {})
+        changed  = False
+        to_close = []
+
+        for kod, sess in state.items():
+            imie   = workers.get(kod, {}).get("imie", kod)
+            m      = (now - datetime.fromisoformat(sess["ts_wejscia"])).total_seconds() / 60
+            ts_wej = datetime.fromisoformat(sess["ts_wejscia"])
+
+            # --- Alert długa przerwa ---
+            if sess["strefa"] == "PRZERWA" and m > prog_przerwa and not sess.get("alert_wyslany"):
+                opis = f"{imie} na przerwie {fmt_czas(m)} (prog {prog_przerwa} min)"
+                append_alert(kod, imie, "DLUGA_PRZERWA", opis)
+                _active_alerts[kod] = {"typ":"DLUGA_PRZERWA","opis":opis,"ts":now.isoformat()}
+                state[kod]["alert_wyslany"] = True
+                changed = True
+
+            # --- Alert długi dyżur (każda strefa) ---
+            if m > alert_dyżur_h * 60 and not sess.get("alert_dlugi_dyżur"):
+                opis = f"{imie} w strefie {sess['strefa']} od {fmt_czas(m)}"
+                append_alert(kod, imie, "DLUGI_DYZUR", opis)
+                _active_alerts[kod] = {"typ":"DLUGI_DYZUR","opis":opis,"ts":now.isoformat()}
+                state[kod]["alert_dlugi_dyżur"] = True
+                changed = True
+
+            # --- Auto-zamknięcie o północy dnia rozpoczęcia ---
+            # Pobyt z poprzedniego dnia (lub starszych) → zamknij o 23:59:59 tamtego dnia
+            if ts_wej.date() < today:
+                to_close.append((kod, sess, imie, ts_wej))
+
+        for kod, sess, imie, ts_wej in to_close:
+            ts_wyj = datetime(ts_wej.year, ts_wej.month, ts_wej.day, 23, 59, 59)
+            zamknij_pobyt(kod, imie, sess, ts_wyj, flaga="AUTO_ZAMKNIETO")
+            opis = f"{imie} auto-zamknięto o 23:59 dnia {ts_wej.date()} (strefa {sess['strefa']})"
+            append_alert(kod, imie, "AUTO_ZAMKNIETO", opis)
+            _active_alerts[kod] = {"typ":"AUTO_ZAMKNIETO","opis":opis,"ts":now.isoformat()}
+            del state[kod]
+            changed = True
+
+        if changed:
+            _w(STATE_FILE, state)
+
 def bg_check():
     while True:
         time_module.sleep(60)
-        try:
-            workers       = load_workers()
-            cfg           = load_config()
-            prog_przerwa  = cfg.get("prog_przerwa_min", PROG_PRZERWA)
-            alert_dyżur_h = cfg.get("alert_dlugi_dyżur_h", 10)
-            with _lock:
-                state    = _r(STATE_FILE, {})
-                changed  = False
-                now      = datetime.now()
-                today    = now.date()
-                to_close = []
-
-                for kod, sess in state.items():
-                    imie   = workers.get(kod, {}).get("imie", kod)
-                    m      = mins_since(sess["ts_wejscia"])
-                    ts_wej = datetime.fromisoformat(sess["ts_wejscia"])
-
-                    # --- Alert długa przerwa ---
-                    if sess["strefa"] == "PRZERWA":
-                        if m > prog_przerwa and not sess.get("alert_wyslany"):
-                            opis = f"{imie} na przerwie {fmt_czas(m)} (prog {prog_przerwa} min)"
-                            append_alert(kod, imie, "DLUGA_PRZERWA", opis)
-                            _active_alerts[kod] = {"typ":"DLUGA_PRZERWA","opis":opis,"ts":now.isoformat()}
-                            state[kod]["alert_wyslany"] = True
-                            changed = True
-
-                    # --- Alert długi dyżur (każda strefa) ---
-                    if m > alert_dyżur_h * 60 and not sess.get("alert_dlugi_dyżur"):
-                        opis = f"{imie} w strefie {sess['strefa']} od {fmt_czas(m)}"
-                        append_alert(kod, imie, "DLUGI_DYZUR", opis)
-                        _active_alerts[kod] = {"typ":"DLUGI_DYZUR","opis":opis,"ts":now.isoformat()}
-                        state[kod]["alert_dlugi_dyżur"] = True
-                        changed = True
-
-                    # --- Auto-zamknięcie o północy dnia rozpoczęcia ---
-                    # Sesja z poprzedniego dnia (lub starszych) → zamknij o 23:59:59 tamtego dnia
-                    if ts_wej.date() < today:
-                        to_close.append((kod, sess, imie, ts_wej))
-
-                # Zamykamy przeterminowane sesje
-                for kod, sess, imie, ts_wej in to_close:
-                    ts_wyj = datetime(ts_wej.year, ts_wej.month, ts_wej.day, 23, 59, 59)
-                    czas_m = (ts_wyj - ts_wej).total_seconds() / 60
-                    append_csv_row({
-                        "pracownik": kod, "imie_nazwisko": imie,
-                        "strefa": sess["strefa"],
-                        "podstrefa": sess.get("podstrefa",""),
-                        "ts_wejscia": sess["ts_wejscia"],
-                        "ts_wyjscia": ts_wyj.isoformat(timespec="seconds"),
-                        "czas_min": round(czas_m, 2),
-                        "flaga": "AUTO_ZAMKNIETO",
-                    }, ts_wyj)
-                    opis = f"{imie} auto-zamknięto o 23:59 dnia {ts_wej.date()} (strefa {sess['strefa']})"
-                    append_alert(kod, imie, "AUTO_ZAMKNIETO", opis)
-                    _active_alerts[kod] = {"typ":"AUTO_ZAMKNIETO","opis":opis,"ts":now.isoformat()}
-                    del state[kod]
-                    changed = True
-
-                if changed:
-                    _w(STATE_FILE, state)
+        try: kontrola_pobytow()
         except (OSError, KeyError, ValueError): pass
 
 threading.Thread(target=bg_check, daemon=True).start()
@@ -561,9 +605,8 @@ def api_rejestruj():
 
     worker = workers[kod]
 
-    if nowa_str != "KONIEC_ZMIANY":
-        if nowa_str not in [s.upper() for s in worker.get("strefy",[])]:
-            return jsonify({"ok":False,"error":f"Brak uprawnień do strefy {nowa_str}"}), 403
+    if nowa_str != "KONIEC_ZMIANY" and nowa_str not in [s.upper() for s in worker.get("strefy",[])]:
+        return jsonify({"ok":False,"error":f"Brak uprawnień do strefy {nowa_str}"}), 403
 
     cfg     = load_config()
     alerts  = []
@@ -590,46 +633,7 @@ def api_rejestruj():
 
         # Zamknij poprzednią strefę
         if sesja:
-            ts_in  = datetime.fromisoformat(sesja["ts_wejscia"])
-            czas_m = round((now - ts_in).total_seconds() / 60, 2)
-            flaga  = get_flaga(sesja["strefa"], czas_m)
-
-            row = {
-                "id":            next_id(ts_in),
-                "pracownik":     kod,
-                "imie_nazwisko": worker["imie"],
-                "strefa":        sesja["strefa"],
-                "podstrefa":     sesja.get("podstrefa",""),
-                "ts_wejscia":    sesja["ts_wejscia"],
-                "ts_wyjscia":    now_iso,
-                "czas_min":      czas_m,
-                "czas_fmt":      fmt_czas(czas_m),
-                "flaga":         flaga,
-                "korekta_info":  korekta,
-            }
-            append_csv_row(row, ts_in)
-
-            if flaga == "DLUGA_PRZERWA":
-                prog = cfg.get("prog_przerwa_min", PROG_PRZERWA)
-                nadwyzka_min = round(czas_m - prog, 2)
-                nadwyzki = load_nadwyzki()
-                nadwyzki.append({
-                    "id":           len(nadwyzki) + 1,
-                    "pracownik":    kod,
-                    "imie":         worker["imie"],
-                    "ts_przerwy":   sesja["ts_wejscia"],
-                    "czas_przerwy_min": czas_m,
-                    "czas_przerwy_fmt": fmt_czas(czas_m),
-                    "nadwyzka_min": nadwyzka_min,
-                    "nadwyzka_fmt": fmt_czas(nadwyzka_min),
-                    "przypisana_strefa": None,
-                    "status": "oczekuje",
-                })
-                save_nadwyzki(nadwyzki)
-                append_alert(kod, worker["imie"], "DLUGA_PRZERWA",
-                    f"{worker['imie']} przerwa {fmt_czas(czas_m)} | nadwyzka {fmt_czas(nadwyzka_min)}")
-                alerts.append({"typ":"DLUGA_PRZERWA",
-                    "opis": f"Przerwa trwała {fmt_czas(czas_m)} (nadwyżka: {fmt_czas(nadwyzka_min)})"})
+            alerts = zamknij_pobyt(kod, worker["imie"], sesja, now, korekta)
 
         if nowa_str == "KONIEC_ZMIANY":
             state.pop(kod, None)
@@ -659,7 +663,7 @@ def api_status():
     now            = datetime.now()
     cfg            = load_config()
     prog           = cfg.get("prog_przerwa_min", PROG_PRZERWA)
-    alert_dyżur_h  = cfg.get("alert_dlugi_dyżur_h", 12)
+    alert_dyżur_h  = cfg.get("alert_dlugi_dyżur_h", ALERT_DYZUR_H)
     wynik          = []
     for kod, sess in state.items():
         m = (now - datetime.fromisoformat(sess["ts_wejscia"])).total_seconds() / 60
@@ -822,7 +826,6 @@ def adm_dashboard():
 
     # Aktywne sesje teraz
     state   = load_state()
-    workers = load_workers()
     strefy  = load_strefy()
     cfg     = load_config()
     prog    = cfg.get("prog_przerwa_min", PROG_PRZERWA)
@@ -877,6 +880,7 @@ def adm_nadwyzka_przypisz(nid):
     if not is_admin(): return jsonify({"error":"Brak dostępu"}), 401
     strefa = (request.json or {}).get("strefa","").strip().upper()
     if not strefa: return jsonify({"ok":False,"error":"Brak strefy"}), 400
+    if strefa not in load_strefy(): return jsonify({"ok":False,"error":f"Nieznana strefa {strefa}"}), 400
     nadwyzki = load_nadwyzki()
     for n in nadwyzki:
         if n["id"] == nid:
@@ -919,27 +923,15 @@ def adm_move():
     if kod not in workers:
         return jsonify({"ok":False,"error":"Nieznany pracownik"}), 404
     worker  = workers[kod]
+    if nowa_str != "KONIEC_ZMIANY" and (blad := sprawdz_strefe(worker, nowa_str)):
+        return jsonify({"ok":False,"error":blad[0]}), blad[1]
     with _lock:
         now     = datetime.now()
         now_iso = now.isoformat(timespec="seconds")
         state   = _r(STATE_FILE, {})
         sesja   = state.get(kod)
         if sesja:
-            ts_in  = datetime.fromisoformat(sesja["ts_wejscia"])
-            czas_m = round((now - ts_in).total_seconds() / 60, 2)
-            append_csv_row({
-                "id":            next_id(ts_in),
-                "pracownik":     kod,
-                "imie_nazwisko": worker["imie"],
-                "strefa":        sesja["strefa"],
-                "podstrefa":     sesja.get("podstrefa",""),
-                "ts_wejscia":    sesja["ts_wejscia"],
-                "ts_wyjscia":    now_iso,
-                "czas_min":      czas_m,
-                "czas_fmt":      fmt_czas(czas_m),
-                "flaga":         get_flaga(sesja["strefa"], czas_m),
-                "korekta_info":  f"ADMIN:{session.get('admin_user','?')}",
-            }, ts_in)
+            zamknij_pobyt(kod, worker["imie"], sesja, now, f"ADMIN:{session.get('admin_user','?')}")
         if nowa_str == "KONIEC_ZMIANY":
             state.pop(kod, None)
             _w(STATE_FILE, state)
@@ -959,27 +951,15 @@ def adm_start():
     if kod not in workers: return jsonify({"ok":False,"error":"Nieznany pracownik"}), 404
     if not strefa: return jsonify({"ok":False,"error":"Brak strefy"}), 400
     worker  = workers[kod]
+    if blad := sprawdz_strefe(worker, strefa):
+        return jsonify({"ok":False,"error":blad[0]}), blad[1]
     now     = datetime.now()
     now_iso = now.isoformat(timespec="seconds")
     with _lock:
         state = _r(STATE_FILE, {})
         sesja = state.get(kod)
         if sesja:
-            ts_in  = datetime.fromisoformat(sesja["ts_wejscia"])
-            czas_m = round((now - ts_in).total_seconds() / 60, 2)
-            append_csv_row({
-                "id":            next_id(ts_in),
-                "pracownik":     kod,
-                "imie_nazwisko": worker["imie"],
-                "strefa":        sesja["strefa"],
-                "podstrefa":     sesja.get("podstrefa",""),
-                "ts_wejscia":    sesja["ts_wejscia"],
-                "ts_wyjscia":    now_iso,
-                "czas_min":      czas_m,
-                "czas_fmt":      fmt_czas(czas_m),
-                "flaga":         get_flaga(sesja["strefa"], czas_m),
-                "korekta_info":  f"ADMIN:{session.get('admin_user','?')}:start_override",
-            }, ts_in)
+            zamknij_pobyt(kod, worker["imie"], sesja, now, f"ADMIN:{session.get('admin_user','?')}:start_override")
         state[kod] = {"strefa":strefa,"podstrefa":podstrefa,"ts_wejscia":now_iso}
         _w(STATE_FILE, state)
     return jsonify({"ok":True,"imie_nazwisko":worker["imie"],"strefa":strefa})
@@ -1156,7 +1136,7 @@ def adm_grafik_template():
         ws.cell(2, ci, f"{code} = {desc}").font = Font(italic=True, color="7a90a8")
 
     # wiersze pracowników
-    for ri, (kod, w) in enumerate(workers.items(), start=3):
+    for ri, w in enumerate(workers.values(), start=3):
         ws.cell(ri, 1, w.get("imie","")).border = border
 
     buf = BytesIO()
