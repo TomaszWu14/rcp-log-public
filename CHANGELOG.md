@@ -22,6 +22,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie 
 - Odwołania `app.py:linia` w dokumentacji naprawione po podwójnym przeliczeniu w US-003; skrypt blokuje drugi przebieg.
 
 ### Added
+- US-007: `docs/bezpieczenstwo/RODO.md` v0.1 — role, cele i podstawy przetwarzania, monitoring (art. 22³ KP),
+  minimalizacja, tabela retencji, prawa osób, wpis do rejestru czynności, checklista przed wdrożeniem;
+  historyjka US-009 (mechanizm retencji).
 - `tools/remap_line_refs.py` — przelicza odwołania `app.py:linia` w dokumentacji po zmianie kodu.
 - Proces zespołu BA / DEV / SEC: `CONTRIBUTING.md`, `SECURITY.md`, szablony issue i PR, CODEOWNERS.
 - CI (GitHub Actions): ruff, testy, bandit, pip-audit, gitleaks, build obrazu + trivy; Dependabot; pre-commit.

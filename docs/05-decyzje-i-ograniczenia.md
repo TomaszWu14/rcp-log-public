@@ -228,8 +228,9 @@ Kolejność według wpływu na wiarygodność ewidencji i bezpieczeństwo danych
    dyżuru 10 h (T2, Z13); usunięcie pozostałości `PRZEKROCZENIE_ZMIANY` (T15, Z14).
 4. **Korekta powiązana z konkretnym wpisem**, która po zatwierdzeniu zmienia ewidencję w obu plikach
    (D6, BR-32, BR-33).
-5. **Polityka retencji danych osobowych** w ewidencji, alertach, nadwyżkach i korektach (dla kopii ustalono
-   30 dni, [Z7](00-przeglad.md#ustalenia-potwierdzone)) oraz decyzja o anonimizacji danych
+5. **Polityka retencji danych osobowych** — opisana w [RODO.md](bezpieczenstwo/RODO.md) (US-007: podstawy,
+   okresy dla ewidencji, alertów, nadwyżek, korekt; kopie 30 dni, [Z7](00-przeglad.md#ustalenia-potwierdzone));
+   do potwierdzenia z IOD, mechanizm usuwania w US-009; oraz decyzja o anonimizacji danych
    przykładowych ([Do anonimizacji](00-przeglad.md#do-anonimizacji)).
 6. **Kopia zapasowa niezależna od godziny pracy serwera**, na tym samym serwerze, z retencją 30 dni
    i powiadomieniem o błędzie (T11, D10, Z7).

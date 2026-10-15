@@ -79,7 +79,7 @@ przetwarza wyłącznie dane fikcyjne, więc ryzyka poniżej dotyczą **planowane
 | R7 | Konfiguracja przyjmuje dowolne klucze; `backup_path` może wskazać dowolny katalog serwera. | **średnia** | B7 | biała lista, ścieżka tylko z env |
 | R8 | ~~CSV injection przez nieznany kod~~ — **naprawione w US-003**: apostrof przed `= + - @` i tabulatorem we wszystkich zapisach CSV. | ~~średnia~~ | B8 | zamknięte |
 | R9 | Brak `MAX_CONTENT_LENGTH` i walidacji xlsx (DoS jednym plikiem); brak nagłówków CSP / X-Content-Type-Options / Referrer-Policy; TLS tylko z proxy Coolify. Na publicznym demo każdy jest administratorem i może edytować grafik bez limitu — DoS instancji demo. | **średnia** | nowe | limit żądania, nagłówki w `after_request` |
-| R10 | Brak retencji (poza kopiami, Z7) i dziennika audytu operacji administratora (poza `korekta_info`). | **średnia** | A3 | polityka retencji, audit log |
+| R10 | Brak retencji (poza kopiami, Z7) i dziennika audytu operacji administratora (poza `korekta_info`). Polityka opisana w [RODO.md](bezpieczenstwo/RODO.md) (US-007); mechanizm — US-009. | **średnia** | A3 | US-009, audit log |
 
 Poza top 10 (niska): nazwy pracowników bez `escHtml` w trzech miejscach panelu (`admin.html:688, 740, 1229`;
 w 740 wewnątrz `onclick` — apostrof w nazwisku psuje przycisk); dane tylko od administratora, więc self-XSS.
