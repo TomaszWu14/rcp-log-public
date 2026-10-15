@@ -50,12 +50,12 @@ flowchart TD
 |---|---|---|---|---|---|---|
 | 1 | Otwórz „Zgłoś korektę wpisu” | pracownik | ekran startu skanera | okno z polem opisu | — | `index.html:306, 627-632` |
 | 2 | Opisz problem i podaj swój kod | pracownik | opis słowny; kod wpisany w oknie przeglądarki | zgłoszenie wysłane | BR-29 | `index.html:634-646` |
-| 3 | Sprawdź kod | system | kod | zgłoszenie przyjęte albo odrzucone | BR-29 | `app.py:708-712` |
-| 4 | Zapisz zgłoszenie ze statusem oczekuje | system | kod, opis, chwila zgłoszenia | pozycja na liście korekt z kolejnym numerem i kopią nazwiska | BR-30, BR-33 | `app.py:707-725` |
+| 3 | Sprawdź kod | system | kod | zgłoszenie przyjęte albo odrzucone | BR-29 | `app.py:752-756` |
+| 4 | Zapisz zgłoszenie ze statusem oczekuje | system | kod, opis, chwila zgłoszenia | pozycja na liście korekt z kolejnym numerem i kopią nazwiska | BR-30, BR-33 | `app.py:751-769` |
 | 5 | Przejrzyj zgłoszenia | administrator | zakładka Korekty z licznikiem oczekujących | lista od najnowszych: data, pracownik, opis, status | BR-34 | `admin.html:842-862` |
 | 6 | Zatwierdź albo odrzuć | administrator | opis zgłoszenia; wiedza spoza systemu (ewidencja, rozmowa z pracownikiem) | decyzja ✓ lub ✕ | BR-31 | `admin.html:853-856, 863-867` |
-| 7 | Zapisz decyzję i zmień status | system | numer zgłoszenia, decyzja | status „zatwierdzona” albo „odrzucona”; przyciski znikają | BR-31, BR-32 | `app.py:910-922` |
-| 8 | Popraw wpis w pliku dnia i pliku miesiąca | administrator, poza aplikacją | zatwierdzone zgłoszenie, pliki CSV | poprawiony wpis w **obu** plikach | BR-32 | `app.py:257-263` (dwa pliki) |
+| 7 | Zapisz decyzję i zmień status | system | numer zgłoszenia, decyzja | status „zatwierdzona” albo „odrzucona”; przyciski znikają | BR-31, BR-32 | `app.py:954-966` |
+| 8 | Popraw wpis w pliku dnia i pliku miesiąca | administrator, poza aplikacją | zatwierdzone zgłoszenie, pliki CSV | poprawiony wpis w **obu** plikach | BR-32 | `app.py:301-307` (dwa pliki) |
 
 ## Podprocesy
 
@@ -91,7 +91,7 @@ flowchart TD
 | A1–A3 | pusty opis zatrzymuje wysyłkę komunikatem „Opisz problem”; kontrola tylko na ekranie | `index.html:637` |
 | A4 | okno jest dostępne tylko z ekranu startu, więc kod trzeba wpisać ręcznie w oknie przeglądarki „Wpisz swój kod (HU_...)”; kod zamieniany na wielkie litery | `index.html:306, 638-642` |
 | A6 | ekran zawsze pokazuje „Zgłoszenie wysłane — admin zatwierdzi korektę”, także gdy serwer odrzucił nieznany kod | `index.html:640-645` |
-| A7, A8 | serwer przyjmuje zgłoszenie tylko dla kodu ze słownika; nie wymaga niepustego opisu | `app.py:708-725` |
+| A7, A8 | serwer przyjmuje zgłoszenie tylko dla kodu ze słownika; nie wymaga niepustego opisu | `app.py:752-769` |
 
 ### P4.2 Decyzja administratora
 
@@ -115,30 +115,30 @@ flowchart TD
 |---|---|---|
 | A1 | lista od najnowszych; licznik oczekujących przy nazwie zakładki | `admin.html:842-847` |
 | A2 | przyciski ✓ i ✕ tylko przy statusie „oczekuje”; brak okna potwierdzenia | `admin.html:853-856` |
-| A3 | wartość „tak” daje „zatwierdzona”, każda inna „odrzucona”; ekran nie sprawdza odpowiedzi serwera | `app.py:914-921`, `admin.html:863-867` |
+| A3 | wartość „tak” daje „zatwierdzona”, każda inna „odrzucona”; ekran nie sprawdza odpowiedzi serwera | `app.py:958-965`, `admin.html:863-867` |
 
 ## Ścieżki alternatywne i wyjątki
 
 | Wyjątek | Warunek wystąpienia | Obsługa | Skutek dla procesu | Źródło w kodzie |
 |---|---|---|---|---|
-| Kod spoza słownika w zgłoszeniu | pracownik pomylił kod albo wpisał cudzy | serwer odrzuca, ekran pokazuje sukces | pracownik myśli, że zgłosił; zgłoszenia nie ma na liście | `app.py:710-712`, `index.html:640-645` |
+| Kod spoza słownika w zgłoszeniu | pracownik pomylił kod albo wpisał cudzy | serwer odrzuca, ekran pokazuje sukces | pracownik myśli, że zgłosił; zgłoszenia nie ma na liście | `app.py:754-756`, `index.html:640-645` |
 | Zgłoszenie w cudzym imieniu | kod innej osoby wpisany w oknie | brak weryfikacji tożsamości | zgłoszenie z cudzym nazwiskiem | `index.html:638` |
-| Zgłoszenie bez opisu wysłane poza ekranem | żądanie z pustym opisem | serwer przyjmuje | pozycja bez treści | `app.py:720` |
-| Nieistniejący numer zgłoszenia | decyzja dla numeru spoza listy | serwer odpowiada sukcesem, nic nie zmienia | brak | `app.py:914-921` |
-| Dwie decyzje w tej samej chwili | dwóch administratorów ocenia to samo zgłoszenie | decyzja pod blokadą; druga dostaje 409 „Zgłoszenie już rozpatrzone” i komunikat w panelu (US-006) | pierwsza decyzja zostaje | `app.py:914-921`, `admin.html:863-868` |
+| Zgłoszenie bez opisu wysłane poza ekranem | żądanie z pustym opisem | serwer przyjmuje | pozycja bez treści | `app.py:764` |
+| Nieistniejący numer zgłoszenia | decyzja dla numeru spoza listy | serwer odpowiada sukcesem, nic nie zmienia | brak | `app.py:958-965` |
+| Dwie decyzje w tej samej chwili | dwóch administratorów ocenia to samo zgłoszenie | decyzja pod blokadą; druga dostaje 409 „Zgłoszenie już rozpatrzone” i komunikat w panelu (US-006) | pierwsza decyzja zostaje | `app.py:958-965`, `admin.html:863-868` |
 | Zmiana decyzji | administrator chce cofnąć zatwierdzenie | brak funkcji; przyciski znikają po decyzji | zmiana tylko w pliku poza aplikacją | `admin.html:853-856` |
-| Zgłoszenie bez wskazania wpisu | opis nie pozwala zidentyfikować pobytu | brak powiązania zgłoszenia z wpisem | administrator szuka wpisu w Historii po dacie i nazwisku | `app.py:707-724` |
-| Poprawka tylko w jednym pliku | osoba poprawiająca zmienia plik dnia, ale nie miesiąca (lub odwrotnie) | brak kontroli spójności | plik dnia i plik miesiąca różnią się | `app.py:257-263` |
+| Zgłoszenie bez wskazania wpisu | opis nie pozwala zidentyfikować pobytu | brak powiązania zgłoszenia z wpisem | administrator szuka wpisu w Historii po dacie i nazwisku | `app.py:751-768` |
+| Poprawka tylko w jednym pliku | osoba poprawiająca zmienia plik dnia, ale nie miesiąca (lub odwrotnie) | brak kontroli spójności | plik dnia i plik miesiąca różnią się | `app.py:301-307` |
 
 ## Reguły biznesowe
 
 | ID | Warunek → działanie | Źródło w kodzie |
 |---|---|---|
-| BR-29 | Zgłoszenie korekty → przyjmij tylko dla kodu ze słownika pracowników; opis to dowolny tekst, którego serwer nie wymaga | `app.py:708-725` |
-| BR-30 | Zgłoszenie przyjęte → nadaj kolejny numer, zapisz chwilę zgłoszenia, kopię nazwiska i status „oczekuje” | `app.py:707-724` |
-| BR-31 | Administrator podejmuje decyzję → „tak” daje status „zatwierdzona”, każda inna wartość „odrzucona”; decyzja jest jednorazowa | `app.py:914-921`, `admin.html:853-856` |
-| BR-32 | Decyzja zapisana → ewidencja pozostaje bez zmian; poprawkę nanosi człowiek w pliku dnia i pliku miesiąca | `app.py:910-922, 257-263` |
-| BR-33 | Zgłoszenie → nie wskazuje konkretnego wpisu ewidencji; powiązanie wynika tylko z opisu | `app.py:707-724` |
+| BR-29 | Zgłoszenie korekty → przyjmij tylko dla kodu ze słownika pracowników; opis to dowolny tekst, którego serwer nie wymaga | `app.py:752-769` |
+| BR-30 | Zgłoszenie przyjęte → nadaj kolejny numer, zapisz chwilę zgłoszenia, kopię nazwiska i status „oczekuje” | `app.py:751-768` |
+| BR-31 | Administrator podejmuje decyzję → „tak” daje status „zatwierdzona”, każda inna wartość „odrzucona”; decyzja jest jednorazowa | `app.py:958-965`, `admin.html:853-856` |
+| BR-32 | Decyzja zapisana → ewidencja pozostaje bez zmian; poprawkę nanosi człowiek w pliku dnia i pliku miesiąca | `app.py:954-966, 301-307` |
+| BR-33 | Zgłoszenie → nie wskazuje konkretnego wpisu ewidencji; powiązanie wynika tylko z opisu | `app.py:751-768` |
 | BR-34 | Zakładka Korekty → lista od najnowszych, licznik przy zakładce pokazuje liczbę zgłoszeń „oczekuje” | `admin.html:842-847` |
 
 ## Wymagania funkcjonalne

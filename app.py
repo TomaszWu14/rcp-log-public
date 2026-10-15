@@ -41,7 +41,25 @@ app.secret_key = _secret_key()
 
 # Za proxy TLS (Coolify): ciasteczko tylko po HTTPS, adres klienta z X-Forwarded-For (US-003)
 PROXY = os.environ.get("RCP_PROXY") == "1"
-app.config.update(SESSION_COOKIE_SAMESITE="Lax", SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SECURE=PROXY)
+app.config.update(SESSION_COOKIE_SAMESITE="Lax", SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SECURE=PROXY,
+                  MAX_CONTENT_LENGTH=2 * 1024 * 1024)   # największe żądanie to import grafiku (.xlsx); 413 powyżej (US-011)
+
+@app.after_request
+def naglowki_bezpieczenstwa(resp):
+    # Szablony mają skrypty i style inline (D1: brak builda frontendu), stąd 'unsafe-inline' — ryzyko R13 (US-011)
+    resp.headers.setdefault("Content-Security-Policy",
+        "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'")
+    resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+    resp.headers.setdefault("Referrer-Policy", "same-origin")
+    resp.headers.setdefault("X-Frame-Options", "DENY")
+    if PROXY:
+        resp.headers.setdefault("Strict-Transport-Security", "max-age=31536000")
+    return resp
+
+@app.errorhandler(413)
+def za_duze_zadanie(_e):
+    return jsonify({"ok": False, "error": "Plik lub żądanie za duże (limit 2 MB)"}), 413
 BASE_DIR     = Path(__file__).parent
 DATA_DIR     = BASE_DIR / ("data_demo" if DEMO else "data")
 DATA_DIR.mkdir(exist_ok=True)
@@ -84,6 +102,32 @@ DEFAULT_CONFIG = {
     "alert_dlugi_dyżur_h": 10,
     "grafik_tolerancja_min": 15,
 }
+# Zakresy progów (biała lista kluczy konfiguracji, R7 / US-011); kopie tylko pod RCP_BACKUP_ROOT (domyślnie katalog aplikacji)
+CONFIG_ZAKRESY = {
+    "prog_przerwa_min": (1, 240),
+    "ostrzezenie_szybka_zmiana_min": (0, 60),
+    "alert_dlugi_dyżur_h": (1, 24),
+    "grafik_tolerancja_min": (0, 120),
+}
+BACKUP_ROOT = Path(os.environ.get("RCP_BACKUP_ROOT") or BASE_DIR).resolve()
+
+def sprawdz_konfiguracje(d):
+    """Normalizuje wartości w `d` i zwraca komunikat błędu albo None."""
+    for k in d:
+        if k not in CONFIG_ZAKRESY and k != "backup_path":
+            return f"Nieznany klucz konfiguracji: {k}"
+    for k, (lo, hi) in CONFIG_ZAKRESY.items():
+        if k in d:
+            try: d[k] = int(d[k])
+            except (TypeError, ValueError): return f"{k}: wymagana liczba całkowita"
+            if not lo <= d[k] <= hi: return f"{k}: wartość spoza zakresu {lo}–{hi}"
+    if "backup_path" in d:
+        p = Path(str(d["backup_path"]).strip() or DEFAULT_CONFIG["backup_path"]).expanduser()
+        p = (BACKUP_ROOT / p).resolve() if not p.is_absolute() else p.resolve()
+        if not p.is_relative_to(BACKUP_ROOT):
+            return f"backup_path: katalog kopii musi leżeć w {BACKUP_ROOT}"
+        d["backup_path"] = str(p)
+    return None
 
 # ── I/O ────────────────────────────────────────────────────────────────────────
 _lock = threading.Lock()
@@ -1085,6 +1129,8 @@ def adm_get_config():
 def adm_save_config():
     if not is_admin(): return jsonify({"error":"Brak dostępu"}), 401
     d=request.json or {}
+    if blad := sprawdz_konfiguracje(d):
+        return jsonify({"ok":False,"error":blad}), 400
     cfg=load_config(); cfg.update(d); save_config(cfg)
     return jsonify({"ok":True})
 
@@ -1165,8 +1211,14 @@ def adm_grafik_import():
     f = request.files.get("file")
     if not f:
         return jsonify({"ok":False,"error":"Brak pliku"}), 400
+    if not (f.filename or "").lower().endswith(".xlsx"):
+        return jsonify({"ok":False,"error":"Wymagany plik .xlsx (szablon z przycisku „Pobierz szablon”)"}), 400
     workers = load_workers()
-    patch, bledy = import_grafik_excel(f.read(), workers)
+    try:
+        patch, bledy = import_grafik_excel(f.read(), workers)
+    except Exception as e:   # uszkodzony lub podrobiony plik: openpyxl/zipfile rzucają różne typy (T6 / US-011)
+        log.warning("Import grafiku odrzucony (%s): %s", f.filename, e)
+        return jsonify({"ok":False,"error":"Nieprawidłowy plik .xlsx — nie udało się go odczytać"}), 400
     if patch:
         grafik = load_grafik()
         for kod, dni in patch.items():

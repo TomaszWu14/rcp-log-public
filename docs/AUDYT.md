@@ -44,16 +44,16 @@ Publiczne demo z danymi fikcyjnymi: [rcp.log.twapp.pl](https://rcp.log.twapp.pl)
 
 | # | Ustalenie | Waga | Gdzie |
 |---|---|---|---|
-| DEV-1 | ~~Logika zamykania pobytu skopiowana trzykrotnie~~ — **naprawione w US-005**: `zamknij_pobyt()` + `sprawdz_strefe()`; kontrola w tle wydzielona do `kontrola_pobytow()` i przetestowana. | ~~wysoka~~ | `app.py:371-419, 485-535` |
-| DEV-2 | ~~Zapisy JSON nieatomowe; korekty i nadwyżki bez blokady~~ — **naprawione w US-006**: `_w()` przez plik tymczasowy + `os.replace`; zgłoszenia i decyzje pod `_lock`, druga decyzja → 409. Zostaje brak logowania błędów (DEV-3). | ~~wysoka~~ | `app.py:100-109, 713, 894, 914` |
-| DEV-3 | ~~17 miejsc `except: pass`; wątek alertów ginął po cichu~~ — **naprawione w US-010**: `logging` (logger `rcp`), `_przebieg()` dla zadań w tle, wyjątki zawężone do oczekiwanych typów; ruff bez wyjątków. | ~~średnia~~ | `app.py:24-25, 452-459` |
-| DEV-4 | Efekty uboczne przy imporcie modułu: tworzenie katalogów, plików startowych, 2–3 wątków (D10). Wiele procesów = zdublowane alerty. | średnia | `app.py:47, 447, 480, 542` |
+| DEV-1 | ~~Logika zamykania pobytu skopiowana trzykrotnie~~ — **naprawione w US-005**: `zamknij_pobyt()` + `sprawdz_strefe()`; kontrola w tle wydzielona do `kontrola_pobytow()` i przetestowana. | ~~wysoka~~ | `app.py:415-463, 529-579` |
+| DEV-2 | ~~Zapisy JSON nieatomowe; korekty i nadwyżki bez blokady~~ — **naprawione w US-006**: `_w()` przez plik tymczasowy + `os.replace`; zgłoszenia i decyzje pod `_lock`, druga decyzja → 409. Zostaje brak logowania błędów (DEV-3). | ~~wysoka~~ | `app.py:144-153, 757, 938, 958` |
+| DEV-3 | ~~17 miejsc `except: pass`; wątek alertów ginął po cichu~~ — **naprawione w US-010**: `logging` (logger `rcp`), `_przebieg()` dla zadań w tle, wyjątki zawężone do oczekiwanych typów; ruff bez wyjątków. | ~~średnia~~ | `app.py:24-25, 496-503` |
+| DEV-4 | Efekty uboczne przy imporcie modułu: tworzenie katalogów, plików startowych, 2–3 wątków (D10). Wiele procesów = zdublowane alerty. | średnia | `app.py:65, 491, 524, 586` |
 | DEV-5 | Jeden plik ~1350 linii (D1) i `admin.html` z całym JS inline. OK dla prototypu; podział na moduły, gdy pojawi się druga domena. Reguły ruff spłacone w całości (US-005, US-010). | niska | `app.py`, `templates/admin.html` |
 | DEV-6 | Zależności były nieprzypięte (`>=`) — **naprawione w tym PR** (`requirements.txt`, `requirements-dev.txt`). | — | — |
 | DEV-7 | Brak CI, lintera, pre-commit — **naprawione w tym PR** (ruff, unittest, bandit, pip-audit, gitleaks, trivy). | — | `.github/workflows/ci.yml` |
-| DEV-8 | Konfiguracja przez env: `RCP_SECRET_KEY`, `RCP_ADMIN_PASSWORD`, `PORT`, `RCP_DEMO*`; ścieżki danych i kopii nadal w kodzie/konfiguracji. Dockerfile: slim, użytkownik bez roota, healthcheck — dobrze. | niska | `app.py:28-40, 353-360`, `Dockerfile` |
+| DEV-8 | Konfiguracja przez env: `RCP_SECRET_KEY`, `RCP_ADMIN_PASSWORD`, `PORT`, `RCP_DEMO*`; ścieżki danych i kopii nadal w kodzie/konfiguracji. Dockerfile: slim, użytkownik bez roota, healthcheck — dobrze. | niska | `app.py:28-40, 397-404`, `Dockerfile` |
 | DEV-9 | Brak CHANGELOG i CONTRIBUTING — **dodane w tym PR**. | — | — |
-| DEV-10 | Martwy kod: sumy dashboardu (T13); ~~alert `PRZEKROCZENIE_ZMIANY`~~ usunięty (US-005). | niska | `app.py:826-835` |
+| DEV-10 | Martwy kod: sumy dashboardu (T13); ~~alert `PRZEKROCZENIE_ZMIANY`~~ usunięty (US-005). | niska | `app.py:870-879` |
 
 Testy: 18 akceptacyjnych (`unittest`, bez zależności). Brakuje testów jednostkowych logiki czystej
 (`parse_shift`, `fmt_czas`, `get_flaga`), testu „brak dostępu" dla **każdego** endpointu `/admin/api/*`
@@ -76,9 +76,9 @@ przetwarza wyłącznie dane fikcyjne, więc ryzyka poniżej dotyczą **planowane
 | R4 | Kody QR przewidywalne (`HU_NAZWISKO_IMIE`), zgubiona karta dostaje duplikat z tym samym kodem (Z3) — rejestracja w cudzym imieniu. | **wysoka** | B5 | losowy token na karcie, unieważnianie |
 | R5 | ~~Brak limitu prób logowania~~ — **naprawione w US-003**: 5 prób / 10 min z adresu → blokada 15 min. | ~~wysoka~~ | B6 | zamknięte |
 | R6 | ~~CSRF formularzy; cookie bez `SameSite`/`Secure`~~ — **naprawione w US-003**: token na formularzach i imporcie, `SameSite=Lax`, `HttpOnly`, `Secure` za proxy (`RCP_PROXY=1`); wylogowanie GET zostaje (skutek: tylko wylogowanie). | ~~średnia~~ | B6 | zamknięte |
-| R7 | Konfiguracja przyjmuje dowolne klucze; `backup_path` może wskazać dowolny katalog serwera. | **średnia** | B7 | biała lista, ścieżka tylko z env |
+| R7 | ~~Konfiguracja przyjmowała dowolne klucze; `backup_path` dowolny katalog~~ — **naprawione w US-011**: biała lista, zakresy, katalog kopii pod `RCP_BACKUP_ROOT`. | ~~średnia~~ | B7 | zamknięte |
 | R8 | ~~CSV injection przez nieznany kod~~ — **naprawione w US-003**: apostrof przed `= + - @` i tabulatorem we wszystkich zapisach CSV. | ~~średnia~~ | B8 | zamknięte |
-| R9 | Brak `MAX_CONTENT_LENGTH` i walidacji xlsx (DoS jednym plikiem); brak nagłówków CSP / X-Content-Type-Options / Referrer-Policy; TLS tylko z proxy Coolify. Na publicznym demo każdy jest administratorem i może edytować grafik bez limitu — DoS instancji demo. | **średnia** | nowe | limit żądania, nagłówki w `after_request` |
+| R9 | ~~Brak `MAX_CONTENT_LENGTH` i walidacji xlsx; brak nagłówków~~ — **naprawione w US-011**: limit 2 MB (413), tylko `.xlsx` z obsługą uszkodzonych plików, CSP / nosniff / Referrer-Policy / X-Frame-Options, HSTS za proxy. Zostaje: nasłuch `0.0.0.0` (zamierzony) i demo bez limitu żądań (wyjątek w rejestrze). CSP dopuszcza inline (R13). | ~~średnia~~ | nowe | zamknięte |
 | R10 | Brak retencji (poza kopiami, Z7) i dziennika audytu operacji administratora (poza `korekta_info`). Polityka opisana w [RODO.md](bezpieczenstwo/RODO.md) (US-007); mechanizm — US-009. | **średnia** | A3 | US-009, audit log |
 
 Poza top 10 (niska): nazwy pracowników bez `escHtml` w trzech miejscach panelu (`admin.html:688, 740, 1229`;

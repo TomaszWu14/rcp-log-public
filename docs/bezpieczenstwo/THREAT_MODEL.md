@@ -33,13 +33,13 @@ flowchart LR
 | Cookie sesji | podrobienie sesji dzięki domyślnemu kluczowi | Spoofing / Elevation | R1 (zamknięte) | klucz wymagany poza demo, ≥ 32 znaki; demo losuje (US-001) |
 | Admin → zmiana hasła | CSRF na formularz `/admin/haslo`; przejęcie hasła startowego z logu | Tampering / Spoofing | R6, R11 | min. 12 znaków, powtórzenie; token CSRF (US-003); R11 zaakceptowane |
 | Admin → formularze | CSRF (logowanie, import xlsx, wylogowanie GET) | Tampering | R6 (zamknięte) | token CSRF w sesji na formularzach i nagłówku importu; `SameSite=Lax`, `HttpOnly`, `Secure` za proxy (US-003); wylogowanie GET bez tokenu — skutek tylko wylogowanie |
-| Admin → import grafiku | spreparowany/duży xlsx | DoS | R9 | brak `MAX_CONTENT_LENGTH` |
-| Admin → config | dowolne klucze, `backup_path` dowolny katalog | Tampering | R7 / B7 | brak walidacji; w demo zablokowane |
+| Admin → import grafiku | spreparowany/duży xlsx | DoS | R9 (zamknięte) | `MAX_CONTENT_LENGTH` 2 MB → 413; tylko `.xlsx`; uszkodzony plik → 400 z wpisem w logu (US-011) |
+| Admin → config | dowolne klucze, `backup_path` dowolny katalog | Tampering | R7 (zamknięte) | biała lista kluczy, zakresy, katalog kopii pod `RCP_BACKUP_ROOT` (US-011); w demo zablokowane |
 | Admin → operacje wrażliwe | brak dziennika kto co zmienił (poza `korekta_info`) | Repudiation | R10 | częściowo (`ADMIN:<login>`) |
 | Gość → instancja demo | każdy jest administratorem: edycja grafiku, przesunięcia, korekty bez limitu — zaśmiecenie lub DoS demo | Tampering / DoS | R9 | `DEMO_BLOCKED`, reset co 30 min, dane fikcyjne; brak limitu żądań |
 | Gość → instancja demo | pomylenie demo z produkcją — wpisanie prawdziwych danych | Information disclosure | — | baner demo w szablonach (`demo` w kontekście); osobna instancja produkcyjna (Z16) |
 | data/, backup/ | dane osobowe bezterminowo (kopie: retencja 30 dni do zbudowania, Z7) | Information disclosure | R10 | okresy w [RODO.md](RODO.md) (Z29); mechanizm usuwania — US-009 |
-| Serwer | HTTP bez TLS w kontenerze | Information disclosure | R9 | TLS na proxy Coolify (Let's Encrypt) |
+| Serwer | HTTP bez TLS w kontenerze; clickjacking, sniffing typu | Information disclosure | R9 (zamknięte), R13 | TLS na proxy Coolify; CSP, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, HSTS za proxy (US-011) |
 
 ## Poza modelem
 

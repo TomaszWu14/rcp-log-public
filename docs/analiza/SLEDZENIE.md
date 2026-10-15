@@ -13,5 +13,6 @@ tabel wymagań w [01-procesy](../01-procesy/); tu śledzimy pracę od audytu wzw
 | T12, NFR-002, NFR-003 | US-006 | `test_KOR_04_rownoczesne_zgloszenia_maja_rozne_id`, `test_KOR_05_druga_decyzja_o_tej_samej_korekcie_409`, `test_PRZ_05_druga_decyzja_o_tej_samej_nadwyzce_409`, `test_SYS_09_przerwany_zapis_nie_uszkadza_pliku` | #25 | zrobione |
 | A3, R10 | US-007 | n/d (dokument `RODO.md`) | #24 | zrobione (do potwierdzenia z IOD) |
 | DEV-3, T11 (log) | US-010 | `test_SYS_01_kopia_zapasowa_kopiuje_csv_i_json_z_prefiksem`, `test_SYS_10_blad_w_zadaniu_w_tle_trafia_do_logu_i_nie_zabija_watku`, `test_SYS_11_uszkodzony_json_jest_logowany_a_nie_cicho_pusty` | #26 | zrobione |
+| B7, R7, R9, T6 | US-011 | `test_ADM_10_konfiguracja_biala_lista_i_zakresy`, `test_ADM_14_naglowki_bezpieczenstwa`, `test_GRF_05_import_odrzuca_zly_plik_i_za_duzy` | #27 | zrobione |
 | T11, R10, Z29 | US-009 | `test_SYS_07_retencja_plikow`, `test_SYS_08_retencja_kopii` (do napisania) | — | backlog |
 | B5, R4 | US-008 | — | — | decyzja PO |

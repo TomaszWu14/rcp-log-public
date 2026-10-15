@@ -197,7 +197,8 @@ docker run --rm -p 5050:5050 -e RCP_DEMO=1 rcp-log
 | `RCP_DEMO_RESET_MIN` | co ile minut odtworzyć dane demo (domyślnie 30) |
 | `RCP_SECRET_KEY` | klucz podpisu sesji, co najmniej 32 znaki; **wymagany** poza trybem demo (bez niego aplikacja nie startuje) |
 | `RCP_ADMIN_PASSWORD` | hasło startowe konta `admin` przy pierwszym starcie; bez niej hasło jest losowane i wypisane raz w konsoli; w obu wypadkach zmiana wymuszona przy pierwszym logowaniu |
-| `RCP_PROXY` | `1`, gdy aplikacja stoi za proxy z TLS (Coolify): ciasteczko sesji tylko po HTTPS, adres klienta z `X-Forwarded-For` |
+| `RCP_PROXY` | `1`, gdy aplikacja stoi za proxy z TLS (Coolify): ciasteczko sesji tylko po HTTPS, adres klienta z `X-Forwarded-For`, nagłówek HSTS |
+| `RCP_BACKUP_ROOT` | katalog, pod którym musi leżeć ścieżka kopii z konfiguracji (domyślnie katalog aplikacji) |
 | `PORT` | port serwera (domyślnie 5050) |
 
 Testy akceptacyjne (18 testów, bez dodatkowych zależności; nazwy testów to identyfikatory wymagań
