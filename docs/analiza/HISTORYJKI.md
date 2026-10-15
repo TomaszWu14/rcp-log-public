@@ -20,7 +20,7 @@ When  loguję się tym hasłem
 Then  panel wymusza zmianę hasła przed dalszą pracą
 ```
 SEC: brak hasła w README i w konsoli (`run.py`); `.gitleaks.toml` traci allowlistę; `gitleaks` zielony.
-**Zrealizowane** (PR #15): `test_SYS_04`, `test_SYS_05`, `test_SYS_06`; założenie Z26 (hasło startowe bez zmiennej losowane i wypisane raz w logu).
+**Zrealizowane** (PR #20): `test_SYS_04`, `test_SYS_05`, `test_SYS_06`; założenie Z26 (hasło startowe bez zmiennej losowane i wypisane raz w logu).
 
 ### US-002 Podgląd obecności tylko dla zalogowanych (B4, R3)
 **Jako** pracownik **chcę**, żeby lista, kto jest gdzie, nie była publiczna, **aby** moje dane o miejscu

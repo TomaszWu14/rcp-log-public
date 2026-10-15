@@ -6,8 +6,8 @@ Dotyczy planowanej instancji produkcyjnej (Z16); demo przetwarza dane fikcyjne.
 
 | ID | Ryzyko | Wpływ | Prawd. | Decyzja | Właściciel | Historyjka | Przegląd |
 |---|---|---|---|---|---|---|---|
-| R1 | domyślny klucz sesji w kodzie użyty, gdy brak `RCP_SECRET_KEY` (B1) | 3 | 2 | **naprawione** 2026-10-15 (PR #15) | SEC | US-001 | zamknięte |
-| R2 | domyślne hasło admina bez wymuszenia zmiany (B2, B3) | 3 | 3 | **naprawione** 2026-10-15 (PR #15) | SEC | US-001 | zamknięte |
+| R1 | domyślny klucz sesji w kodzie użyty, gdy brak `RCP_SECRET_KEY` (B1) | 3 | 2 | **naprawione** 2026-10-15 (PR #20) | SEC | US-001 | zamknięte |
+| R2 | domyślne hasło admina bez wymuszenia zmiany (B2, B3) | 3 | 3 | **naprawione** 2026-10-15 (PR #20) | SEC | US-001 | zamknięte |
 | R11 | hasło startowe bez `RCP_ADMIN_PASSWORD` trafia raz do logu serwera — kto czyta log, może zalogować się przed administratorem | 2 | 1 | zaakceptować: hasło jednorazowe, log = ten sam krąg zaufania co `admins.json`; produkcyjnie podawać `RCP_ADMIN_PASSWORD` | SEC | US-001 | 2026-11-15 |
 | R3 | obecność z nazwiskami bez logowania (B4) | 3 | 2 | naprawić | SEC | US-002 | — |
 | R4 | przewidywalne, nieunieważnialne kody QR; duplikat z tym samym kodem (B5, Z3) | 2 | 2 | **decyzja PO** | PO | US-008 | 2026-11-15 |
