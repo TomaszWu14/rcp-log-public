@@ -101,7 +101,7 @@ z Product Ownerem akceptującym zakres i ryzyka. Każdy krok w dokumentach i PR-
 |---|---|
 | [Audyt stanu wyjściowego](docs/AUDYT.md) | trzy perspektywy: luki w wymaganiach, dług techniczny, top 10 ryzyk |
 | [Historyjki](docs/analiza/HISTORYJKI.md) · [Śledzenie](docs/analiza/SLEDZENIE.md) · [Założenia](docs/analiza/ZALOZENIA.md) | backlog MoSCoW z Given/When/Then, macierz wymaganie → test → PR, założenia do potwierdzenia |
-| [Threat model](docs/bezpieczenstwo/THREAT_MODEL.md) · [Rejestr ryzyk](docs/bezpieczenstwo/RYZYKA.md) | STRIDE per przepływ, decyzje i właściciele |
+| [Threat model](docs/bezpieczenstwo/THREAT_MODEL.md) · [Rejestr ryzyk](docs/bezpieczenstwo/RYZYKA.md) · [RODO](docs/bezpieczenstwo/RODO.md) | STRIDE per przepływ, decyzje i właściciele, podstawy przetwarzania i retencja |
 | [Architektura](docs/architektura/ARCHITEKTURA.md) · [API](docs/architektura/API.md) · [ADR](docs/architektura/adr/README.md) | C4 w Mermaid, endpointy z rolą dostępu, decyzje |
 | [CONTRIBUTING](CONTRIBUTING.md) · [SECURITY](SECURITY.md) · [CHANGELOG](CHANGELOG.md) | proces, Definition of Ready/Done, zgłaszanie podatności |
 

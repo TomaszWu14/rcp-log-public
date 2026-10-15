@@ -9,7 +9,7 @@
 
 Uwagi:
 - Ewidencja miejsca i czasu pracy może być uznana za **monitoring pracownika** (art. 22³ Kodeksu pracy) —
-  wymaga poinformowania pracowników i uzasadnienia celu; `RODO.md` (US-007) przed instancją produkcyjną.
+  wymaga poinformowania pracowników i uzasadnienia celu; [RODO.md](RODO.md) (US-007) — do potwierdzenia z IOD przed instancją produkcyjną.
 - Nazwy stref domyślnych są przykładowe (Z15); lista do anonimizacji w [00-przeglad](../00-przeglad.md#do-anonimizacji).
 - Opis korekty to wolny tekst od pracownika — może zawierać dane o innych osobach.
 - Nieznany kod ze skanu trafia do `alerty.csv` bez logowania — pole kontrolowane przez osobę przy skanerze (B8).

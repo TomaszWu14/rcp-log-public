@@ -80,6 +80,22 @@ Then  lista ma dwa wpisy o różnych id
 ### US-007 RODO i retencja (A3, R10, Z7)
 `bezpieczenstwo/RODO.md`: podstawa przetwarzania, informacja dla pracowników, retencja ewidencji, alertów,
 nadwyżek i korekt (kopie: 30 dni, Z7), prawa osób. Wymóg przed instancją produkcyjną (Z16).
+**Zrealizowane** (PR #24) jako [RODO.md](../bezpieczenstwo/RODO.md) v0.1: role, cele i podstawy (Z28), minimalizacja,
+tabela retencji (Z29), prawa osób, wpis do rejestru czynności, checklista przed wdrożeniem. Do potwierdzenia z IOD.
+
+### US-009 Mechanizm retencji (T11, R10, Z7, Z29)
+**Jako** administrator danych **chcę**, żeby aplikacja sama usuwała dane po okresie z `RODO.md`, **aby** nie trzymać
+danych osobowych bez celu.
+```gherkin
+Given plik ewidencji starszy niż okres retencji z konfiguracji
+When  przebieg kontroli w tle
+Then  plik jest usunięty, a w alertach jest wpis RETENCJA z nazwą pliku
+
+Given kopia zapasowa starsza niż 30 dni
+When  przebieg kopii zapasowej
+Then  kopia jest usunięta
+```
+Okresy jako klucze konfiguracji z wartościami domyślnymi z `RODO.md`; kopia zapasowa niezależna od godziny pracy serwera (T11).
 
 ## Could
 
