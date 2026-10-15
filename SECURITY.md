@@ -1,0 +1,21 @@
+# Polityka bezpieczeństwa
+
+## Status
+
+RCP Log jest prototypem i **nie przeszedł przeglądu bezpieczeństwa**. Publiczna instancja
+[rcp.log.twapp.pl](https://rcp.log.twapp.pl) działa w trybie demo: dane fikcyjne odtwarzane co 30 min,
+każdy gość jest administratorem — to zamierzone. Nie uruchamiaj aplikacji z prawdziwymi danymi
+pracowników przed naprawą ryzyk R1–R3: [docs/AUDYT.md](docs/AUDYT.md#sec-najważniejsze-ryzyka-top-10),
+rejestr [docs/bezpieczenstwo/RYZYKA.md](docs/bezpieczenstwo/RYZYKA.md).
+
+## Zgłaszanie podatności
+
+Nie otwieraj publicznego issue z działającym exploitem. Użyj zakładki *Security → Report a vulnerability*
+albo napisz na adres z profilu [@TomaszWu14](https://github.com/TomaszWu14). Odpowiedź w ciągu 7 dni.
+Zgłoszenia dotyczące instancji demo (zaśmiecenie danych, niedostępność) nie są podatnościami —
+dane resetują się same.
+
+## Zakres
+
+W zakresie: `app.py`, `run.py`, `demo_data.py`, `templates/`, `Dockerfile`, `docker-compose.yaml`.
+Poza zakresem: biblioteki zewnętrzne (zgłaszaj u ich autorów), infrastruktura Coolify.

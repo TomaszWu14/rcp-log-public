@@ -1,0 +1,7 @@
+[extend]
+useDefault = true
+
+# Klucz sesji w app.py:16 to znane ryzyko R1 (docs/bezpieczenstwo/RYZYKA.md), naprawiane w US-001.
+# Wpis do usunięcia razem z tą historyjką — nie jest wyciszeniem, tylko udokumentowanym wyjątkiem.
+[allowlist]
+regexes = ['''timeapp-secret-change-in-production-32ch''']

@@ -92,6 +92,21 @@ flowchart TD
 | [05. Decyzje i ograniczenia](docs/05-decyzje-i-ograniczenia.md) | decyzje D1–D11, ograniczenia, dług techniczny, lista przed wdrożeniem produkcyjnym |
 | [Archiwum](docs/archiwum/README.md) | pierwsza wersja dokumentacji (01–07); jej identyfikatory wymagań są nazwami testów |
 
+## Proces pracy (BA / DEV / SEC)
+
+Od 2026-10-15 repo jest prowadzone jak przez trzyosobowy zespół — analityk, developer, bezpieczeństwo —
+z Product Ownerem akceptującym zakres i ryzyka. Każdy krok w dokumentach i PR-ach ma oznaczenie roli.
+
+| Dokument | Zawartość |
+|---|---|
+| [Audyt stanu wyjściowego](docs/AUDYT.md) | trzy perspektywy: luki w wymaganiach, dług techniczny, top 10 ryzyk |
+| [Historyjki](docs/analiza/HISTORYJKI.md) · [Śledzenie](docs/analiza/SLEDZENIE.md) · [Założenia](docs/analiza/ZALOZENIA.md) | backlog MoSCoW z Given/When/Then, macierz wymaganie → test → PR, założenia do potwierdzenia |
+| [Threat model](docs/bezpieczenstwo/THREAT_MODEL.md) · [Rejestr ryzyk](docs/bezpieczenstwo/RYZYKA.md) | STRIDE per przepływ, decyzje i właściciele |
+| [Architektura](docs/architektura/ARCHITEKTURA.md) · [API](docs/architektura/API.md) · [ADR](docs/architektura/adr/README.md) | C4 w Mermaid, endpointy z rolą dostępu, decyzje |
+| [CONTRIBUTING](CONTRIBUTING.md) · [SECURITY](SECURITY.md) · [CHANGELOG](CHANGELOG.md) | proces, Definition of Ready/Done, zgłaszanie podatności |
+
+CI (GitHub Actions): ruff, testy, bandit, pip-audit, gitleaks na każdym PR.
+
 ## Jak uruchomić
 
 Wymagany Python 3.11 lub nowszy.
@@ -200,7 +215,8 @@ render.yaml         konfiguracja demo na Render (alternatywa)
 templates/          skaner (index.html), panel (admin.html), logowanie
 tests/              testy akceptacyjne; nazwy testów to ID z docs/archiwum/05, mapa na WF-n w docs/01-procesy
 docs/               dokumentacja przedwdrożeniowa: 00 przegląd, 01-procesy P1–P7, 02-dane, 03-user-flow,
-                    04 integracje, 05 decyzje i ograniczenia; archiwum, screenshots, media (logo, film)
+                    04 integracje, 05 decyzje i ograniczenia; archiwum, screenshots, media (logo, film);
+                    proces zespołu: AUDYT, analiza/, architektura/, bezpieczenstwo/, testy/, operacje/
 data/               tworzony przy starcie: JSON i CSV z danymi (poza repozytorium)
 data_demo/          dane trybu demo, odtwarzane automatycznie (poza repozytorium)
 ```

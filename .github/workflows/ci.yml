@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - name: Lint (ruff)
+        run: ruff check .
+      - name: Testy akceptacyjne
+        run: python -m unittest discover tests -v
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - name: SAST (bandit) — blokuje ustalenia o wadze średniej i wyższej
+        run: bandit -c pyproject.toml -r app.py run.py demo_data.py --severity-level medium
+      - name: SCA (pip-audit)
+        run: pip-audit -r requirements.txt
+      - name: Sekrety (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build obrazu
+        run: docker build -t rcp-log:ci .
+      - name: Skan obrazu (trivy) — blokuje HIGH/CRITICAL z dostępną poprawką
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: rcp-log:ci
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
