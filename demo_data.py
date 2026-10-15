@@ -11,8 +11,8 @@ Co powstaje:
   - jedna przekroczona przerwa trwająca teraz, nadwyżki przerw, alerty, korekty,
   - grafik bieżącego miesiąca ze spóźnieniem i nieobecnością.
 """
-from datetime import datetime, date, timedelta, time
 import random
+from datetime import datetime, time, timedelta
 
 WORKERS = {
     "HU_KOWALSKI_JAN":       {"imie": "Kowalski Jan",       "strefy": ["PICKING", "PRZYJECIA", "KURIER1", "PRZERWA"]},
@@ -164,7 +164,6 @@ def build(now, strefy, seed=2026):
         cur_start = max(start, now - timedelta(minutes=cur_len, seconds=rnd.randint(0, 59)))
         done = _simulate(rnd, kod, strefy, start, cur_start)
         rows.extend(done)
-        last = done[-1]["strefa"] if done else None
         if kod in (LONG_BREAK, SHORT_BREAK):
             z, pod = "PRZERWA", ""
         elif kod == SCAN_DEMO:

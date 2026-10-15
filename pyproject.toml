@@ -1,0 +1,23 @@
+[project]
+name = "rcp-log"
+version = "0.1.0"
+requires-python = ">=3.11"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E4", "E9", "F", "W", "I", "B", "SIM"]
+# E7 (wiele instrukcji w linii) pominięte: zwięzły styl `if …: return` w całym app.py.
+
+[tool.ruff.lint.per-file-ignores]
+# Dług z docs/AUDYT.md (DEV-3, DEV-5): poprawki przesuwają numery linii, do których odwołują się
+# docs/01-procesy, 04 i 05 — zostają do refaktoru DEV-1 (US-005); wtedy usunąć ten wpis i zaktualizować odwołania.
+"app.py" = ["E722", "B904", "SIM105", "SIM102", "E401", "I001", "F401", "F841", "B007"]
+"run.py" = ["I001"]
+
+[tool.bandit]
+# B104 (nasłuch na 0.0.0.0) — zamierzone: skanery łączą się z sieci lokalnej magazynu.
+# Ryzyko R9 w docs/bezpieczenstwo/RYZYKA.md; host ma przejść do zmiennej środowiskowej razem z US-001.
+skips = ["B104"]

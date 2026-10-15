@@ -1,0 +1,6 @@
+# Przypisanie obszarów do ról zespołu (opisowo — repo prowadzi jedna osoba w trzech rolach).
+# [BA]  docs/analiza/, docs/01-07, README
+# [DEV] app.py, run.py, templates/, tests/, docs/architektura/, .github/workflows/
+# [SEC] SECURITY.md, docs/bezpieczenstwo/, .github/dependabot.yml
+
+*                      @TomaszWu14
