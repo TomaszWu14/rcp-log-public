@@ -44,16 +44,16 @@ Publiczne demo z danymi fikcyjnymi: [rcp.log.twapp.pl](https://rcp.log.twapp.pl)
 
 | # | Ustalenie | Waga | Gdzie |
 |---|---|---|---|
-| DEV-1 | Logika zamykania pobytu skopiowana trzykrotnie (skan, przesunięcie, ręczny start) — bezpośrednia przyczyna T1 i T9. Jedna funkcja `zamknij_pobyt()` naprawia oba. | wysoka | `app.py:529-569, 830-845, 870-885` |
-| DEV-2 | Zapisy JSON nieatomowe; `_lock` chroni tylko plik pobytów. Korekty i nadwyżki nadają `id = len+1` bez blokady — dwa równoczesne zgłoszenia mogą dostać to samo `id` albo jedno zginie (szerzej niż T12). | wysoka | `app.py:69-71, 634-644, 552-565` |
+| DEV-1 | Logika zamykania pobytu skopiowana trzykrotnie (skan, przesunięcie, ręczny start) — bezpośrednia przyczyna T1 i T9. Jedna funkcja `zamknij_pobyt()` naprawia oba. | wysoka | `app.py:549-589, 877-892, 917-932` |
+| DEV-2 | Zapisy JSON nieatomowe; `_lock` chroni tylko plik pobytów. Korekty i nadwyżki nadają `id = len+1` bez blokady — dwa równoczesne zgłoszenia mogą dostać to samo `id` albo jedno zginie (szerzej niż T12). | wysoka | `app.py:80-82, 654-664, 572-585` |
 | DEV-3 | 17 miejsc `except: pass` bez logowania; wątek alertów ginie po cichu przy nieprzewidzianym wyjątku. | średnia | [05 — obsługa błędów](05-decyzje-i-ograniczenia.md#obsługa-błędów-i-walidacja) |
-| DEV-4 | Efekty uboczne przy imporcie modułu: tworzenie katalogów, plików startowych, 2–3 wątków (D10). Wiele procesów = zdublowane alerty. | średnia | `app.py:20, 327, 354, 424` |
+| DEV-4 | Efekty uboczne przy imporcie modułu: tworzenie katalogów, plików startowych, 2–3 wątków (D10). Wiele procesów = zdublowane alerty. | średnia | `app.py:31, 347, 374, 444` |
 | DEV-5 | Jeden plik 1262 linie (D1) i `admin.html` z całym JS inline. OK dla prototypu; podział na moduły przy DEV-1. | niska | `app.py`, `templates/admin.html` |
 | DEV-6 | Zależności były nieprzypięte (`>=`) — **naprawione w tym PR** (`requirements.txt`, `requirements-dev.txt`). | — | — |
 | DEV-7 | Brak CI, lintera, pre-commit — **naprawione w tym PR** (ruff, unittest, bandit, pip-audit, gitleaks, trivy). | — | `.github/workflows/ci.yml` |
-| DEV-8 | Konfiguracja przez env istnieje tylko dla `RCP_SECRET_KEY`, `PORT`, `RCP_DEMO*`; ścieżki danych i kopii nadal w kodzie/konfiguracji. Dockerfile: slim, użytkownik bez roota, healthcheck — dobrze. | niska | `app.py:16-19`, `Dockerfile` |
+| DEV-8 | Konfiguracja przez env: `RCP_SECRET_KEY`, `RCP_ADMIN_PASSWORD`, `PORT`, `RCP_DEMO*`; ścieżki danych i kopii nadal w kodzie/konfiguracji. Dockerfile: slim, użytkownik bez roota, healthcheck — dobrze. | niska | `app.py:16-28, 294-301`, `Dockerfile` |
 | DEV-9 | Brak CHANGELOG i CONTRIBUTING — **dodane w tym PR**. | — | — |
-| DEV-10 | Martwy kod: sumy dashboardu (T13), alert `PRZEKROCZENIE_ZMIANY` (T15, Z14). | niska | `app.py:712-724`, `index.html:617` |
+| DEV-10 | Martwy kod: sumy dashboardu (T13), alert `PRZEKROCZENIE_ZMIANY` (T15, Z14). | niska | `app.py:759-771`, `index.html:617` |
 
 Testy: 18 akceptacyjnych (`unittest`, bez zależności). Brakuje testów jednostkowych logiki czystej
 (`parse_shift`, `fmt_czas`, `get_flaga`), testu „brak dostępu" dla **każdego** endpointu `/admin/api/*`
@@ -70,8 +70,8 @@ przetwarza wyłącznie dane fikcyjne, więc ryzyka poniżej dotyczą **planowane
 
 | # | Ryzyko | Waga | Źródło | Zalecenie |
 |---|---|---|---|---|
-| R1 | Klucz sesji ma wartość domyślną w kodzie, użytą gdy brak `RCP_SECRET_KEY` — instancja produkcyjna uruchomiona bez zmiennej pozwala podrobić ciasteczko administratora. | **krytyczna** | B1, `app.py:16` | poza demo: brak zmiennej = błąd startu |
-| R2 | Konto `admin/admin123` w README bez wymuszenia zmiany; migracja hashy ustawia to samo hasło. | **krytyczna** | B2, B3 | hasło z env lub losowe, wymuszona zmiana |
+| R1 | ~~Klucz sesji z wartością domyślną w kodzie~~ — **naprawione w US-001**: poza demo brak `RCP_SECRET_KEY` = błąd startu. | ~~krytyczna~~ | B1 | zamknięte |
+| R2 | ~~Konto `admin/admin123` bez wymuszenia zmiany; migracja hashy ustawiała to samo hasło~~ — **naprawione w US-001**: hasło startowe z env lub losowe wypisane raz, zmiana wymuszona przy pierwszym logowaniu. | ~~krytyczna~~ | B2, B3 | zamknięte |
 | R3 | `/api/status` bez logowania zwraca nazwiska obecnych, strefę i godzinę wejścia. | **wysoka** | B4 | tylko dla admina |
 | R4 | Kody QR przewidywalne (`HU_NAZWISKO_IMIE`), zgubiona karta dostaje duplikat z tym samym kodem (Z3) — rejestracja w cudzym imieniu. | **wysoka** | B5 | losowy token na karcie, unieważnianie |
 | R5 | Brak limitu prób logowania. | **wysoka** | B6 | limit per IP/login |
@@ -86,7 +86,7 @@ w 740 wewnątrz `onclick` — apostrof w nazwisku psuje przycisk); dane tylko od
 Pozytywnie: opis korekty i kod ze skanu są escapowane; hasła hashowane; eksport ze stałej listy plików
 (brak path traversal); demo z losowym kluczem sesji i osobnym katalogiem danych; Dockerfile bez roota.
 
-**Weto SEC:** instancja produkcyjna (Z16) nie powstaje przed naprawą R1–R3. Demo publiczne jest w porządku,
+**Weto SEC:** instancja produkcyjna (Z16) nie powstaje przed naprawą R3 (R1, R2 zamknięte w US-001). Demo publiczne jest w porządku,
 dopóki zawiera wyłącznie dane fikcyjne.
 
 ---

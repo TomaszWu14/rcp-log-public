@@ -29,8 +29,9 @@ flowchart LR
 | Skaner → korekta | opis wolnego tekstu bez limitu długości | Tampering / DoS | — | escapowany w panelu; brak limitu (niska) |
 | Skaner → alerty.csv | nieznany kod z `=` jako formuła w Excelu | Tampering | R8 / B8 | brak; US-003 |
 | Każdy → /api/status | wyciek obecności z nazwiskami | Information disclosure | R3 / B4 | brak; US-002 |
-| Admin → logowanie | brute force; domyślne `admin123` | Spoofing / Elevation | R2, R5 / B2, B3, B6 | hash werkzeug; US-001, US-003 |
-| Cookie sesji | podrobienie sesji dzięki domyślnemu kluczowi, gdy brak `RCP_SECRET_KEY` | Spoofing / Elevation | R1 / B1 | demo: klucz losowany przez Coolify; produkcja: US-001 |
+| Admin → logowanie | brute force | Spoofing / Elevation | R5 / B6 | hash werkzeug; hasło startowe jednorazowe z wymuszoną zmianą (US-001); limit prób — US-003 |
+| Cookie sesji | podrobienie sesji dzięki domyślnemu kluczowi | Spoofing / Elevation | R1 (zamknięte) | klucz wymagany poza demo, ≥ 32 znaki; demo losuje (US-001) |
+| Admin → zmiana hasła | CSRF na formularz `/admin/haslo`; przejęcie hasła startowego z logu | Tampering / Spoofing | R6, R11 | min. 12 znaków, powtórzenie; CSRF — US-003; R11 zaakceptowane |
 | Admin → formularze | CSRF (logowanie, import xlsx, wylogowanie GET) | Tampering | R6 / B6 | brak `SameSite`; US-003 |
 | Admin → import grafiku | spreparowany/duży xlsx | DoS | R9 | brak `MAX_CONTENT_LENGTH` |
 | Admin → config | dowolne klucze, `backup_path` dowolny katalog | Tampering | R7 / B7 | brak walidacji; w demo zablokowane |

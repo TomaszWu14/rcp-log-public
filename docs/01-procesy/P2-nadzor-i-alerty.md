@@ -47,14 +47,14 @@ może w tym samym przebiegu dostać alert dyżuru i zostać zamknięty.
 
 | Nr | Krok | Aktor | Wejście | Wyjście | Reguła biznesowa | Źródło w kodzie |
 |---|---|---|---|---|---|---|
-| 1 | Pobierz trwające pobyty i progi | kontrola w tle | plik trwających pobytów, konfiguracja | lista pobytów z czasem trwania | BR-14 | `app.py:359-377` |
-| 2 | Wykryj przekroczoną przerwę | kontrola w tle | pobyt w strefie `PRZERWA`, próg przerwy | alert `DLUGA_PRZERWA` w pliku i w pamięci panelu; znacznik „alert wysłany” na pobycie | BR-15 | `app.py:379-386` |
-| 3 | Wykryj długi dyżur | kontrola w tle | pobyt w dowolnej strefie, próg dyżuru | alert `DLUGI_DYZUR`; znacznik na pobycie | BR-16 | `app.py:388-394` |
-| 4 | Zamknij pobyt z poprzedniego dnia | kontrola w tle | pobyt z datą wejścia wcześniejszą niż dziś | wpis ewidencji z flagą `AUTO_ZAMKNIETO`, alert, pobyt usunięty | BR-17 | `app.py:396-418` |
-| 5 | Obserwuj Live i Dashboard | administrator | zakładki Live (co 20 s) i Dashboard (na żądanie) | lista osób, stref, czasów i oznaczeń alertów; wskaźniki dnia | BR-18, BR-23 | `app.py:591-616, 705-764`, `admin.html:573-626` |
-| 6 | Odbierz baner alertu | administrator | nowe alerty z pamięci serwera (co 20 s) | baner z treścią i sygnał dźwiękowy; „OK” chowa baner | BR-19 | `app.py:619-624`, `admin.html:486-508` |
+| 1 | Pobierz trwające pobyty i progi | kontrola w tle | plik trwających pobytów, konfiguracja | lista pobytów z czasem trwania | BR-14 | `app.py:379-397` |
+| 2 | Wykryj przekroczoną przerwę | kontrola w tle | pobyt w strefie `PRZERWA`, próg przerwy | alert `DLUGA_PRZERWA` w pliku i w pamięci panelu; znacznik „alert wysłany” na pobycie | BR-15 | `app.py:399-406` |
+| 3 | Wykryj długi dyżur | kontrola w tle | pobyt w dowolnej strefie, próg dyżuru | alert `DLUGI_DYZUR`; znacznik na pobycie | BR-16 | `app.py:408-414` |
+| 4 | Zamknij pobyt z poprzedniego dnia | kontrola w tle | pobyt z datą wejścia wcześniejszą niż dziś | wpis ewidencji z flagą `AUTO_ZAMKNIETO`, alert, pobyt usunięty | BR-17 | `app.py:416-438` |
+| 5 | Obserwuj Live i Dashboard | administrator | zakładki Live (co 20 s) i Dashboard (na żądanie) | lista osób, stref, czasów i oznaczeń alertów; wskaźniki dnia | BR-18, BR-23 | `app.py:611-636, 752-811`, `admin.html:573-626` |
+| 6 | Odbierz baner alertu | administrator | nowe alerty z pamięci serwera (co 20 s) | baner z treścią i sygnał dźwiękowy; „OK” chowa baner | BR-19 | `app.py:639-644`, `admin.html:486-508` |
 | 7 | Zdecyduj o interwencji | administrator | stan z Live, treść alertu | decyzja: przesuń, zakończ zmianę, dodaj ręcznie albo nic | — | — |
-| 8 | Przesuń, zakończ lub uruchom pobyt | administrator, system | wybrany pracownik, strefa, podstrefa | pobyt zamknięty wpisem z oznaczeniem administratora i/lub nowy pobyt | BR-20, BR-21, BR-22 | `app.py:812-888`, `admin.html:629-742` |
+| 8 | Przesuń, zakończ lub uruchom pobyt | administrator, system | wybrany pracownik, strefa, podstrefa | pobyt zamknięty wpisem z oznaczeniem administratora i/lub nowy pobyt | BR-20, BR-21, BR-22 | `app.py:859-935`, `admin.html:629-742` |
 
 ## Podprocesy
 
@@ -78,9 +78,9 @@ flowchart TD
 
 | Krok | Opis | Źródło w kodzie |
 |---|---|---|
-| A1, A2 | lista nowych alertów jest trzymana w pamięci serwera i kasowana przy pobraniu; pobiera ją pierwsza otwarta karta panelu | `app.py:357, 619-624` |
+| A1, A2 | lista nowych alertów jest trzymana w pamięci serwera i kasowana przy pobraniu; pobiera ją pierwsza otwarta karta panelu | `app.py:377, 639-644` |
 | A3 | baner z treścią wszystkich nowych alertów i krótki sygnał dźwiękowy | `admin.html:486-508` |
-| A4 | tabela Live sortuje wiersze: najpierw z alertem, potem najdłużej trwające; wiersz z długim dyżurem ma własne oznaczenie | `app.py:615`, `admin.html:596-611` |
+| A4 | tabela Live sortuje wiersze: najpierw z alertem, potem najdłużej trwające; wiersz z długim dyżurem ma własne oznaczenie | `app.py:635`, `admin.html:596-611` |
 | A5 | baner nie zamyka się sam | `admin.html:507` |
 
 ### P2.2 Ręczna zmiana pobytu przez administratora
@@ -115,36 +115,36 @@ flowchart TD
 | A1 | „Przesuń” z wiersza Live: lista wszystkich stref ze słownika, podstrefa opcjonalna | `admin.html:629-650` |
 | A2 | „Zakończ zmianę” z okna przesunięcia albo przycisk 🏁 w wierszu; wymaga potwierdzenia w przeglądarce | `admin.html:670-690` |
 | A3 | „Dodaj ręcznie”: pobyt bez skanu dla pracownika, który np. zgubił kartę | `admin.html:694-742` |
-| A4 | wpis ma pole korekty `ADMIN:<login>`; przy „Dodaj ręcznie” `ADMIN:<login>:start_override`; flaga długiej przerwy nadawana, nadwyżka nie | `app.py:829-844, 869-884` |
-| A5, A6 | serwer nie sprawdza uprawnień pracownika ani istnienia strefy | `app.py:846-852, 885-887` |
+| A4 | wpis ma pole korekty `ADMIN:<login>`; przy „Dodaj ręcznie” `ADMIN:<login>:start_override`; flaga długiej przerwy nadawana, nadwyżka nie | `app.py:876-891, 916-931` |
+| A5, A6 | serwer nie sprawdza uprawnień pracownika ani istnienia strefy | `app.py:893-899, 932-934` |
 
 ## Ścieżki alternatywne i wyjątki
 
 | Wyjątek | Warunek wystąpienia | Obsługa | Skutek dla procesu | Źródło w kodzie |
 |---|---|---|---|---|
-| Pobyt starszy niż jeden dzień | serwer nie działał przez dobę lub dłużej | zamknięcie o 23:59:59 dnia **wejścia**, bez względu na liczbę dni | czas po północy dnia wejścia przepada z ewidencji | `app.py:396-418` |
-| Przerwa zamknięta przez administratora lub automatycznie | „Przesuń”, „Zakończ zmianę” lub auto-zamknięcie przerwy ponad próg | wpis dostaje flagę `DLUGA_PRZERWA`, ale nadwyżka nie powstaje | nadwyżka do rozliczenia tylko przy zamknięciu przez pracownika ([P3](P3-nadwyzki-przerw.md)) | `app.py:843, 412` wobec `549` |
-| Alert utracony | restart serwera przed pobraniem banera; dwie otwarte karty panelu; drugi alert tego samego pracownika przed pobraniem pierwszego | alerty w pamięci giną przy restarcie; pobiera je pierwsza karta; nowszy alert nadpisuje starszy | baner może nie dotrzeć; pełna lista zostaje w pliku alertów | `app.py:357, 384, 392, 416, 622-623` |
-| Zatrzymanie kontroli w tle | nieoczekiwany błąd inny niż błąd pliku, klucza lub wartości | wątek kończy się bez komunikatu | alerty i auto-zamykanie nie działają do restartu serwera | `app.py:423` |
-| Przesunięcie do strefy spoza uprawnień lub spoza słownika | administrator wpisuje dowolną nazwę (poza listą w oknie) | serwer przyjmuje | ewidencja z nazwą spoza słownika | `app.py:812-888` |
-| Podgląd obecności bez logowania | wywołanie adresu stanu bez sesji administratora | brak kontroli dostępu | każdy w sieci widzi, kto jest w pracy | `app.py:591` |
-| Dashboard z błędną datą | data w adresie w złym formacie | brak walidacji, błąd serwera | zakładka nie ładuje się | `app.py:708-709` |
-| Dwa progi długiego dyżuru | brak wartości progu w konfiguracji | alert używa 10 h, oznaczenie w Live 12 h | Live może nie pokazać dyżuru, o którym był alert; właściwa wartość to 10 h, 12 h jest błędem do poprawy ([Z13](../00-przeglad.md#ustalenia-potwierdzone)) | `app.py:366, 598` |
+| Pobyt starszy niż jeden dzień | serwer nie działał przez dobę lub dłużej | zamknięcie o 23:59:59 dnia **wejścia**, bez względu na liczbę dni | czas po północy dnia wejścia przepada z ewidencji | `app.py:416-438` |
+| Przerwa zamknięta przez administratora lub automatycznie | „Przesuń”, „Zakończ zmianę” lub auto-zamknięcie przerwy ponad próg | wpis dostaje flagę `DLUGA_PRZERWA`, ale nadwyżka nie powstaje | nadwyżka do rozliczenia tylko przy zamknięciu przez pracownika ([P3](P3-nadwyzki-przerw.md)) | `app.py:890, 432` wobec `549` |
+| Alert utracony | restart serwera przed pobraniem banera; dwie otwarte karty panelu; drugi alert tego samego pracownika przed pobraniem pierwszego | alerty w pamięci giną przy restarcie; pobiera je pierwsza karta; nowszy alert nadpisuje starszy | baner może nie dotrzeć; pełna lista zostaje w pliku alertów | `app.py:377, 404, 412, 436, 642-643` |
+| Zatrzymanie kontroli w tle | nieoczekiwany błąd inny niż błąd pliku, klucza lub wartości | wątek kończy się bez komunikatu | alerty i auto-zamykanie nie działają do restartu serwera | `app.py:443` |
+| Przesunięcie do strefy spoza uprawnień lub spoza słownika | administrator wpisuje dowolną nazwę (poza listą w oknie) | serwer przyjmuje | ewidencja z nazwą spoza słownika | `app.py:859-935` |
+| Podgląd obecności bez logowania | wywołanie adresu stanu bez sesji administratora | brak kontroli dostępu | każdy w sieci widzi, kto jest w pracy | `app.py:611` |
+| Dashboard z błędną datą | data w adresie w złym formacie | brak walidacji, błąd serwera | zakładka nie ładuje się | `app.py:755-756` |
+| Dwa progi długiego dyżuru | brak wartości progu w konfiguracji | alert używa 10 h, oznaczenie w Live 12 h | Live może nie pokazać dyżuru, o którym był alert; właściwa wartość to 10 h, 12 h jest błędem do poprawy ([Z13](../00-przeglad.md#ustalenia-potwierdzone)) | `app.py:386, 618` |
 
 ## Reguły biznesowe
 
 | ID | Warunek → działanie | Źródło w kodzie |
 |---|---|---|
-| BR-14 | Upłynęło 60 s → sprawdź każdy trwający pobyt pod blokadą stanu | `app.py:359-367` |
-| BR-15 | Pobyt w strefie `PRZERWA` trwa dłużej niż próg i nie miał jeszcze alertu → zapisz alert `DLUGA_PRZERWA` (raz na pobyt) i oznacz pobyt | `app.py:379-386` |
-| BR-16 | Pobyt w dowolnej strefie trwa dłużej niż próg dyżuru (domyślnie 10 h) i nie miał jeszcze alertu → zapisz alert `DLUGI_DYZUR` (raz na pobyt) | `app.py:388-394` |
-| BR-17 | Pobyt ma datę wejścia wcześniejszą niż dzisiejsza → zamknij go o 23:59:59 dnia wejścia, zapisz wpis z flagą `AUTO_ZAMKNIETO` i alert; nadwyżka nie powstaje | `app.py:396-418` |
-| BR-18 | Podgląd Live → oznacz wiersz alertem, gdy przerwa przekracza próg albo pobyt przekracza próg dyżuru; sortuj alerty na górę, potem według czasu; odświeżaj co 20 s | `app.py:591-616`, `admin.html:626` |
-| BR-19 | Co 20 s w otwartym panelu → pobierz nowe alerty, pokaż baner z sygnałem, każdy alert pokazuj tylko raz | `app.py:619-624`, `admin.html:486-508` |
-| BR-20 | Administrator przesuwa pracownika → zamknij trwający pobyt wpisem z oznaczeniem `ADMIN:<login>` i otwórz nowy od teraz; nie sprawdzaj uprawnień ani słownika stref | `app.py:812-852` |
-| BR-21 | Administrator uruchamia pobyt ręcznie → otwórz pobyt od teraz; jeśli pobyt trwał, zamknij go wpisem `ADMIN:<login>:start_override` | `app.py:854-888` |
-| BR-22 | Administrator kończy zmianę → zamknij pobyt wpisem z oznaczeniem administratora i usuń pobyt, jak przy końcu zmiany ze skanera | `app.py:846-849` |
-| BR-23 | Dashboard → wskaźniki „aktywne”, „na przerwie” i „alerty przerw” zawsze z bieżącej chwili; liczba wpisów i czas per strefa dla wybranej daty z pliku dnia | `app.py:705-764` |
+| BR-14 | Upłynęło 60 s → sprawdź każdy trwający pobyt pod blokadą stanu | `app.py:379-387` |
+| BR-15 | Pobyt w strefie `PRZERWA` trwa dłużej niż próg i nie miał jeszcze alertu → zapisz alert `DLUGA_PRZERWA` (raz na pobyt) i oznacz pobyt | `app.py:399-406` |
+| BR-16 | Pobyt w dowolnej strefie trwa dłużej niż próg dyżuru (domyślnie 10 h) i nie miał jeszcze alertu → zapisz alert `DLUGI_DYZUR` (raz na pobyt) | `app.py:408-414` |
+| BR-17 | Pobyt ma datę wejścia wcześniejszą niż dzisiejsza → zamknij go o 23:59:59 dnia wejścia, zapisz wpis z flagą `AUTO_ZAMKNIETO` i alert; nadwyżka nie powstaje | `app.py:416-438` |
+| BR-18 | Podgląd Live → oznacz wiersz alertem, gdy przerwa przekracza próg albo pobyt przekracza próg dyżuru; sortuj alerty na górę, potem według czasu; odświeżaj co 20 s | `app.py:611-636`, `admin.html:626` |
+| BR-19 | Co 20 s w otwartym panelu → pobierz nowe alerty, pokaż baner z sygnałem, każdy alert pokazuj tylko raz | `app.py:639-644`, `admin.html:486-508` |
+| BR-20 | Administrator przesuwa pracownika → zamknij trwający pobyt wpisem z oznaczeniem `ADMIN:<login>` i otwórz nowy od teraz; nie sprawdzaj uprawnień ani słownika stref | `app.py:859-899` |
+| BR-21 | Administrator uruchamia pobyt ręcznie → otwórz pobyt od teraz; jeśli pobyt trwał, zamknij go wpisem `ADMIN:<login>:start_override` | `app.py:901-935` |
+| BR-22 | Administrator kończy zmianę → zamknij pobyt wpisem z oznaczeniem administratora i usuń pobyt, jak przy końcu zmiany ze skanera | `app.py:893-896` |
+| BR-23 | Dashboard → wskaźniki „aktywne”, „na przerwie” i „alerty przerw” zawsze z bieżącej chwili; liczba wpisów i czas per strefa dla wybranej daty z pliku dnia | `app.py:752-811` |
 
 ## Wymagania funkcjonalne
 

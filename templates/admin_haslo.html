@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RCP Log — Zmiana hasła</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f1923; color: #e8edf3; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+.card { background: #1a2535; border: 1px solid #2d3f56; border-radius: 14px; padding: 40px 36px; width: 100%; max-width: 360px; box-shadow: 0 8px 40px rgba(0,0,0,.5); }
+.logo { font-size: 2rem; margin-bottom: 6px; }
+h1 { font-size: 1.1rem; font-weight: 700; }
+.sub { font-size: .8rem; color: #7a90a8; margin-bottom: 28px; }
+label { display: block; font-size: .75rem; color: #7a90a8; margin-bottom: 5px; }
+input { width: 100%; padding: 11px 14px; background: #212f42; border: 1.5px solid #2d3f56; border-radius: 8px; color: #e8edf3; font-size: .9rem; outline: none; margin-bottom: 16px; }
+input:focus { border-color: #185FA5; }
+button[type=submit] { width: 100%; padding: 12px; background: #185FA5; border: none; border-radius: 8px; color: #fff; font-size: .95rem; font-weight: 700; cursor: pointer; }
+.error { background: rgba(192,57,43,.15); border: 1px solid rgba(192,57,43,.4); color: #e88; padding: 9px 12px; border-radius: 6px; font-size: .8rem; margin-bottom: 16px; }
+.info { background: rgba(243,156,18,.12); border: 1px solid rgba(243,156,18,.4); color: #f0c060; padding: 9px 12px; border-radius: 6px; font-size: .8rem; margin-bottom: 16px; }
+.back { display: block; text-align: center; margin-top: 14px; font-size: .78rem; color: #7a90a8; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">🔑</div>
+  <h1>Zmiana hasła</h1>
+  <p class="sub">Konto: {{ session.admin_user }}</p>
+  {% if wymuszona %}<div class="info">Hasło startowe jest jednorazowe. Ustaw własne, zanim wejdziesz do panelu.</div>{% endif %}
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  <form method="post">
+    <label>Nowe hasło (co najmniej 12 znaków)</label>
+    <input type="password" name="password" autocomplete="new-password" minlength="12" autofocus required>
+    <label>Powtórz hasło</label>
+    <input type="password" name="password2" autocomplete="new-password" minlength="12" required>
+    <button type="submit">Zapisz hasło</button>
+  </form>
+  <a href="/admin/logout" class="back">Wyloguj</a>
+</div>
+</body>
+</html>

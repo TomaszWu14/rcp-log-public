@@ -19,5 +19,5 @@ select = ["E4", "E9", "F", "W", "I", "B", "SIM"]
 
 [tool.bandit]
 # B104 (nasłuch na 0.0.0.0) — zamierzone: skanery łączą się z sieci lokalnej magazynu.
-# Ryzyko R9 w docs/bezpieczenstwo/RYZYKA.md; host ma przejść do zmiennej środowiskowej razem z US-001.
+# Ryzyko R9 w docs/bezpieczenstwo/RYZYKA.md; kontener stoi za proxy Coolify.
 skips = ["B104"]
