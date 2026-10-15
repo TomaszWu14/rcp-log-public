@@ -36,7 +36,7 @@ administrator widzi obsadę na żywo, a przerwa ponad próg wywołuje alert i tr
 ## Dokumentacja analityczna
 
 Dokumentacja przedwdrożeniowa odtworzona z kodu: procesy P1–P7 z diagramami BPMN w Mermaid i torami
-aktorów, reguły biznesowe BR-1–BR-58, wymagania WF-1–WF-37 z kryteriami Given/When/Then, model danych,
+aktorów, reguły biznesowe BR-1–BR-58, wymagania WF-1–WF-38 z kryteriami Given/When/Then, model danych,
 user flow, integracje i dziennik decyzji. Główny proces poniżej, reszta w [`docs/`](docs/00-przeglad.md).
 
 ```mermaid
@@ -118,6 +118,7 @@ git clone https://github.com/TomaszWu14/rcp-log-public.git
 cd rcp-log-public
 python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt
+$env:RCP_SECRET_KEY = .venv\Scripts\python -c "import secrets; print(secrets.token_hex(32))"
 .venv\Scripts\python run.py
 ```
 
@@ -128,6 +129,7 @@ git clone https://github.com/TomaszWu14/rcp-log-public.git
 cd rcp-log-public
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
+export RCP_SECRET_KEY=$(.venv/bin/python -c "import secrets; print(secrets.token_hex(32))")
 .venv/bin/python run.py
 ```
 
@@ -136,7 +138,7 @@ Po starcie:
 | Adres | Co to jest |
 |---|---|
 | http://localhost:5050/ | skaner — wpisz `HU_KOWALSKI_JAN` i naciśnij Enter |
-| http://localhost:5050/admin | panel administratora — login `admin`, hasło `admin123` |
+| http://localhost:5050/admin | panel administratora — login `admin`, hasło z `RCP_ADMIN_PASSWORD` albo wypisane w konsoli przy pierwszym starcie; przy pierwszym logowaniu aplikacja wymusza zmianę hasła |
 
 Przy pierwszym uruchomieniu aplikacja sama tworzy katalog `data/` ze strefami, trzema przykładowymi
 pracownikami (`HU_KOWALSKI_JAN`, `HU_NOWAK_ANNA`, `HU_WISNIEWSKI_PIOTR`) i kontem administratora.
@@ -193,7 +195,8 @@ docker run --rm -p 5050:5050 -e RCP_DEMO=1 rcp-log
 |---|---|
 | `RCP_DEMO` | `1` włącza tryb demo |
 | `RCP_DEMO_RESET_MIN` | co ile minut odtworzyć dane demo (domyślnie 30) |
-| `RCP_SECRET_KEY` | klucz podpisu sesji; bez niej używana jest wartość z kodu |
+| `RCP_SECRET_KEY` | klucz podpisu sesji, co najmniej 32 znaki; **wymagany** poza trybem demo (bez niego aplikacja nie startuje) |
+| `RCP_ADMIN_PASSWORD` | hasło startowe konta `admin` przy pierwszym starcie; bez niej hasło jest losowane i wypisane raz w konsoli; w obu wypadkach zmiana wymuszona przy pierwszym logowaniu |
 | `PORT` | port serwera (domyślnie 5050) |
 
 Testy akceptacyjne (18 testów, bez dodatkowych zależności; nazwy testów to identyfikatory wymagań

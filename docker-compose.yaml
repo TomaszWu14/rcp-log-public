@@ -22,7 +22,8 @@ services:
       - RCP_SECRET_KEY=${SERVICE_PASSWORD_64_RCPLOG}
     expose:
       - "5050"
-    # Tryb produkcyjny (RCP_DEMO=0, logowanie admin/admin123 — zmień hasło po starcie):
+    # Tryb produkcyjny (RCP_DEMO=0; RCP_SECRET_KEY wymagany; hasło startowe admina z RCP_ADMIN_PASSWORD
+    # albo z logu pierwszego startu — zmiana wymuszona przy pierwszym logowaniu):
     # odkomentuj woluminy, żeby ewidencja i kopie zapasowe przeżyły redeploy.
     # volumes:
     #   - rcp-data:/app/data

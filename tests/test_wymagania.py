@@ -6,9 +6,14 @@ Uruchomienie: python -m unittest discover tests
 app.py przy imporcie tworzy katalog data/ obok siebie, dlatego każdy test
 ładuje kopię aplikacji w katalogu tymczasowym — prawdziwe dane nie są ruszane.
 """
+import contextlib
 import importlib.util
 import io
+import os
+import re
 import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 from datetime import datetime, timedelta
@@ -17,6 +22,7 @@ from pathlib import Path
 import openpyxl
 
 REPO = Path(__file__).resolve().parent.parent
+NOWE_HASLO = "Nowe-haslo-testowe-1"
 
 
 def load_app():
@@ -31,6 +37,9 @@ def load_app():
 
 class Wymagania(unittest.TestCase):
     def setUp(self):
+        os.environ["RCP_SECRET_KEY"] = "klucz-testowy-" * 4
+        os.environ["RCP_ADMIN_PASSWORD"] = "admin123"
+        os.environ.pop("RCP_DEMO", None)
         self.A, self.tmp = load_app()
         self.c = self.A.app.test_client()
 
@@ -38,7 +47,9 @@ class Wymagania(unittest.TestCase):
         shutil.rmtree(self.tmp, ignore_errors=True)
 
     def login(self):
+        """Logowanie hasłem startowym i wymuszona zmiana — dopiero potem panel jest dostępny."""
         self.c.post("/admin/login", data={"username": "admin", "password": "admin123"})
+        self.c.post("/admin/haslo", data={"password": NOWE_HASLO, "password2": NOWE_HASLO})
 
     def rejestruj(self, strefa, force=True, kod="HU_KOWALSKI_JAN"):
         return self.c.post("/api/rejestruj", json={"pracownik": kod, "strefa": strefa, "force": force})
@@ -167,6 +178,46 @@ class Wymagania(unittest.TestCase):
     # ── Bezpieczeństwo i start ───────────────────────────────────────────────
     def test_SYS_02_haslo_nie_jest_zapisane_jawnie(self):
         self.assertNotIn("admin123", (self.tmp / "data" / "admins.json").read_text(encoding="utf-8"))
+
+    def test_SYS_04_start_bez_klucza_sesji_konczy_sie_bledem(self):
+        env = {k: v for k, v in os.environ.items() if k not in ("RCP_SECRET_KEY", "RCP_DEMO")}
+        r = subprocess.run([sys.executable, "-c", "import app"], cwd=self.tmp, env=env,
+                           capture_output=True, text=True, encoding="utf-8", timeout=60)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("RCP_SECRET_KEY", r.stderr)
+        env["RCP_SECRET_KEY"] = "klucz-testowy-" * 4
+        r = subprocess.run([sys.executable, "-c", "import app"], cwd=self.tmp, env=env,
+                           capture_output=True, text=True, encoding="utf-8", timeout=60)
+        self.assertEqual(r.returncode, 0, r.stderr)
+
+    def test_SYS_05_haslo_startowe_wymusza_zmiane(self):
+        self.c.post("/admin/login", data={"username": "admin", "password": "admin123"})
+        self.assertEqual(self.c.get("/admin").headers["Location"].split("?")[0], "/admin/haslo")
+        self.assertEqual(self.c.get("/admin/api/status").status_code, 302)
+        r = self.c.post("/admin/haslo", data={"password": "krotkie", "password2": "krotkie"})
+        self.assertIn("co najmniej 12", r.get_data(as_text=True))
+        r = self.c.post("/admin/haslo", data={"password": NOWE_HASLO, "password2": NOWE_HASLO})
+        self.assertEqual(r.headers["Location"], "/admin")
+        self.assertEqual(self.c.get("/admin").status_code, 200)
+        self.assertFalse(self.A.load_admins()["admin"]["must_change"])
+        self.c.get("/admin/logout")
+        self.c.post("/admin/login", data={"username": "admin", "password": "admin123"})
+        self.assertEqual(self.c.get("/admin").status_code, 302)   # stare hasło już nie działa
+        self.c.post("/admin/login", data={"username": "admin", "password": NOWE_HASLO})
+        self.assertEqual(self.c.get("/admin").status_code, 200)
+
+    def test_SYS_06_bez_zmiennej_haslo_startowe_losowe_i_wypisane_raz(self):
+        os.environ.pop("RCP_ADMIN_PASSWORD")
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            A, tmp = load_app()
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        m = re.search(r"Hasło startowe konta 'admin': (\S+)", buf.getvalue())
+        self.assertIsNotNone(m, buf.getvalue())
+        c = A.app.test_client()
+        c.post("/admin/login", data={"username": "admin", "password": m.group(1)})
+        self.assertEqual(c.get("/admin").headers["Location"].split("?")[0], "/admin/haslo")
+        self.assertNotIn(m.group(1), (tmp / "data" / "admins.json").read_text(encoding="utf-8"))
 
     def test_SYS_03_start_bez_przygotowania_danych(self):
         self.assertEqual(len(self.A.load_workers()), 3)

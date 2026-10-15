@@ -32,4 +32,5 @@ w demo wyłączona. Ręcznie: skopiuj cały `data/`. Retencja 30 dni (Z7) — do
 | Błąd 500 przy wejściu na Live | uszkodzony wpis daty w `aktywne_sesje.json` | przywróć plik z kopii lub usuń wadliwy wpis |
 | „Plik jest pusty" przy imporcie grafiku | `.xls` zamiast `.xlsx` albo pusty arkusz | zapisz jako `.xlsx` |
 | Demo pokazuje dziwne dane | gość edytował grafik / przesunął pracowników | poczekaj na reset (`RCP_DEMO_RESET_MIN`) lub Redeploy |
-| Podejrzenie wycieku hasła admina | — | usuń konto w zakładce Admini z innego konta; po US-001 — rotacja `RCP_SECRET_KEY` |
+| Podejrzenie wycieku hasła admina | — | zmień hasło na `/admin/haslo` albo usuń konto z innego konta; rotacja `RCP_SECRET_KEY` (restart) unieważnia wszystkie sesje |
+| Zgubione hasło jedynego administratora | — | zatrzymaj serwer, usuń wpis z `admins.json` (albo cały plik), uruchom z `RCP_ADMIN_PASSWORD` — konto `admin` powstaje na nowo z wymuszoną zmianą |

@@ -25,12 +25,12 @@ widoczne w działaniu aplikacji.
   słownik pracowników, wpisy czasu.
 - **Opcje.** SQLite; serwer bazy danych; pliki JSON i CSV.
 - **Wybór i uzasadnienie.** Pliki. Ewidencja ma trafiać do Excela, którego odbiorcy używali wcześniej,
-  dlatego CSV jest zapisywany ze średnikiem i UTF-8 BOM (`app.py:214`) i otwiera się dwuklikiem. Prototyp
+  dlatego CSV jest zapisywany ze średnikiem i UTF-8 BOM (`app.py:228`) i otwiera się dwuklikiem. Prototyp
   nie wymaga instalowania ani utrzymywania bazy.
 - **Konsekwencje.** ➕ Start bez infrastruktury; ewidencja od razu czytelna w Excelu. ➖ Brak kluczy obcych:
   spójność trzyma kod, i nie wszędzie ([02. Model danych](02-dane/model-danych.md#spójność-danych)).
   ➖ Każdy wpis zapisywany do dwóch plików; historia czytana z wielu plików dziennych. ➖ Uszkodzony plik JSON
-  czytany jak pusty bez alarmu (`app.py:63-67`).
+  czytany jak pusty bez alarmu (`app.py:74-78`).
 
 ### D2. Jeden skan = przejście, a nie para wejście/wyjście
 
@@ -95,7 +95,7 @@ widoczne w działaniu aplikacji.
   przy prawdziwej szybkiej zmianie.
 - **Konsekwencje.** ➕ Pomyłkowe kliknięcie zatrzymane, prawdziwa zmiana po jednym dodatkowym kliknięciu
   (BR-6). ➕ Próg konfigurowalny. ➖ Sprawdzenie czasu odbywa się poza blokadą stanu, więc przy dwóch
-  równoczesnych skanach jednego kodu ostrzeżenie może się nie pojawić (`app.py:509-520`).
+  równoczesnych skanach jednego kodu ostrzeżenie może się nie pojawić (`app.py:529-540`).
 
 ### D8. Uprawnienia na poziomie strefy
 
@@ -114,7 +114,7 @@ widoczne w działaniu aplikacji.
   niepraktyczne na wspólnym urządzeniu.
 - **Konsekwencje.** ➕ Rejestracja to jeden skan. ➖ Kod QR ma przewidywalną treść (`HU_NAZWISKO_IMIE`):
   kto zna nazwisko, może zarejestrować kogoś innego. ➖ Podgląd obecności jest dostępny bez logowania
-  (`app.py:591`).
+  (`app.py:611`).
 
 ### D10. Zadania cykliczne jako wątki wewnątrz serwera
 
@@ -122,11 +122,11 @@ widoczne w działaniu aplikacji.
   człowieka.
 - **Opcje.** Zewnętrzny harmonogram systemu operacyjnego; osobny proces; wątki uruchamiane przy starcie
   serwera.
-- **Wybór i uzasadnienie.** Wątki w procesie serwera (`app.py:354, 424, 1258`). Jedno polecenie uruchamia
+- **Wybór i uzasadnienie.** Wątki w procesie serwera (`app.py:374, 444, 1305`). Jedno polecenie uruchamia
   wszystko; brak dodatkowej konfiguracji na stanowisku.
 - **Konsekwencje.** ➕ Zero konfiguracji. ➖ Zadania żyją tylko, gdy serwer działa: kopia o 02:00 nie
   powstanie przy wyłączonym serwerze (BR-56), a nieoczekiwany błąd kończy wątek kontroli po cichu
-  (`app.py:423`). ➖ Nowe alerty trzymane w pamięci giną przy restarcie (BR-19). ➖ Przy kilku procesach
+  (`app.py:443`). ➖ Nowe alerty trzymane w pamięci giną przy restarcie (BR-19). ➖ Przy kilku procesach
   serwera (skalowanie) każdy uruchomiłby własne zadania.
 
 ### D11. Tryb demo w tym samym kodzie
@@ -134,25 +134,25 @@ widoczne w działaniu aplikacji.
 - **Kontekst.** Publiczna prezentacja prototypu bez ujawniania danych i bez osobnej wersji aplikacji.
 - **Opcje.** Osobna gałąź lub kopia kodu z danymi; nagranie wideo; tryb demo sterowany zmienną
   środowiskową.
-- **Wybór i uzasadnienie.** Zmienna `RCP_DEMO` (`app.py:17`): osobny katalog danych, generator fikcyjnych
+- **Wybór i uzasadnienie.** Zmienna `RCP_DEMO` (`app.py:16`): osobny katalog danych, generator fikcyjnych
   danych, automatyczne logowanie, blokada zmian słowników, cykliczne odtwarzanie danych.
 - **Konsekwencje.** ➕ Jedna baza kodu; demo zawsze zgodne z aktualną wersją. ➕ Reset nie dotyka katalogu
-  produkcyjnego (`app.py:19`). ➖ Lista blokad jest utrzymywana ręcznie: nowy adres zmieniający dane trzeba
-  do niej dopisać (`app.py:1200-1205`). ➖ W demo działają przesunięcia, korekty i nadwyżki, więc gość
+  produkcyjnego (`app.py:30`). ➖ Lista blokad jest utrzymywana ręcznie: nowy adres zmieniający dane trzeba
+  do niej dopisać (`app.py:1247-1252`). ➖ W demo działają przesunięcia, korekty i nadwyżki, więc gość
   może „zepsuć” scenę demo do następnego resetu.
 
 ## Znane ograniczenia rozwiązania
 
 | Ograniczenie | Konsekwencja | Źródło |
 |---|---|---|
-| Brak naliczania wynagrodzeń i integracji kadrowo-płacowej | dane przekazywane przez eksport CSV | `app.py:1003-1016` |
+| Brak naliczania wynagrodzeń i integracji kadrowo-płacowej | dane przekazywane przez eksport CSV | `app.py:1050-1063` |
 | Korekta nie zmienia ewidencji | poprawka ręczna w dwóch plikach | BR-32 |
 | Brak zmian nocnych przez północ | pobyt zamykany o 23:59:59 | BR-17, D3 |
 | Uprawnienia tylko per strefa | podstrefy dostępne dla każdego z uprawnieniem do strefy | BR-5, D8 |
 | Skaner wymaga połączenia z serwerem | skan bez połączenia przepada z komunikatem | `index.html:459, 595` |
-| Jedna rola w panelu | pełny panel ma tylko administrator; lider zmiany nie ma dostępu, co właściciel projektu uznał za wystarczające ([Z11](00-przeglad.md#ustalenia-potwierdzone)) | `app.py:278` |
+| Jedna rola w panelu | pełny panel ma tylko administrator; lider zmiany nie ma dostępu, co właściciel projektu uznał za wystarczające ([Z11](00-przeglad.md#ustalenia-potwierdzone)) | `app.py:292` |
 | Eksport tylko dnia dzisiejszego i bieżącego miesiąca | dane z przeszłości przez Historię (maks. 500 wierszy) albo z serwera | BR-54, BR-55 |
-| Alerty bez potwierdzania | kolumna „potwierdzone” zawsze „NIE”; brak listy alertów w panelu (tylko eksport); potwierdzone jako wystarczające (Z12) | `app.py:252`, [04. Integracje](04-integracje.md#adresy-aplikacji-interfejs-http) |
+| Alerty bez potwierdzania | kolumna „potwierdzone” zawsze „NIE”; brak listy alertów w panelu (tylko eksport); potwierdzone jako wystarczające (Z12) | `app.py:266`, [04. Integracje](04-integracje.md#adresy-aplikacji-interfejs-http) |
 | Brak retencji danych osobowych | wpisy, alerty, nadwyżki, korekty i kopie przechowywane bezterminowo | brak mechanizmu w kodzie |
 | Brak edycji nazwisk i nazw stref | zmiana przez usunięcie i ponowne dodanie; stare nazwy zostają w historii | BR-48, BR-50 |
 | Czas lokalny serwera bez strefy w zapisach | zmiana czasu letni/zimowy zaburza pobyty trwające w noc zmiany czasu; zaakceptowane: serwer w Europe/Warsaw, czas lokalny wystarcza (Z10) | `datetime.now()` w całym `app.py` |
@@ -163,20 +163,20 @@ widoczne w działaniu aplikacji.
 
 | # | Problem | Gdzie opisane | Źródło |
 |---|---|---|---|
-| T1 | Nadwyżka tylko przy zamknięciu przerwy przez pracownika; przesunięcie i auto-zamknięcie dają samą flagę | BR-24, [P3](01-procesy/P3-nadwyzki-przerw.md) | `app.py:549` wobec `843, 412` |
-| T2 | Dwa domyślne progi długiego dyżuru: 10 h dla alertu, 12 h dla Live; właściwa wartość to 10 h, więc 12 h jest błędem do poprawy | Z13, [P2](01-procesy/P2-nadzor-i-alerty.md) | `app.py:366, 598` |
-| T3 | Usunięcie pracownika kasuje trwający pobyt bez wpisu; zostawia grafik, nadwyżki, korekty | BR-49 | `app.py:947-955` |
-| T4 | Ponowny skan tej samej strefy rozbija pobyt | BR-12 | `app.py:522-577` |
-| T5 | Porównanie z grafikiem liczy tylko zamknięte wpisy; dzień, który się nie zaczął, ma status „nieobecność” | [P5](01-procesy/P5-grafik-i-obecnosc.md) wyjątki | `app.py:1142-1172` |
-| T6 | Import grafiku: dopasowanie po fragmencie nazwiska, literówka w kodzie zmiany = dzień wolny, numer dnia w nagłówku = bieżący miesiąc, wiersz legendy w szablonie zgłaszany jako błąd | BR-36, BR-37, BR-38, [P5](01-procesy/P5-grafik-i-obecnosc.md) wyjątki | `app.py:115, 159-163, 180-185, 1055` |
-| T7 | Nowe alerty w pamięci serwera: giną przy restarcie, pobiera je pierwsza karta panelu, nowszy alert tego samego pracownika nadpisuje starszy | BR-19, [P2](01-procesy/P2-nadzor-i-alerty.md) wyjątki | `app.py:357, 384, 392, 416, 622-623` |
-| T8 | Dodanie pracownika, strefy lub konta o istniejącej nazwie nadpisuje rekord | BR-48, BR-51 | `app.py:902, 944, 978` |
-| T9 | Przesunięcie i ręczny start nie sprawdzają uprawnień ani słownika stref; nazwa strefy przy nadwyżce to wolny tekst | BR-20, BR-21, BR-26 | `app.py:812-888, 781-786` |
-| T10 | Przekroczona przerwa daje dwa wiersze `DLUGA_PRZERWA` w pliku alertów: w trakcie i przy zamknięciu | BR-9, BR-15 | `app.py:383, 566` |
-| T11 | Kopia tylko w godzinie 02 przy działającym serwerze; brak retencji; błąd tylko w konsoli | BR-56, BR-57 | `app.py:332-352` |
-| T12 | Równoczesne decyzje dwóch administratorów o tej samej nadwyżce lub korekcie: wygrywa ostatni zapis | [P3](01-procesy/P3-nadwyzki-przerw.md), [P4](01-procesy/P4-korekty-ewidencji.md) wyjątki | `app.py:783-789, 802-808` |
-| T13 | Dane dashboardu zawierają niewyświetlane sumy per strefa i per pracownik | [04. Integracje](04-integracje.md) | `app.py:712-724, 757-758` |
-| T14 | Numery wpisów liczone z liczby linii pliku; wpisy automatyczne bez numeru, formatu czasu i pola korekty | [02. Model danych](02-dane/model-danych.md#spójność-danych) | `app.py:224-229, 405-413` |
+| T1 | Nadwyżka tylko przy zamknięciu przerwy przez pracownika; przesunięcie i auto-zamknięcie dają samą flagę | BR-24, [P3](01-procesy/P3-nadwyzki-przerw.md) | `app.py:569` wobec `843, 412` |
+| T2 | Dwa domyślne progi długiego dyżuru: 10 h dla alertu, 12 h dla Live; właściwa wartość to 10 h, więc 12 h jest błędem do poprawy | Z13, [P2](01-procesy/P2-nadzor-i-alerty.md) | `app.py:386, 618` |
+| T3 | Usunięcie pracownika kasuje trwający pobyt bez wpisu; zostawia grafik, nadwyżki, korekty | BR-49 | `app.py:994-1002` |
+| T4 | Ponowny skan tej samej strefy rozbija pobyt | BR-12 | `app.py:542-597` |
+| T5 | Porównanie z grafikiem liczy tylko zamknięte wpisy; dzień, który się nie zaczął, ma status „nieobecność” | [P5](01-procesy/P5-grafik-i-obecnosc.md) wyjątki | `app.py:1189-1219` |
+| T6 | Import grafiku: dopasowanie po fragmencie nazwiska, literówka w kodzie zmiany = dzień wolny, numer dnia w nagłówku = bieżący miesiąc, wiersz legendy w szablonie zgłaszany jako błąd | BR-36, BR-37, BR-38, [P5](01-procesy/P5-grafik-i-obecnosc.md) wyjątki | `app.py:129, 173-177, 194-199, 1102` |
+| T7 | Nowe alerty w pamięci serwera: giną przy restarcie, pobiera je pierwsza karta panelu, nowszy alert tego samego pracownika nadpisuje starszy | BR-19, [P2](01-procesy/P2-nadzor-i-alerty.md) wyjątki | `app.py:377, 404, 412, 436, 642-643` |
+| T8 | Dodanie pracownika, strefy lub konta o istniejącej nazwie nadpisuje rekord | BR-48, BR-51 | `app.py:949, 991, 978` |
+| T9 | Przesunięcie i ręczny start nie sprawdzają uprawnień ani słownika stref; nazwa strefy przy nadwyżce to wolny tekst | BR-20, BR-21, BR-26 | `app.py:859-935, 828-833` |
+| T10 | Przekroczona przerwa daje dwa wiersze `DLUGA_PRZERWA` w pliku alertów: w trakcie i przy zamknięciu | BR-9, BR-15 | `app.py:403, 586` |
+| T11 | Kopia tylko w godzinie 02 przy działającym serwerze; brak retencji; błąd tylko w konsoli | BR-56, BR-57 | `app.py:352-372` |
+| T12 | Równoczesne decyzje dwóch administratorów o tej samej nadwyżce lub korekcie: wygrywa ostatni zapis | [P3](01-procesy/P3-nadwyzki-przerw.md), [P4](01-procesy/P4-korekty-ewidencji.md) wyjątki | `app.py:830-836, 849-855` |
+| T13 | Dane dashboardu zawierają niewyświetlane sumy per strefa i per pracownik | [04. Integracje](04-integracje.md) | `app.py:759-771, 804-805` |
+| T14 | Numery wpisów liczone z liczby linii pliku; wpisy automatyczne bez numeru, formatu czasu i pola korekty | [02. Model danych](02-dane/model-danych.md#spójność-danych) | `app.py:238-243, 425-433` |
 | T15 | Alert `PRZEKROCZENIE_ZMIANY` filtrowany na ekranie, nigdy nietworzony; pozostałość do usunięcia | Z14 | `index.html:617` |
 
 ### Bezpieczeństwo
@@ -185,15 +185,15 @@ Prototyp nie przeszedł przeglądu bezpieczeństwa. Przed jakimkolwiek wdrożeni
 
 | # | Problem | Źródło |
 |---|---|---|
-| B1 | Klucz sesji ma wartość domyślną w kodzie, używaną, gdy nie ustawiono `RCP_SECRET_KEY` | `app.py:16` |
-| B2 | Konto startowe `admin` z hasłem `admin123` bez wymuszenia zmiany; dane logowania wypisywane w konsoli | `app.py:314`, `run.py:4, 17` |
-| B3 | Migracja starych skrótów haseł ustawia hasło startowe | `app.py:316-325` |
-| B4 | Podgląd obecności dostępny bez logowania | `app.py:591` |
-| B5 | Przewidywalna treść kodu QR; brak unieważniania kodu zgubionej karty, a zgubiona karta dostaje duplikat z tym samym kodem (Z3) | `app.py:943`, D9 |
-| B6 | Brak limitu prób logowania i ochrony przed podrobionym żądaniem (CSRF) | `app.py:650-662` |
-| B7 | Konfiguracja zapisuje dowolne klucze; ścieżka kopii może wskazać dowolny katalog serwera | `app.py:995-1000` |
-| B8 | Treść nieznanego kodu trafia do pliku alertów bez oczyszczenia; kod zaczynający się od „=” staje się formułą w Excelu | `app.py:441, 248-252` |
-| B9 | Dodanie administratora o istniejącym loginie po cichu zmienia hasło tego konta | `app.py:978` |
+| B1 | ~~Klucz sesji z wartością domyślną w kodzie~~ — naprawione (US-001): poza trybem demo brak `RCP_SECRET_KEY` kończy start błędem | `app.py:18-28` |
+| B2 | ~~Konto `admin/admin123` bez wymuszenia zmiany, dane logowania w konsoli~~ — naprawione (US-001): hasło startowe z `RCP_ADMIN_PASSWORD` albo losowe wypisane raz; zmiana wymuszona przy pierwszym logowaniu | `app.py:294-301, 690-714` |
+| B3 | ~~Migracja starych skrótów haseł ustawiała stałe hasło~~ — naprawione (US-001): konto dostaje nowe hasło startowe jak wyżej | `app.py:335-345` |
+| B4 | Podgląd obecności dostępny bez logowania | `app.py:611` |
+| B5 | Przewidywalna treść kodu QR; brak unieważniania kodu zgubionej karty, a zgubiona karta dostaje duplikat z tym samym kodem (Z3) | `app.py:990`, D9 |
+| B6 | Brak limitu prób logowania i ochrony przed podrobionym żądaniem (CSRF) | `app.py:670-683` |
+| B7 | Konfiguracja zapisuje dowolne klucze; ścieżka kopii może wskazać dowolny katalog serwera | `app.py:1042-1047` |
+| B8 | Treść nieznanego kodu trafia do pliku alertów bez oczyszczenia; kod zaczynający się od „=” staje się formułą w Excelu | `app.py:461, 262-266` |
+| B9 | Dodanie administratora o istniejącym loginie po cichu zmienia hasło tego konta | `app.py:1025` |
 
 ### Interfejs
 
@@ -204,16 +204,16 @@ Najważniejsza: ekran pracownika nie wraca sam do ekranu startu (U1).
 
 | Miejsce | Co się dzieje | Źródło |
 |---|---|---|
-| odczyt JSON | uszkodzony plik czytany jak pusty, bez alarmu | `app.py:63-67` |
-| zapis JSON | bez obsługi błędu i nieatomowy; przerwany zapis uszkadza plik | `app.py:69-71` |
-| wiele miejsc | błędy pomijane bez śladu (`except: pass`) | `app.py:148-164, 229, 236, 259, 274, 288-289, 717, 724, 1154, 1184` |
-| wątek kontroli | łapie tylko błędy pliku, klucza i wartości; inny wyjątek kończy wątek po cichu | `app.py:423` |
-| daty z plików | uszkodzony zapis pobytu daje błąd serwera | `app.py:377, 513, 530, 601, 831, 871` |
-| data dashboardu | zły format w adresie daje błąd serwera | `app.py:708-709` |
-| plik grafiku | nieprawidłowy plik daje błąd serwera; pole wyboru dopuszcza `.xls`, którego biblioteka nie czyta | `app.py:123`, `admin.html:388` |
-| treść żądań | treść niebędąca obiektem JSON daje błąd serwera | `app.py:435, 485, 629` |
-| opis korekty, lista uprawnień, konfiguracja, wpis grafiku | bez walidacji po stronie serwera | `app.py:640, 960-963, 998-999, 1114-1123` |
-| nieistniejące numery nadwyżki i korekty | odpowiedź sukces | `app.py:783-790, 802-809` |
+| odczyt JSON | uszkodzony plik czytany jak pusty, bez alarmu | `app.py:74-78` |
+| zapis JSON | bez obsługi błędu i nieatomowy; przerwany zapis uszkadza plik | `app.py:80-82` |
+| wiele miejsc | błędy pomijane bez śladu (`except: pass`) | `app.py:162-178, 243, 250, 273, 288, 310-311, 764, 771, 1201, 1231` |
+| wątek kontroli | łapie tylko błędy pliku, klucza i wartości; inny wyjątek kończy wątek po cichu | `app.py:443` |
+| daty z plików | uszkodzony zapis pobytu daje błąd serwera | `app.py:397, 533, 550, 621, 878, 918` |
+| data dashboardu | zły format w adresie daje błąd serwera | `app.py:755-756` |
+| plik grafiku | nieprawidłowy plik daje błąd serwera; pole wyboru dopuszcza `.xls`, którego biblioteka nie czyta | `app.py:137`, `admin.html:388` |
+| treść żądań | treść niebędąca obiektem JSON daje błąd serwera | `app.py:455, 505, 649` |
+| opis korekty, lista uprawnień, konfiguracja, wpis grafiku | bez walidacji po stronie serwera | `app.py:660, 1007-1010, 1045-1046, 1161-1170` |
+| nieistniejące numery nadwyżki i korekty | odpowiedź sukces | `app.py:830-837, 849-856` |
 | ekran | nie sprawdza odpowiedzi serwera w kilku akcjach; brak obsługi wygaśnięcia sesji i błędów sieci w panelu | `index.html:640-645`, `admin.html:863-867, 972-975, 1165-1173, 529-532` |
 
 ## Co trzeba zrobić przed wdrożeniem produkcyjnym
@@ -222,8 +222,8 @@ Kolejność według wpływu na wiarygodność ewidencji i bezpieczeństwo danych
 
 1. **Powrót ekranu pracownika do startu po bezczynności** (U1) i **ochrona podglądu obecności** (B4):
    chronią przed rejestracją w cudzym imieniu i wyciekiem informacji o obecności.
-2. **Wymóg ustawienia klucza sesji** poza trybem demo i **wymuszenie zmiany hasła startowego** (B1–B3);
-   limit prób logowania i ochrona CSRF (B6).
+2. ~~Wymóg ustawienia klucza sesji poza trybem demo i wymuszenie zmiany hasła startowego (B1–B3)~~ — zrobione (US-001);
+   zostaje limit prób logowania i ochrona CSRF (B6).
 3. **Spójne zamykanie przerw**: nadwyżka niezależnie od tego, kto zamknął przerwę (T1); jeden próg długiego
    dyżuru 10 h (T2, Z13); usunięcie pozostałości `PRZEKROCZENIE_ZMIANY` (T15, Z14).
 4. **Korekta powiązana z konkretnym wpisem**, która po zatwierdzeniu zmienia ewidencję w obu plikach

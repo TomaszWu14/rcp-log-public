@@ -7,14 +7,25 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date, timedelta
 from pathlib import Path
 from io import BytesIO
-import csv, json, threading, time as time_module, shutil, os, re
+import csv, json, threading, time as time_module, shutil, os, re, secrets
 import openpyxl
 from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("RCP_SECRET_KEY") or "timeapp-secret-change-in-production-32ch"
 DEMO = os.environ.get("RCP_DEMO") == "1"   # tryb demo — opis w sekcji DEMO na końcu pliku
+
+def _secret_key():
+    """Klucz podpisu sesji: wymagany poza trybem demo (US-001). Demo bez zmiennej losuje klucz."""
+    key = os.environ.get("RCP_SECRET_KEY", "")
+    if DEMO and not key:
+        return secrets.token_hex(32)
+    if len(key) < 32:
+        raise SystemExit("RCP_SECRET_KEY: ustaw losowy klucz o długości co najmniej 32 znaków, "
+                         "np. python -c \"import secrets; print(secrets.token_hex(32))\"")
+    return key
+
+app.secret_key = _secret_key()
 BASE_DIR     = Path(__file__).parent
 DATA_DIR     = BASE_DIR / ("data_demo" if DEMO else "data")
 DATA_DIR.mkdir(exist_ok=True)
@@ -74,7 +85,10 @@ def load_workers():  return _r(WORKERS_FILE, {})
 def save_workers(d): _w(WORKERS_FILE, d)
 def load_strefy():   return _r(STREFY_FILE, {})
 def save_strefy(d):  _w(STREFY_FILE, d)
-def load_admins():   return _r(ADMINS_FILE, {})
+def load_admins():
+    # wartość: {"hash", "must_change"}; stary format (sam skrót jako tekst) jest podnoszony w locie
+    return {u: (v if isinstance(v, dict) else {"hash": v, "must_change": False})
+            for u, v in _r(ADMINS_FILE, {}).items()}
 def save_admins(d):  _w(ADMINS_FILE, d)
 def load_config():   return _r(CONFIG_FILE, DEFAULT_CONFIG)
 def save_config(d):  _w(CONFIG_FILE, d)
@@ -277,6 +291,14 @@ def hash_pw(pw): return generate_password_hash(pw)
 def verify_pw(pw, hashed): return check_password_hash(hashed, pw)
 def is_admin():  return session.get("admin_logged") is True
 
+def _konto_startowe(user):
+    """Hasło startowe z RCP_ADMIN_PASSWORD; bez zmiennej losowe, wypisane raz w logu (US-001).
+    Konto wymusza zmianę hasła przy pierwszym zalogowaniu."""
+    pw = os.environ.get("RCP_ADMIN_PASSWORD") or secrets.token_urlsafe(12)
+    if not os.environ.get("RCP_ADMIN_PASSWORD"):
+        print(f"[ADMIN] Hasło startowe konta '{user}': {pw}  — jednorazowe, zmiana wymuszona przy logowaniu")
+    return {"hash": hash_pw(pw), "must_change": True}
+
 def get_dzien_min(pracownik, dt=None):
     dt = dt or datetime.now()
     daily, _ = get_csv_paths(dt)
@@ -311,18 +333,16 @@ def init_files():
             "HU_WISNIEWSKI_PIOTR": {"imie":"Wisniewski Piotr","strefy":["PICKING","INV","PRZERWA"]},
         })
     if not ADMINS_FILE.exists():
-        save_admins({"admin": hash_pw("admin123")})
+        save_admins({"admin": _konto_startowe("admin")})
     else:
-        # Migracja starych hashów SHA-256 (64 znaki hex) do werkzeug
-        adm = load_admins()
-        migrated = False
-        for user, h in adm.items():
-            if len(h) == 64 and all(c in "0123456789abcdef" for c in h):
-                adm[user] = hash_pw("admin123")
-                migrated = True
-        if migrated:
+        # Konta ze skrótem w starym formacie (SHA-256, 64 znaki hex) dostają nowe hasło startowe
+        adm   = load_admins()
+        stare = [u for u, v in adm.items()
+                 if len(v["hash"]) == 64 and all(c in "0123456789abcdef" for c in v["hash"])]
+        for u in stare:
+            adm[u] = _konto_startowe(u)
+        if stare:
             save_admins(adm)
-            print("[ADMINS] Hasła zmigrowane do bezpiecznego formatu. Zresetuj hasła!")
 
 init_files()
 
@@ -654,9 +674,10 @@ def admin_login():
         user = request.form.get("username","").strip()
         pw   = request.form.get("password","")
         adm  = load_admins()
-        if user in adm and verify_pw(pw, adm[user]):
+        if user in adm and verify_pw(pw, adm[user]["hash"]):
             session["admin_logged"] = True
             session["admin_user"]   = user
+            session["must_change"]  = adm[user]["must_change"]
             return redirect(url_for("admin_panel"))
         err = "Nieprawidłowy login lub hasło"
     return render_template("admin_login.html", error=err)
@@ -665,6 +686,32 @@ def admin_login():
 def admin_logout():
     session.clear()
     return redirect(url_for("admin_login"))
+
+@app.before_request
+def wymus_zmiane_hasla():
+    # Hasło startowe działa tylko do pierwszego zalogowania — do zmiany panel jest niedostępny (US-001)
+    if (session.get("must_change") and request.path.startswith("/admin")
+            and request.endpoint not in ("admin_haslo", "admin_logout")):
+        return redirect(url_for("admin_haslo"))
+
+@app.route("/admin/haslo", methods=["GET","POST"])
+def admin_haslo():
+    if not is_admin(): return redirect(url_for("admin_login"))
+    err = None
+    if request.method == "POST":
+        p1 = request.form.get("password","")
+        p2 = request.form.get("password2","")
+        if len(p1) < 12: err = "Hasło musi mieć co najmniej 12 znaków"
+        elif p1 != p2:   err = "Hasła różnią się"
+        else:
+            adm  = load_admins()
+            user = session.get("admin_user")
+            if user in adm:
+                adm[user] = {"hash": hash_pw(p1), "must_change": False}
+                save_admins(adm)
+            session["must_change"] = False
+            return redirect(url_for("admin_panel"))
+    return render_template("admin_haslo.html", error=err, wymuszona=bool(session.get("must_change")))
 
 @app.route("/admin")
 def admin_panel():
@@ -975,7 +1022,7 @@ def adm_add_admin():
     d=request.json or {}
     u=d.get("username","").strip(); p=d.get("password","")
     if not u or not p: return jsonify({"ok":False,"error":"Brak danych"}), 400
-    a=load_admins(); a[u]=hash_pw(p); save_admins(a)
+    a=load_admins(); a[u]={"hash":hash_pw(p),"must_change":False}; save_admins(a)
     return jsonify({"ok":True})
 
 @app.route("/admin/api/admins/<user>",     methods=["DELETE"])
@@ -1211,7 +1258,7 @@ def demo_reset():
             f.unlink()
         save_strefy(DEFAULT_STREFY)
         save_config(DEFAULT_CONFIG)
-        save_admins({"demo": hash_pw(os.urandom(16).hex())})
+        save_admins({"demo": {"hash": hash_pw(secrets.token_hex(16)), "must_change": False}})
         d = demo_data.build(datetime.now(), DEFAULT_STREFY)
         save_workers(d["workers"])
         _w(STATE_FILE, d["state"])
