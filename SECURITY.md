@@ -4,9 +4,10 @@
 
 RCP Log jest prototypem i **nie przeszedł przeglądu bezpieczeństwa**. Publiczna instancja
 [rcp.log.twapp.pl](https://rcp.log.twapp.pl) działa w trybie demo: dane fikcyjne odtwarzane co 30 min,
-każdy gość jest administratorem — to zamierzone. Nie uruchamiaj aplikacji z prawdziwymi danymi
-pracowników przed naprawą ryzyk R1–R3: [docs/AUDYT.md](docs/AUDYT.md#sec-najważniejsze-ryzyka-top-10),
-rejestr [docs/bezpieczenstwo/RYZYKA.md](docs/bezpieczenstwo/RYZYKA.md).
+każdy gość jest administratorem — to zamierzone. Ryzyka krytyczne i wysokie R1–R3 zamknięte (US-001, US-002);
+przed uruchomieniem z prawdziwymi danymi pracowników sprawdź listę „przed wdrożeniem" w
+[docs/05](docs/05-decyzje-i-ograniczenia.md#co-trzeba-zrobić-przed-wdrożeniem-produkcyjnym) i rejestr
+[docs/bezpieczenstwo/RYZYKA.md](docs/bezpieczenstwo/RYZYKA.md).
 
 ## Zgłaszanie podatności
 

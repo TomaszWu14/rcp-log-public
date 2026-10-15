@@ -36,8 +36,8 @@ w Excelu, a nadwyżki przerw i korekty trafiają na listy do decyzji człowieka.
 
 | Poza zakresem | Jak to wynika z kodu |
 |---|---|
-| Naliczanie wynagrodzeń, integracja z systemem kadrowo-płacowym | jedynym wyjściem danych jest plik CSV (`app.py:1050-1063`) |
-| Automatyczna poprawka ewidencji po zatwierdzeniu korekty | decyzja zmienia tylko status zgłoszenia (`app.py:845-856`) |
+| Naliczanie wynagrodzeń, integracja z systemem kadrowo-płacowym | jedynym wyjściem danych jest plik CSV (`app.py:1051-1064`) |
+| Automatyczna poprawka ewidencji po zatwierdzeniu korekty | decyzja zmienia tylko status zgłoszenia (`app.py:846-857`) |
 | Zmiana nocna przechodząca przez północ | pobyt z poprzedniego dnia jest zamykany o 23:59:59 dnia rozpoczęcia (`app.py:416-438`); potwierdzone: zmiany nocne nie występują (Z8) |
 | Uprawnienia na poziomie podstref | uprawnienia to lista stref; podstrefa nie jest sprawdzana (`app.py:521-523`) |
 | Praca skanera bez połączenia z serwerem | każdy skan to zapytanie do serwera; brak bufora po stronie ekranu (`index.html:450-460`) |
@@ -50,14 +50,14 @@ w Excelu, a nadwyżki przerw i korekty trafiają na listy do decyzji człowieka.
 
 | Aktor | Typ | Kanał | Odpowiedzialność | Źródło w kodzie |
 |---|---|---|---|---|
-| Pracownik magazynu | człowiek | ekran skanera `/`, bez logowania | identyfikuje się kodem, rejestruje wejście do strefy, przerwę i koniec zmiany, zgłasza korektę | `app.py:449-665`, `index.html` |
-| Administrator | człowiek | panel `/admin`, po zalogowaniu | monitoruje obsadę, reaguje na alerty, przesuwa i kończy pobyty, rozlicza nadwyżki i korekty, utrzymuje słowniki, grafik i konfigurację, eksportuje dane; w organizacji: właściciel projektu, który też drukuje i wydaje karty z kodem i nanosi zatwierdzone korekty na pliki CSV (Z1, Z3) | `app.py:670-1234`, `admin.html` |
-| Gość demo | wariant administratora | panel w trybie demo, logowanie automatyczne | ogląda i testuje wszystko poza zmianą słowników, kont, konfiguracji i importem grafiku | `app.py:1247-1298` |
+| Pracownik magazynu | człowiek | ekran skanera `/`, bez logowania | identyfikuje się kodem, rejestruje wejście do strefy, przerwę i koniec zmiany, zgłasza korektę | `app.py:449-666`, `index.html` |
+| Administrator | człowiek | panel `/admin`, po zalogowaniu | monitoruje obsadę, reaguje na alerty, przesuwa i kończy pobyty, rozlicza nadwyżki i korekty, utrzymuje słowniki, grafik i konfigurację, eksportuje dane; w organizacji: właściciel projektu, który też drukuje i wydaje karty z kodem i nanosi zatwierdzone korekty na pliki CSV (Z1, Z3) | `app.py:671-1235`, `admin.html` |
+| Gość demo | wariant administratora | panel w trybie demo, logowanie automatyczne | ogląda i testuje wszystko poza zmianą słowników, kont, konfiguracji i importem grafiku | `app.py:1248-1299` |
 | Kontrola pobytów | proces automatyczny, co 60 s | wątek serwera | wykrywa długą przerwę i długi dyżur, zamyka pobyty z poprzedniego dnia | `app.py:379-444` |
 | Kopia zapasowa | proces automatyczny, raz na dobę o 02:00 | wątek serwera (nie w trybie demo) | kopiuje wszystkie pliki danych do katalogu kopii | `app.py:352-374` |
-| Odtwarzanie danych demo | proces automatyczny, co N minut | wątek serwera (tylko tryb demo) | kasuje dane i generuje fikcyjny stan | `app.py:1254-1305` |
+| Odtwarzanie danych demo | proces automatyczny, co N minut | wątek serwera (tylko tryb demo) | kasuje dane i generuje fikcyjny stan | `app.py:1255-1306` |
 | Czytnik kodów QR | urządzenie | czytnik USB emulujący klawiaturę na jednym wspólnym komputerze zmiany (Z2) | wpisuje kod pracownika i Enter w pole skanera; po wpisaniu ponad 5 znaków ekran sam wysyła kod po 0,7 s | `index.html:441-448` |
-| Excel (lub inny arkusz) | system zewnętrzny | pliki `.xlsx` i `.csv` | wypełnienie szablonu grafiku; odczyt ewidencji i alertów | `app.py:131-210, 1069-1117` |
+| Excel (lub inny arkusz) | system zewnętrzny | pliki `.xlsx` i `.csv` | wypełnienie szablonu grafiku; odczyt ewidencji i alertów | `app.py:131-210, 1070-1118` |
 | Lider zmiany | człowiek, poza aplikacją | brak własnego dostępu do panelu (Z11) | odpowiada za rejestrację i jej poprawność na zmianie (P1, P2) | — (Z1) |
 | Kierownik magazynu | człowiek, poza aplikacją | Excel: szablon grafiku, pliki CSV | przygotowuje grafik w Excelu na podstawie szablonu; odbiorca ewidencji i porównania z grafikiem (P5, P7) | — (Z1, Z6) |
 
