@@ -15,6 +15,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie 
   (stary format czytany w locie).
 
 ### Fixed
+- US-010: błędy w tle i przy odczycie plików trafiają do logu (`logging`, logger `rcp`) zamiast `except: pass`;
+  wątki kontroli, kopii i demo przeżywają każdy wyjątek przebiegu (`_przebieg`); uszkodzony JSON loguje ERROR
+  i działa na wartości domyślnej; kopia zapasowa jako `kopia_zapasowa(now)` z testem; parsowanie dat grafiku
+  w `_data_z_naglowka()`. Hasło startowe i komunikaty demo przez logger (stderr).
 - US-006: zapis plików JSON przez plik tymczasowy i `os.replace` (przerwany zapis nie uszkadza danych); zgłoszenia
   korekt oraz decyzje o nadwyżkach i korektach pod blokadą — równoczesne zgłoszenia mają różne numery, druga decyzja
   o tej samej pozycji dostaje 409, nieistniejący numer 404 (T12); panel pokazuje komunikat.

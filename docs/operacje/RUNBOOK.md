@@ -28,7 +28,7 @@ w demo wyłączona. Ręcznie: skopiuj cały `data/`. Retencja 30 dni (Z7) — do
 
 | Objaw | Przyczyna | Co zrobić |
 |---|---|---|
-| Alerty przestały przychodzić | wątek `bg_check` zginął na nieobsłużonym wyjątku (DEV-3) | restart; zgłoś bug z `alerty.csv` |
+| Alerty przestały przychodzić | wyjątek w przebiegu kontroli (od US-010 wątek działa dalej, a błąd jest w logu z pełnym śladem) | sprawdź log serwera pod „kontrola pobytów: błąd przebiegu”; zgłoś bug ze śladem |
 | Błąd 500 przy wejściu na Live | uszkodzony wpis daty w `aktywne_sesje.json` | przywróć plik z kopii lub usuń wadliwy wpis |
 | „Plik jest pusty" przy imporcie grafiku | `.xls` zamiast `.xlsx` albo pusty arkusz | zapisz jako `.xlsx` |
 | Demo pokazuje dziwne dane | gość edytował grafik / przesunął pracowników | poczekaj na reset (`RCP_DEMO_RESET_MIN`) lub Redeploy |

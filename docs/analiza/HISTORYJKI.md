@@ -102,6 +102,21 @@ Then  kopia jest usunięta
 ```
 Okresy jako klucze konfiguracji z wartościami domyślnymi z `RODO.md`; kopia zapasowa niezależna od godziny pracy serwera (T11).
 
+### US-010 Błędy do logu zamiast `except: pass` (DEV-3)
+**Jako** administrator **chcę**, żeby każdy błąd w tle i przy odczycie plików zostawiał ślad w logu, a wątki kontroli
+i kopii działały dalej, **aby** alerty nie przestawały działać po cichu.
+```gherkin
+Given przebieg kontroli pobytów rzuca nieprzewidziany wyjątek
+When  wątek wykonuje przebieg
+Then  w logu jest wpis ERROR ze śladem, a kolejny przebieg po 60 s wykonuje się normalnie
+
+Given uszkodzony plik config.json
+When  aplikacja czyta konfigurację
+Then  używa wartości domyślnych i loguje ERROR z nazwą pliku
+```
+**Zrealizowane** (PR #26): logger `rcp` (`logging.basicConfig`), `_przebieg()` dla trzech wątków, `kopia_zapasowa(now)`
+i `_data_z_naglowka()` wydzielone i przetestowane; `test_SYS_01`, `test_SYS_10`, `test_SYS_11`; `pyproject.toml` bez wyjątków ruff.
+
 ## Could
 
 ### US-008 Tokeny na kartach zamiast przewidywalnych kodów (B5, R4)

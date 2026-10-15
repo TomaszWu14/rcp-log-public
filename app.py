@@ -3,12 +3,14 @@ RCP Log v3
 """
 import csv
 import json
+import logging
 import os
 import re
 import secrets
 import shutil
 import threading
 import time as time_module
+from contextlib import suppress
 from datetime import date, datetime, timedelta
 from io import BytesIO
 from pathlib import Path
@@ -18,6 +20,9 @@ from flask import Flask, jsonify, redirect, render_template, request, send_file,
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 from werkzeug.security import check_password_hash, generate_password_hash
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+log = logging.getLogger("rcp")   # błędy w tle i odczytach trafiają tu, nie w `except: pass` (US-010)
 
 app = Flask(__name__)
 DEMO = os.environ.get("RCP_DEMO") == "1"   # tryb demo — opis w sekcji DEMO na końcu pliku
@@ -86,8 +91,11 @@ _lock = threading.Lock()
 def _r(path, default=None):
     try:
         with open(path, encoding="utf-8") as f: return json.load(f)
-    except (OSError, json.JSONDecodeError):
-        return default if default is not None else {}
+    except FileNotFoundError:
+        pass
+    except (OSError, json.JSONDecodeError) as e:
+        log.error("Nie można odczytać %s — używam wartości domyślnej: %s", path, e)
+    return default if default is not None else {}
 
 def _w(path, data):
     # Zapis przez plik tymczasowy i os.replace — przerwany zapis nie uszkadza pliku (US-006)
@@ -147,6 +155,19 @@ def parse_shift(val):
         return {"od": od, "do": do, "typ": "P"}
     return {"od": None, "do": None, "typ": "W"}
 
+def _data_z_naglowka(s, ref):
+    """Data z nagłówka grafiku: YYYY-MM-DD, DD.MM.YYYY, DD.MM (bieżący rok) albo sam dzień (bieżący miesiąc)."""
+    for fmt in ("%Y-%m-%d", "%d.%m.%Y"):
+        with suppress(ValueError):
+            return datetime.strptime(s, fmt).date()
+    with suppress(ValueError):
+        return datetime.strptime(s, "%d.%m").date().replace(year=ref.year)
+    with suppress(ValueError):
+        day = int(float(s))
+        if 1 <= day <= 31:
+            return date(ref.year, ref.month, day)
+    return None
+
 def import_grafik_excel(file_bytes, workers):
     """Parsuje plik Excel z grafikiem.
     Oczekiwany format:
@@ -170,31 +191,13 @@ def import_grafik_excel(file_bytes, workers):
     header = rows[0]
     # wykryj daty z nagłówka (od kolumny B wzwyż)
     col_dates = {}   # col_index → date_iso
-    ref_year  = date.today().year
-    ref_month = date.today().month
+    ref = date.today()
     for ci, cell in enumerate(header[1:], start=1):
         if cell is None:
             continue
-        d = None
-        s = str(cell).strip()
-        # YYYY-MM-DD
-        try: d = datetime.strptime(s, "%Y-%m-%d").date(); col_dates[ci] = d.isoformat(); continue
-        except: pass
-        # DD.MM.YYYY
-        try: d = datetime.strptime(s, "%d.%m.%Y").date(); col_dates[ci] = d.isoformat(); continue
-        except: pass
-        # DD.MM
-        try:
-            d = datetime.strptime(s, "%d.%m").date().replace(year=ref_year)
-            col_dates[ci] = d.isoformat(); continue
-        except: pass
-        # same number (day of month) – przypisujemy do bieżącego miesiąca
-        try:
-            day = int(float(s))
-            if 1 <= day <= 31:
-                d = date(ref_year, ref_month, day)
-                col_dates[ci] = d.isoformat()
-        except: pass
+        d = _data_z_naglowka(str(cell).strip(), ref)
+        if d:
+            col_dates[ci] = d.isoformat()
 
     if not col_dates:
         return {}, ["Nie wykryto dat w nagłówku. Upewnij się że wiersz 1 zawiera daty (np. 2026-05-01 lub 01.05.2026 lub 1)."]
@@ -264,15 +267,17 @@ def next_id(ts: datetime):
     try:
         with open(monthly, encoding="utf-8-sig") as f:
             return sum(1 for _ in f)
-    except: return 1
+    except OSError: return 1
 
 def read_csv_rows(path: Path):
-    rows = []
+    if not Path(path).exists():
+        return []
     try:
         with open(path, encoding="utf-8-sig") as f:
-            rows = list(csv.DictReader(f, delimiter=";"))
-    except: pass
-    return rows
+            return list(csv.DictReader(f, delimiter=";"))
+    except OSError as e:
+        log.error("Nie można odczytać %s: %s", path, e)
+        return []
 
 # ── Alerts CSV ────────────────────────────────────────────────────────────────
 ALERTS_FILE_PATH = DATA_DIR / "alerty.csv"
@@ -290,11 +295,7 @@ def append_alert(pracownik, imie, typ, opis):
             [_csv_safe(v) for v in (datetime.now().isoformat(), pracownik, imie, typ, opis, "NIE")])
 
 def read_alerts(limit=100):
-    rows = []
-    try:
-        with open(ALERTS_FILE_PATH, encoding="utf-8-sig") as f:
-            rows = list(csv.DictReader(f, delimiter=";"))
-    except: pass
+    rows = read_csv_rows(ALERTS_FILE_PATH)
     return list(reversed(rows[-limit:]))
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -309,7 +310,7 @@ def fmt_czas(minutes):
 
 def mins_since(ts_str):
     try: return (datetime.now() - datetime.fromisoformat(ts_str)).total_seconds() / 60
-    except: return 0
+    except (TypeError, ValueError): return 0
 
 def hash_pw(pw): return generate_password_hash(pw)
 def verify_pw(pw, hashed): return check_password_hash(hashed, pw)
@@ -354,20 +355,18 @@ def _konto_startowe(user):
     Konto wymusza zmianę hasła przy pierwszym zalogowaniu."""
     pw = os.environ.get("RCP_ADMIN_PASSWORD") or secrets.token_urlsafe(12)
     if not os.environ.get("RCP_ADMIN_PASSWORD"):
-        print(f"[ADMIN] Hasło startowe konta '{user}': {pw}  — jednorazowe, zmiana wymuszona przy logowaniu")
+        log.warning("Hasło startowe konta '%s': %s  — jednorazowe, zmiana wymuszona przy logowaniu", user, pw)
     return {"hash": hash_pw(pw), "must_change": True}
+
+def _minuty(v):
+    """Pole czas_min z CSV jako liczba; puste lub uszkodzone pole liczy się jako 0."""
+    try: return float(v or 0)
+    except (TypeError, ValueError): return 0.0
 
 def get_dzien_min(pracownik, dt=None):
     dt = dt or datetime.now()
     daily, _ = get_csv_paths(dt)
-    total = 0.0
-    try:
-        for row in read_csv_rows(daily):
-            if row.get("pracownik") == pracownik:
-                try: total += float(row.get("czas_min") or 0)
-                except: pass
-    except: pass
-    return total
+    return sum(_minuty(row.get("czas_min")) for row in read_csv_rows(daily) if row.get("pracownik") == pracownik)
 
 def zamknij_pobyt(kod, imie, sesja, ts_wyj, korekta_info="", flaga=None):
     """Jedno miejsce zamykania pobytu dla skanera, administratora i auto-zamknięcia (US-005):
@@ -450,27 +449,33 @@ init_files()
 # ── BACKUP THREAD ──────────────────────────────────────────────────────────────
 _last_backup = None
 
+def _przebieg(nazwa, fn):
+    """Jeden przebieg zadania w tle: wyjątek trafia do logu, wątek działa dalej (US-010). Zwraca True, gdy się udał."""
+    try:
+        fn()
+        return True
+    except Exception:
+        log.exception("%s: błąd przebiegu, wątek działa dalej", nazwa)
+        return False
+
+def kopia_zapasowa(now=None):
+    """Kopiuje wszystkie pliki CSV i JSON do katalogu z konfiguracji, z prefiksem daty i godziny."""
+    now  = now or datetime.now()
+    dest = Path(load_config().get("backup_path", BASE_DIR / "backup"))
+    dest.mkdir(parents=True, exist_ok=True)
+    stamp = now.strftime("%Y%m%d_%H%M")
+    for f in list(DATA_DIR.glob("*.csv")) + list(DATA_DIR.glob("*.json")):
+        shutil.copy2(f, dest / f"{stamp}_{f.name}")
+    log.info("Kopia zapasowa zapisana w %s", dest)
+
 def backup_job():
     global _last_backup
     while True:
         time_module.sleep(60)
         now = datetime.now()
-        today = now.date()
-        if _last_backup == today: continue
-        if now.hour != 2: continue   # backup o 02:00
-        try:
-            cfg  = load_config()
-            dest = Path(cfg.get("backup_path", BASE_DIR / "backup"))
-            dest.mkdir(parents=True, exist_ok=True)
-            stamp = now.strftime("%Y%m%d_%H%M")
-            for f in DATA_DIR.glob("*.csv"):
-                shutil.copy2(f, dest / f"{stamp}_{f.name}")
-            for f in DATA_DIR.glob("*.json"):
-                shutil.copy2(f, dest / f"{stamp}_{f.name}")
-            _last_backup = today
-            print(f"[BACKUP] OK → {dest}")
-        except Exception as e:
-            print(f"[BACKUP ERROR] {e}")
+        if _last_backup == now.date() or now.hour != 2: continue   # kopia o 02:00, raz na dobę
+        if _przebieg("kopia zapasowa", kopia_zapasowa):
+            _last_backup = now.date()
 
 if not DEMO: threading.Thread(target=backup_job, daemon=True).start()
 
@@ -532,8 +537,7 @@ def kontrola_pobytow(now=None):
 def bg_check():
     while True:
         time_module.sleep(60)
-        try: kontrola_pobytow()
-        except (OSError, KeyError, ValueError): pass
+        _przebieg("kontrola pobytów", kontrola_pobytow)
 
 threading.Thread(target=bg_check, daemon=True).start()
 
@@ -822,15 +826,13 @@ def adm_dashboard():
     per_strefa = {}
     for r in rows:
         s = r.get("strefa","")
-        try: per_strefa[s] = per_strefa.get(s,0) + float(r.get("czas_min",0) or 0)
-        except: pass
+        per_strefa[s] = per_strefa.get(s,0) + _minuty(r.get("czas_min"))
 
     # Czas per pracownik
     per_pracownik = {}
     for r in rows:
         p = r.get("imie_nazwisko","")
-        try: per_pracownik[p] = per_pracownik.get(p,0) + float(r.get("czas_min",0) or 0)
-        except: pass
+        per_pracownik[p] = per_pracownik.get(p,0) + _minuty(r.get("czas_min"))
 
     # Aktywne sesje teraz
     state   = load_state()
@@ -1238,7 +1240,8 @@ def adm_grafik_porownanie():
             key = (row["pracownik"], dt.date().isoformat())
             if key not in first_scan or ts_str < first_scan[key]["ts"]:
                 first_scan[key] = {"ts": ts_str, "strefa": row.get("strefa","")}
-        except: pass
+        except (KeyError, ValueError):
+            log.warning("Porównanie z grafikiem: pomijam wpis z nieczytelnym czasem wejścia %r", ts_str)
 
     today_iso = date.today().isoformat()
     wynik = {}
@@ -1268,7 +1271,7 @@ def adm_grafik_porownanie():
                     diff_min  = (ts_scan - ts_plan).total_seconds() / 60
                     spoznienie = round(diff_min, 1)
                     status = "na_czas" if diff_min <= tolerancja else "spoznienie"
-                except: status = "obecny"
+                except ValueError: status = "obecny"   # nieczytelna godzina zmiany w grafiku
             wynik[kod]["dni"][date_iso] = {"zaplanowano": zaplan, "status": status,
                                            "pierwsza": scan["ts"], "spoznienie": spoznienie}
     return jsonify(wynik)
@@ -1315,13 +1318,12 @@ def demo_reset():
             ids[month] = ids.get(month, 0) + 1
             append_csv_row({"id": ids[month], **row}, ts_in)
         _active_alerts.clear()
-    print(f"[DEMO] Dane demo odtworzone ({len(d['rows'])} wpisów ewidencji)")
+    log.info("Dane demo odtworzone (%d wpisów ewidencji)", len(d["rows"]))
 
 def demo_reset_job():
     while True:
         time_module.sleep(DEMO_RESET_MIN * 60)
-        try: demo_reset()
-        except Exception as e: print(f"[DEMO RESET ERROR] {e}")
+        _przebieg("odtwarzanie danych demo", demo_reset)
 
 @app.before_request
 def demo_guard():

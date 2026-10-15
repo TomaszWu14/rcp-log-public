@@ -25,8 +25,8 @@ Testy zostają na `unittest` (18 testów istnieje, bez nowej zależności).
 ## Konsekwencje
 
 - Czytelnik zaczyna od README → `docs/AUDYT.md` → `docs/analiza/HISTORYJKI.md`.
-- Ruff z regułami ignorowanymi dla `app.py` (`pyproject.toml`) — dług spłacany przy US-005, bo każda
-  poprawka przesuwa numery linii w `docs/01-procesy` i `05`.
+- Ruff startował z regułami ignorowanymi dla `app.py` (`pyproject.toml`), bo każda poprawka przesuwa numery
+  linii w `docs/01-procesy` i `05`; spłacone w US-005 i US-010 (`tools/remap_line_refs.py` przelicza odwołania).
 - CI blokuje PR przy: błędzie lintera, testów, bandit ≥ średnia, CVE w zależnościach lub obrazie
   (HIGH/CRITICAL z poprawką), sekrecie w historii.
 - Dwa udokumentowane wyjątki, do usunięcia z US-001: bandit B104 (nasłuch `0.0.0.0` — zamierzony, kontener

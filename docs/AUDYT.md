@@ -44,16 +44,16 @@ Publiczne demo z danymi fikcyjnymi: [rcp.log.twapp.pl](https://rcp.log.twapp.pl)
 
 | # | Ustalenie | Waga | Gdzie |
 |---|---|---|---|
-| DEV-1 | ~~Logika zamykania pobytu skopiowana trzykrotnie~~ — **naprawione w US-005**: `zamknij_pobyt()` + `sprawdz_strefe()`; kontrola w tle wydzielona do `kontrola_pobytow()` i przetestowana. | ~~wysoka~~ | `app.py:372-420, 480-530` |
-| DEV-2 | ~~Zapisy JSON nieatomowe; korekty i nadwyżki bez blokady~~ — **naprawione w US-006**: `_w()` przez plik tymczasowy + `os.replace`; zgłoszenia i decyzje pod `_lock`, druga decyzja → 409. Zostaje brak logowania błędów (DEV-3). | ~~wysoka~~ | `app.py:92-101, 709, 892, 912` |
-| DEV-3 | 17 miejsc `except: pass` bez logowania; wątek alertów ginie po cichu przy nieprzewidzianym wyjątku. | średnia | [05 — obsługa błędów](05-decyzje-i-ograniczenia.md#obsługa-błędów-i-walidacja) |
-| DEV-4 | Efekty uboczne przy imporcie modułu: tworzenie katalogów, plików startowych, 2–3 wątków (D10). Wiele procesów = zdublowane alerty. | średnia | `app.py:42, 448, 475, 538` |
-| DEV-5 | Jeden plik ~1340 linii (D1) i `admin.html` z całym JS inline. OK dla prototypu; podział na moduły, gdy pojawi się druga domena. Reguły ruff spłacone poza `except: pass` (DEV-3). | niska | `app.py`, `templates/admin.html` |
+| DEV-1 | ~~Logika zamykania pobytu skopiowana trzykrotnie~~ — **naprawione w US-005**: `zamknij_pobyt()` + `sprawdz_strefe()`; kontrola w tle wydzielona do `kontrola_pobytow()` i przetestowana. | ~~wysoka~~ | `app.py:371-419, 485-535` |
+| DEV-2 | ~~Zapisy JSON nieatomowe; korekty i nadwyżki bez blokady~~ — **naprawione w US-006**: `_w()` przez plik tymczasowy + `os.replace`; zgłoszenia i decyzje pod `_lock`, druga decyzja → 409. Zostaje brak logowania błędów (DEV-3). | ~~wysoka~~ | `app.py:100-109, 713, 894, 914` |
+| DEV-3 | ~~17 miejsc `except: pass`; wątek alertów ginął po cichu~~ — **naprawione w US-010**: `logging` (logger `rcp`), `_przebieg()` dla zadań w tle, wyjątki zawężone do oczekiwanych typów; ruff bez wyjątków. | ~~średnia~~ | `app.py:24-25, 452-459` |
+| DEV-4 | Efekty uboczne przy imporcie modułu: tworzenie katalogów, plików startowych, 2–3 wątków (D10). Wiele procesów = zdublowane alerty. | średnia | `app.py:47, 447, 480, 542` |
+| DEV-5 | Jeden plik ~1350 linii (D1) i `admin.html` z całym JS inline. OK dla prototypu; podział na moduły, gdy pojawi się druga domena. Reguły ruff spłacone w całości (US-005, US-010). | niska | `app.py`, `templates/admin.html` |
 | DEV-6 | Zależności były nieprzypięte (`>=`) — **naprawione w tym PR** (`requirements.txt`, `requirements-dev.txt`). | — | — |
 | DEV-7 | Brak CI, lintera, pre-commit — **naprawione w tym PR** (ruff, unittest, bandit, pip-audit, gitleaks, trivy). | — | `.github/workflows/ci.yml` |
-| DEV-8 | Konfiguracja przez env: `RCP_SECRET_KEY`, `RCP_ADMIN_PASSWORD`, `PORT`, `RCP_DEMO*`; ścieżki danych i kopii nadal w kodzie/konfiguracji. Dockerfile: slim, użytkownik bez roota, healthcheck — dobrze. | niska | `app.py:23-35, 352-359`, `Dockerfile` |
+| DEV-8 | Konfiguracja przez env: `RCP_SECRET_KEY`, `RCP_ADMIN_PASSWORD`, `PORT`, `RCP_DEMO*`; ścieżki danych i kopii nadal w kodzie/konfiguracji. Dockerfile: slim, użytkownik bez roota, healthcheck — dobrze. | niska | `app.py:28-40, 353-360`, `Dockerfile` |
 | DEV-9 | Brak CHANGELOG i CONTRIBUTING — **dodane w tym PR**. | — | — |
-| DEV-10 | Martwy kod: sumy dashboardu (T13); ~~alert `PRZEKROCZENIE_ZMIANY`~~ usunięty (US-005). | niska | `app.py:821-833` |
+| DEV-10 | Martwy kod: sumy dashboardu (T13); ~~alert `PRZEKROCZENIE_ZMIANY`~~ usunięty (US-005). | niska | `app.py:826-835` |
 
 Testy: 18 akceptacyjnych (`unittest`, bez zależności). Brakuje testów jednostkowych logiki czystej
 (`parse_shift`, `fmt_czas`, `get_flaga`), testu „brak dostępu" dla **każdego** endpointu `/admin/api/*`
