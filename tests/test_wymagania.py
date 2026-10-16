@@ -506,6 +506,9 @@ class Wymagania(unittest.TestCase):
 
     def test_SYS_08_zakresy_retencji_w_konfiguracji(self):
         self.login()
+        html = self.c.get("/admin").get_data(as_text=True)
+        for pole in ("cfgRetEw", "cfgRetAl", "cfgRetAu", "cfgRetKo", "retencja_ewidencja_dni:liczba('cfgRetEw',0)"):
+            self.assertIn(pole, html)                               # zakładka Config (US-015); 0 nie zamienia się na domyślne
         self.assertEqual(self.c.post("/admin/api/config", json={"retencja_kopie_dni": 999}).status_code, 400)
         self.assertEqual(self.c.post("/admin/api/config", json={"retencja_ewidencja_dni": 0}).status_code, 200)
 

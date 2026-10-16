@@ -96,7 +96,7 @@ Dane dashboardu zawierają także czas per strefa i per pracownik, których ekra
 | `RCP_ADMIN_PASSWORD` | hasło startowe konta `admin` tworzonego przy pierwszym starcie; zmiana wymuszona przy pierwszym logowaniu | losowe, wypisane raz w konsoli | `app.py:422-429` |
 | `RCP_PROXY` | `1` za proxy TLS (Coolify): ciasteczko sesji tylko po HTTPS, adres klienta do limitu logowań z `X-Forwarded-For`, nagłówek HSTS | wyłączony | `app.py:43-63, 392-395` |
 | `RCP_BACKUP_ROOT` | katalog, pod którym musi leżeć `backup_path` z konfiguracji | katalog aplikacji | `app.py:121` |
-| (konfiguracja) `retencja_*_dni` | okresy przechowywania: ewidencja (0 = bez usuwania), alerty 90, audyt 365, kopie 30 dni — ustawiane przez `/admin/api/config` lub `config.json` | jak obok | `app.py:96-111, 553-584` |
+| (konfiguracja) `retencja_*_dni` | okresy przechowywania: ewidencja (0 = bez usuwania), alerty 90, audyt 365, kopie 30 dni — ustawiane w zakładce Config (US-015), przez `/admin/api/config` lub `config.json` | jak obok | `app.py:96-111, 553-584` |
 | `PORT` | port serwera | 5050 | `run.py:15` |
 | `TZ` | strefa czasowa serwera (czas lokalny w ewidencji); docelowo Europe/Warsaw, czas lokalny wystarcza (Z10) | strefa systemu; w obrazie Docker Europe/Warsaw | `Dockerfile`, `render.yaml` |
 
