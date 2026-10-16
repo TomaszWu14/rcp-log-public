@@ -144,7 +144,7 @@ When  czytam dziennik
 Then  wpis logowanie_nieudane z loginem i adresem
 ```
 **Zrealizowane** (PR #28): `zapisz_audyt()` w 17 miejscach, `audyt.csv` tylko dopisywany, `/admin/api/audyt`, eksport `audyt`;
-`test_ADM_15`. Zakładka w panelu — do zrobienia, gdy PO uzna za potrzebną (dziś eksport i API).
+`test_ADM_15`. Zakładka w panelu — US-013 (PR #29): „🧾 Audyt” z filtrem i linkiem do pełnego CSV; `test_ADM_16`.
 
 ## Could
 
