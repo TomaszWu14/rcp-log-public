@@ -35,7 +35,7 @@ flowchart LR
 | Admin → formularze | CSRF (logowanie, import xlsx, wylogowanie GET) | Tampering | R6 (zamknięte) | token CSRF w sesji na formularzach i nagłówku importu; `SameSite=Lax`, `HttpOnly`, `Secure` za proxy (US-003); wylogowanie GET bez tokenu — skutek tylko wylogowanie |
 | Admin → import grafiku | spreparowany/duży xlsx | DoS | R9 (zamknięte) | `MAX_CONTENT_LENGTH` 2 MB → 413; tylko `.xlsx`; uszkodzony plik → 400 z wpisem w logu (US-011) |
 | Admin → config | dowolne klucze, `backup_path` dowolny katalog | Tampering | R7 (zamknięte) | biała lista kluczy, zakresy, katalog kopii pod `RCP_BACKUP_ROOT` (US-011); w demo zablokowane |
-| Admin → operacje wrażliwe | brak dziennika kto co zmienił (poza `korekta_info`) | Repudiation | R10 | częściowo (`ADMIN:<login>`) |
+| Admin → operacje wrażliwe | brak dziennika kto co zmienił | Repudiation | R10 (audyt zamknięty) | `audyt.csv` dopisywany przy każdej zmianie w panelu, logowaniu (udanym i nieudanym, z adresem) i zmianie hasła; odczyt `/admin/api/audyt`, eksport (US-012) |
 | Gość → instancja demo | każdy jest administratorem: edycja grafiku, przesunięcia, korekty bez limitu — zaśmiecenie lub DoS demo | Tampering / DoS | R9 | `DEMO_BLOCKED`, reset co 30 min, dane fikcyjne; brak limitu żądań |
 | Gość → instancja demo | pomylenie demo z produkcją — wpisanie prawdziwych danych | Information disclosure | — | baner demo w szablonach (`demo` w kontekście); osobna instancja produkcyjna (Z16) |
 | data/, backup/ | dane osobowe bezterminowo (kopie: retencja 30 dni do zbudowania, Z7) | Information disclosure | R10 | okresy w [RODO.md](RODO.md) (Z29); mechanizm usuwania — US-009 |

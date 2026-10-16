@@ -61,8 +61,11 @@ class Wymagania(unittest.TestCase):
         return self.c.post("/api/rejestruj", json={"pracownik": kod, "strefa": strefa, "force": force})
 
     def ewidencja_dzis(self):
-        daily, _ = self.A.get_csv_paths(datetime.now())
-        return self.A.read_csv_rows(daily)
+        """Wpisy ze wszystkich plików dziennych — tuż po północy pobyt zaczęty przed nią ląduje w pliku z wczoraj."""
+        rows = []
+        for p in sorted((self.tmp / "data").glob("ewidencja_????-??-??.csv")):
+            rows += self.A.read_csv_rows(p)
+        return rows
 
     # ── Rejestracja ──────────────────────────────────────────────────────────
     def test_REJ_01_kod_bez_wzgledu_na_wielkosc_liter_i_spacje(self):
@@ -113,8 +116,8 @@ class Wymagania(unittest.TestCase):
         self.assertEqual(len(wpisy), 1)
         self.assertEqual(wpisy[0]["strefa"], "PICKING")
         self.assertEqual(wpisy[0]["ts_wyjscia"], r.json["ts"])
-        _, monthly = self.A.get_csv_paths(datetime.now())
-        self.assertEqual(len(self.A.read_csv_rows(monthly)), 1)
+        miesieczne = list((self.tmp / "data").glob("ewidencja_????-??.csv"))
+        self.assertEqual(sum(len(self.A.read_csv_rows(p)) for p in miesieczne), 1)
 
     def test_SES_03_csv_otwiera_sie_w_excelu(self):
         self.rejestruj("PICKING")
@@ -198,11 +201,12 @@ class Wymagania(unittest.TestCase):
 
     def test_SES_05_jeden_prog_dlugiego_dyzuru_10h(self):
         cfg = self.A.load_config(); cfg.pop("alert_dlugi_dyżur_h", None); self.A.save_config(cfg)
-        start = (datetime.now() - timedelta(hours=11)).isoformat(timespec="seconds")
+        dzis = datetime.now().replace(hour=20, minute=0, second=0, microsecond=0)   # stała „teraz” — po północy
+        start = (dzis - timedelta(hours=11)).isoformat(timespec="seconds")             # pobyt zacząłby się wczoraj
         self.A.save_state({"HU_KOWALSKI_JAN": {"strefa": "PICKING", "podstrefa": "", "ts_wejscia": start}})
         self.login()
-        self.assertTrue(self.c.get("/api/status").json[0]["alert_dyzur"])
-        self.A.kontrola_pobytow()
+        self.assertEqual(self.c.get("/api/status").json[0]["strefa"], "PICKING")
+        self.A.kontrola_pobytow(now=dzis)
         self.assertEqual(self.A.read_alerts()[0]["typ"], "DLUGI_DYZUR")
 
     # ── Korekty ──────────────────────────────────────────────────────────────
@@ -300,6 +304,26 @@ class Wymagania(unittest.TestCase):
         self.assertEqual((r.status_code, r.json["error"]), (400, "Nieprawidłowy plik .xlsx — nie udało się go odczytać"))
         r = wyslij("g.xlsx", b"0" * (3 * 1024 * 1024))
         self.assertEqual((r.status_code, r.json["error"]), (413, "Plik lub żądanie za duże (limit 2 MB)"))
+
+    def test_ADM_15_dziennik_audytu_operacji_administratora(self):
+        self.assertEqual(self.c.get("/admin/api/audyt").status_code, 401)
+        t = self.csrf()
+        self.c.post("/admin/login", data={"username": "admin", "password": "zle", "csrf": t})
+        self.login()
+        self.c.post("/admin/api/strefy", json={"nazwa": "nowa"})
+        self.c.post("/admin/api/config", json={"prog_przerwa_min": 25})
+        self.rejestruj("PICKING")
+        self.c.post("/admin/api/move", json={"pracownik": "HU_KOWALSKI_JAN", "strefa": "PRZYJECIA"})
+        wpisy = self.c.get("/admin/api/audyt").json
+        akcje = [w["akcja"] for w in wpisy]                                   # najnowsze pierwsze
+        self.assertEqual(akcje[:4], ["przesuniecie", "konfiguracja", "strefa_dodana", "zmiana_hasla"])
+        self.assertIn("logowanie_nieudane", akcje)
+        self.assertTrue(all(w["admin"] == "admin" for w in wpisy if w["akcja"] != "logowanie_nieudane"))
+        self.assertEqual((wpisy[0]["obiekt"], wpisy[0]["szczegoly"]), ("HU_KOWALSKI_JAN", "→ PRZYJECIA"))
+        self.assertIn("prog_przerwa_min", wpisy[1]["szczegoly"])
+        r = self.c.get("/admin/export/audyt")
+        self.assertEqual(r.status_code, 200)
+        self.assertIn(b"ts;admin;akcja;obiekt;szczegoly", r.data)
 
     # ── Grafik ───────────────────────────────────────────────────────────────
     def test_GRF_02_kody_zmian(self):

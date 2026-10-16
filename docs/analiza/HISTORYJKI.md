@@ -132,6 +132,20 @@ Then  400 z komunikatem albo 413 (limit 2 MB)
 **Zrealizowane** (PR #27): `sprawdz_konfiguracje()`, `MAX_CONTENT_LENGTH`, `naglowki_bezpieczenstwa()` (CSP, nosniff,
 Referrer-Policy, X-Frame-Options, HSTS za proxy); `test_ADM_10`, `test_ADM_14`, `test_GRF_05`; ryzyko R13 (CSP inline) zaakceptowane.
 
+### US-012 Dziennik audytu operacji administratora (R10)
+**Jako** administrator danych **chcę** wiedzieć, kto, kiedy i co zmienił w panelu, **aby** operacje na danych pracowników były rozliczalne.
+```gherkin
+Given administrator dodaje strefę, zmienia konfigurację i przesuwa pracownika
+When  czytam /admin/api/audyt
+Then  trzy wpisy z loginem, chwilą, akcją i obiektem, najnowszy pierwszy
+
+Given nieudane logowanie
+When  czytam dziennik
+Then  wpis logowanie_nieudane z loginem i adresem
+```
+**Zrealizowane** (PR #28): `zapisz_audyt()` w 17 miejscach, `audyt.csv` tylko dopisywany, `/admin/api/audyt`, eksport `audyt`;
+`test_ADM_15`. Zakładka w panelu — do zrobienia, gdy PO uzna za potrzebną (dziś eksport i API).
+
 ## Could
 
 ### US-008 Tokeny na kartach zamiast przewidywalnych kodów (B5, R4)
