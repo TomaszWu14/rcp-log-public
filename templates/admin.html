@@ -397,6 +397,15 @@ select option{background:var(--card2);}
     <div class="row"><input type="number" id="cfgTolGrafik" min="0" max="60" style="max-width:100px;"><span style="font-size:.78rem;color:var(--muted)">min (domyślnie 15)</span></div>
     <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Ścieżka backup</label>
     <div class="row"><input type="text" id="cfgBackup" placeholder="/opt/rcp-log/backup" style="flex:1;"></div>
+    <!-- US-015: retencja danych (US-009, RODO.md); 0 = bez usuwania -->
+    <label style="font-size:.75rem;color:var(--muted);display:block;margin:14px 0 4px;">🗑 Retencja danych — dni przechowywania (0 = bez usuwania)</label>
+    <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px;">Usuwanie raz na dobę po kopii zapasowej, każde w dzienniku Audyt. Okres ewidencji ustal z inspektorem ochrony danych (dokumentacja pracownicza 3660, narzędzie pomocnicze 365).</div>
+    <div class="row" style="flex-wrap:wrap;gap:12px">
+      <label style="font-size:.75rem">Ewidencja<br><input type="number" id="cfgRetEw" min="0" max="4000" style="max-width:90px;"></label>
+      <label style="font-size:.75rem">Alerty<br><input type="number" id="cfgRetAl" min="0" max="3650" style="max-width:90px;"></label>
+      <label style="font-size:.75rem">Audyt<br><input type="number" id="cfgRetAu" min="0" max="3650" style="max-width:90px;"></label>
+      <label style="font-size:.75rem">Kopie<br><input type="number" id="cfgRetKo" min="0" max="365" style="max-width:90px;"></label>
+    </div>
     <button class="btn btn-blue" onclick="saveConfig()">💾 Zapisz ustawienia</button>
   </div>
 </div>
@@ -1094,7 +1103,10 @@ async function loadConfig(){
   document.getElementById('cfgDyzurH').value=c.alert_dlugi_dyżur_h||10;
   document.getElementById('cfgTolGrafik').value=c.grafik_tolerancja_min||15;
   document.getElementById('cfgBackup').value=c.backup_path||'';
+  const ret={cfgRetEw:['retencja_ewidencja_dni',0],cfgRetAl:['retencja_alerty_dni',90],cfgRetAu:['retencja_audyt_dni',365],cfgRetKo:['retencja_kopie_dni',30]};
+  for(const [id,[k,def]] of Object.entries(ret)) document.getElementById(id).value = c[k] ?? def;
 }
+function liczba(id, def){ const v=parseInt(document.getElementById(id).value); return Number.isNaN(v) ? def : v; }   // 0 jest poprawną wartością
 async function saveConfig(){
   const d={
     prog_przerwa_min:parseInt(document.getElementById('cfgProg').value)||30,
@@ -1102,6 +1114,8 @@ async function saveConfig(){
     alert_dlugi_dyżur_h:parseInt(document.getElementById('cfgDyzurH').value)||10,
     grafik_tolerancja_min:parseInt(document.getElementById('cfgTolGrafik').value)||15,
     backup_path:document.getElementById('cfgBackup').value.trim(),
+    retencja_ewidencja_dni:liczba('cfgRetEw',0), retencja_alerty_dni:liczba('cfgRetAl',90),
+    retencja_audyt_dni:liczba('cfgRetAu',365), retencja_kopie_dni:liczba('cfgRetKo',30),
   };
   const r=await fetch('/admin/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
   const res=await r.json();
