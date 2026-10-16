@@ -35,14 +35,14 @@ flowchart LR
 
 | Nr | Interfejs | Kierunek | Format | Częstotliwość | Obsługa błędów | Źródło w kodzie |
 |---|---|---|---|---|---|---|
-| I1 | Czytnik kodów QR → ekran skanera | do aplikacji | czytnik USB emulujący klawiaturę na jednym wspólnym komputerze zmiany (Z2): tekst kodu (`HU_…`) wpisany w pole, zakończony Enter albo wysłany samoczynnie 0,7 s po wpisaniu ponad 5 znaków | każdy skan | nieznany kod: komunikat na ekranie i alert; pusty kod ignorowany | `index.html:439-460`, `app.py:596-604` |
-| I2 | Ekran skanera ↔ serwer | dwukierunkowy | HTTP, JSON: skan (`/api/scan`), rejestracja (`/api/rejestruj`), korekta (`/api/korekta`) | na żądanie, przy każdej akcji pracownika | odpowiedzi z komunikatem i kodem 400, 403 lub 409; brak połączenia: „Błąd połączenia”; treść żądania niebędąca JSON daje błąd serwera | `app.py:595-769`, `index.html:450-459, 570-596` |
-| I3 | Panel administratora ↔ serwer | dwukierunkowy | HTTP, JSON (`/admin/api/*`); pliki do pobrania (`/admin/export/*`, szablon grafiku); plik wysyłany (`/admin/api/grafik/import`, multipart) | Live i nowe alerty co 20 s; reszta na żądanie | bez sesji: odmowa 401 lub 403, której ekran nie obsługuje; komunikat tam, gdzie ekran sprawdza odpowiedź | `app.py:774-1329`, `admin.html:458-468, 487-508, 626` |
-| I4 | Serwer ↔ katalog danych | dwukierunkowy | JSON (słowniki, pobyty, nadwyżki, korekty, grafik, konta, konfiguracja); CSV ze średnikiem i UTF-8 BOM (ewidencja dnia i miesiąca, alerty) | przy każdej zmianie stanu; odczyt przy każdym żądaniu (bez pamięci podręcznej) | uszkodzony JSON: wpis ERROR w logu i wartość domyślna (US-010); zapis atomowy (US-006); błędy odczytu CSV pomijane | `app.py:63-74, 135-153, 285-343` |
-| I5 | Serwer → katalog kopii zapasowych | z aplikacji | kopie wszystkich plików CSV i JSON z prefiksem `RRRRMMDD_GGMM_` | raz na dobę, gdy serwer działa w godzinie 02 (nie w trybie demo) | błąd w logu serwera z pełnym śladem (US-010); ponawianie co minutę do 03:00; brak retencji | `app.py:515-524` |
-| I6 | Serwer → Excel | z aplikacji | szablon grafiku `.xlsx` (bieżący miesiąc, legenda, lista pracowników); eksport CSV dnia, miesiąca, alertów | na żądanie administratora | brak pliku do eksportu: strona „Brak pliku” (404); od US-003 pole zaczynające się od „=”, „+”, „-”, „@” dostaje apostrof (tekst, nie formuła) | `app.py:1138-1151, 1157-1205` |
-| I7 | Excel → serwer | do aplikacji | grafik `.xlsx`: wiersz 1 daty, kolumna A nazwiska, komórki z kodami zmian | raz na miesiąc albo po zmianie planu | nierozpoznane wiersze na liście błędów, reszta importowana; brak dat lub pusty plik: błąd bez zapisu; plik inny niż `.xlsx` lub uszkodzony: 400 z komunikatem; powyżej 2 MB: 413 (US-011) | `app.py:215-276, 1208-1230` |
-| I8 | Środowisko uruchomieniowe → serwer | do aplikacji | zmienne środowiskowe (tabela niżej), port, strefa czasowa | przy starcie | brak `RCP_SECRET_KEY` poza demo: start kończy się błędem; brak `RCP_ADMIN_PASSWORD`: hasło losowe wypisane raz; brak `PORT`: 5050 | `app.py:28-40, 397-404, 1338`, `run.py:15` |
+| I1 | Czytnik kodów QR → ekran skanera | do aplikacji | czytnik USB emulujący klawiaturę na jednym wspólnym komputerze zmiany (Z2): tekst kodu (`HU_…`) wpisany w pole, zakończony Enter albo wysłany samoczynnie 0,7 s po wpisaniu ponad 5 znaków | każdy skan | nieznany kod: komunikat na ekranie i alert; pusty kod ignorowany | `index.html:439-460`, `app.py:612-620` |
+| I2 | Ekran skanera ↔ serwer | dwukierunkowy | HTTP, JSON: skan (`/api/scan`), rejestracja (`/api/rejestruj`), korekta (`/api/korekta`) | na żądanie, przy każdej akcji pracownika | odpowiedzi z komunikatem i kodem 400, 403 lub 409; brak połączenia: „Błąd połączenia”; treść żądania niebędąca JSON daje błąd serwera | `app.py:611-785`, `index.html:450-459, 570-596` |
+| I3 | Panel administratora ↔ serwer | dwukierunkowy | HTTP, JSON (`/admin/api/*`); pliki do pobrania (`/admin/export/*`, szablon grafiku); plik wysyłany (`/admin/api/grafik/import`, multipart) | Live i nowe alerty co 20 s; reszta na żądanie | bez sesji: odmowa 401 lub 403, której ekran nie obsługuje; komunikat tam, gdzie ekran sprawdza odpowiedź | `app.py:790-1372`, `admin.html:458-468, 487-508, 626` |
+| I4 | Serwer ↔ katalog danych | dwukierunkowy | JSON (słowniki, pobyty, nadwyżki, korekty, grafik, konta, konfiguracja); CSV ze średnikiem i UTF-8 BOM (ewidencja dnia i miesiąca, alerty) | przy każdej zmianie stanu; odczyt przy każdym żądaniu (bez pamięci podręcznej) | uszkodzony JSON: wpis ERROR w logu i wartość domyślna (US-010); zapis atomowy (US-006); błędy odczytu CSV pomijane | `app.py:63-74, 135-153, 285-359` |
+| I5 | Serwer → katalog kopii zapasowych | z aplikacji | kopie wszystkich plików CSV i JSON z prefiksem `RRRRMMDD_GGMM_` | raz na dobę, gdy serwer działa w godzinie 02 (nie w trybie demo) | błąd w logu serwera z pełnym śladem (US-010); ponawianie co minutę do 03:00; brak retencji | `app.py:531-540` |
+| I6 | Serwer → Excel | z aplikacji | szablon grafiku `.xlsx` (bieżący miesiąc, legenda, lista pracowników); eksport CSV dnia, miesiąca, alertów | na żądanie administratora | brak pliku do eksportu: strona „Brak pliku” (404); od US-003 pole zaczynające się od „=”, „+”, „-”, „@” dostaje apostrof (tekst, nie formuła) | `app.py:1178-1192, 1198-1246` |
+| I7 | Excel → serwer | do aplikacji | grafik `.xlsx`: wiersz 1 daty, kolumna A nazwiska, komórki z kodami zmian | raz na miesiąc albo po zmianie planu | nierozpoznane wiersze na liście błędów, reszta importowana; brak dat lub pusty plik: błąd bez zapisu; plik inny niż `.xlsx` lub uszkodzony: 400 z komunikatem; powyżej 2 MB: 413 (US-011) | `app.py:215-276, 1249-1272` |
+| I8 | Środowisko uruchomieniowe → serwer | do aplikacji | zmienne środowiskowe (tabela niżej), port, strefa czasowa | przy starcie | brak `RCP_SECRET_KEY` poza demo: start kończy się błędem; brak `RCP_ADMIN_PASSWORD`: hasło losowe wypisane raz; brak `PORT`: 5050 | `app.py:28-40, 413-420, 1381`, `run.py:15` |
 | I9 | Przeglądarka (lokalnie) | po stronie klienta | pamięć przeglądarki: motyw skanera; generator dźwięku dla banera alertu; natywne okna potwierdzeń i wpisywania | przy użyciu | brak zgody przeglądarki na dźwięk: sygnał pomijany bez komunikatu | `index.html:402-411`, `admin.html:495-505` |
 
 ## Adresy aplikacji (interfejs HTTP)
@@ -68,11 +68,12 @@ jest sesja administratora.
 | GET, POST `/admin/api/workers`; DELETE `/admin/api/workers/<kod>`; PUT `/admin/api/workers/<kod>/strefy` | słownik pracowników, uprawnienia | sesja; w demo dodawanie i usuwanie zablokowane | P6 |
 | GET, POST `/admin/api/admins`; DELETE `/admin/api/admins/<login>` | konta administratorów | sesja; w demo zablokowane | P6 |
 | GET, POST `/admin/api/config` | konfiguracja | sesja; w demo zapis zablokowany | P6 |
-| GET `/admin/export/<dzien\|miesiac\|alerty>` | eksport CSV | sesja | P7 |
+| GET `/admin/export/<dzien\|miesiac\|alerty\|audyt>` | eksport CSV | sesja | P7 |
+| GET `/admin/api/audyt` | ostatnie 200 wpisów dziennika audytu (nieużywane jeszcze przez ekran) | sesja | P6 |
 | GET `/admin/api/grafik/template`; POST `/admin/api/grafik/import`; GET `/admin/api/grafik`; POST `/admin/api/grafik/entry`; GET `/admin/api/grafik/porownanie` | szablon, import, widok, edycja, porównanie grafiku | sesja; w demo import zablokowany | P5 |
 
 Dane dashboardu zawierają także czas per strefa i per pracownik, których ekran nie wyświetla
-(pozostałość po usuniętych wykresach, `app.py:911-912`).
+(pozostałość po usuniętych wykresach, `app.py:930-931`).
 
 ## Środowisko uruchomieniowe
 
@@ -90,10 +91,10 @@ Dane dashboardu zawierają także czas per strefa i per pracownik, których ekra
 | Zmienna | Znaczenie | Domyślnie | Źródło |
 |---|---|---|---|
 | `RCP_DEMO` | `1` włącza tryb demo | wyłączony | `app.py:28` |
-| `RCP_DEMO_RESET_MIN` | co ile minut odtworzyć dane demo | 30 | `app.py:1338` |
+| `RCP_DEMO_RESET_MIN` | co ile minut odtworzyć dane demo | 30 | `app.py:1381` |
 | `RCP_SECRET_KEY` | klucz podpisu sesji przeglądarki, co najmniej 32 znaki; **wymagany** poza trybem demo | brak — start kończy się błędem; w demo losowany | `app.py:30-40` |
-| `RCP_ADMIN_PASSWORD` | hasło startowe konta `admin` tworzonego przy pierwszym starcie; zmiana wymuszona przy pierwszym logowaniu | losowe, wypisane raz w konsoli | `app.py:397-404` |
-| `RCP_PROXY` | `1` za proxy TLS (Coolify): ciasteczko sesji tylko po HTTPS, adres klienta do limitu logowań z `X-Forwarded-For`, nagłówek HSTS | wyłączony | `app.py:43-63, 367-370` |
+| `RCP_ADMIN_PASSWORD` | hasło startowe konta `admin` tworzonego przy pierwszym starcie; zmiana wymuszona przy pierwszym logowaniu | losowe, wypisane raz w konsoli | `app.py:413-420` |
+| `RCP_PROXY` | `1` za proxy TLS (Coolify): ciasteczko sesji tylko po HTTPS, adres klienta do limitu logowań z `X-Forwarded-For`, nagłówek HSTS | wyłączony | `app.py:43-63, 383-386` |
 | `RCP_BACKUP_ROOT` | katalog, pod którym musi leżeć `backup_path` z konfiguracji | katalog aplikacji | `app.py:112` |
 | `PORT` | port serwera | 5050 | `run.py:15` |
 | `TZ` | strefa czasowa serwera (czas lokalny w ewidencji); docelowo Europe/Warsaw, czas lokalny wystarcza (Z10) | strefa systemu; w obrazie Docker Europe/Warsaw | `Dockerfile`, `render.yaml` |
@@ -102,9 +103,9 @@ Dane dashboardu zawierają także czas per strefa i per pracownik, których ekra
 
 | Co się zmienia | Jak | Źródło |
 |---|---|---|
-| Dane | osobny katalog `data_demo/`, kasowany i generowany na nowo przy starcie i co `RCP_DEMO_RESET_MIN` minut: 12 fikcyjnych pracowników, 10 dni ewidencji, trwająca zmiana z przekroczoną przerwą, nadwyżki, korekty, grafik miesiąca | `app.py:1349-1379`, `demo_data.py` |
-| Logowanie | każdy odwiedzający jest administratorem „demo”; strona logowania przekierowuje do panelu; „Wyloguj” ukryty | `app.py:1381-1387`, `admin.html:178-180` |
-| Blokady | dodawanie i usuwanie stref, podstref, pracowników i kont, zapis konfiguracji, import grafiku: odmowa „Niedostępne w trybie demo” | `app.py:1342-1347, 1388-1392` |
-| Działa nadal | skaner, przesunięcia i ręczny start, nadwyżki, korekty, edycja komórek grafiku, eksport | `app.py:1342-1347` (brak na liście) |
-| Kopia zapasowa | nie uruchamia się; instancja demo nie potrzebuje kopii (Z7) | `app.py:524` |
+| Dane | osobny katalog `data_demo/`, kasowany i generowany na nowo przy starcie i co `RCP_DEMO_RESET_MIN` minut: 12 fikcyjnych pracowników, 10 dni ewidencji, trwająca zmiana z przekroczoną przerwą, nadwyżki, korekty, grafik miesiąca | `app.py:1392-1422`, `demo_data.py` |
+| Logowanie | każdy odwiedzający jest administratorem „demo”; strona logowania przekierowuje do panelu; „Wyloguj” ukryty | `app.py:1424-1430`, `admin.html:178-180` |
+| Blokady | dodawanie i usuwanie stref, podstref, pracowników i kont, zapis konfiguracji, import grafiku: odmowa „Niedostępne w trybie demo” | `app.py:1385-1390, 1431-1435` |
+| Działa nadal | skaner, przesunięcia i ręczny start, nadwyżki, korekty, edycja komórek grafiku, eksport | `app.py:1385-1390` (brak na liście) |
+| Kopia zapasowa | nie uruchamia się; instancja demo nie potrzebuje kopii (Z7) | `app.py:540` |
 | Ekrany | pasek informacyjny w panelu; przyciski z przykładowymi kodami i link do panelu na skanerze | `admin.html:163-165`, `index.html:307-319` |

@@ -43,14 +43,14 @@ flowchart TD
 
 | Nr | Krok | Aktor | Wejście | Wyjście | Reguła biznesowa | Źródło w kodzie |
 |---|---|---|---|---|---|---|
-| 1 | Zamknij pobyt w strefie PRZERWA | system | trwający pobyt w `PRZERWA`, chwila skanu | wpis ewidencji przerwy; flaga `DLUGA_PRZERWA`, gdy czas przekracza próg | BR-9, BR-13 | `app.py:647-665` |
-| 2 | Policz nadwyżkę | system | czas przerwy, próg z konfiguracji | nadwyżka w minutach = czas minus próg | BR-25 | `app.py:436-438` |
-| 3 | Utwórz nadwyżkę ze statusem oczekuje | system | nadwyżka, pracownik, chwila rozpoczęcia przerwy | pozycja na liście nadwyżek bez przypisanej strefy | BR-24, BR-26 | `app.py:439-451` |
-| 4 | Zapisz alert i dołącz komunikat | system | czas przerwy, nadwyżka | wiersz `DLUGA_PRZERWA` w pliku alertów; ramka „Przerwa trwała … (nadwyżka: …)” na ekranie potwierdzenia | BR-9 | `app.py:452-454`, `index.html:616-621` |
+| 1 | Zamknij pobyt w strefie PRZERWA | system | trwający pobyt w `PRZERWA`, chwila skanu | wpis ewidencji przerwy; flaga `DLUGA_PRZERWA`, gdy czas przekracza próg | BR-9, BR-13 | `app.py:663-681` |
+| 2 | Policz nadwyżkę | system | czas przerwy, próg z konfiguracji | nadwyżka w minutach = czas minus próg | BR-25 | `app.py:452-454` |
+| 3 | Utwórz nadwyżkę ze statusem oczekuje | system | nadwyżka, pracownik, chwila rozpoczęcia przerwy | pozycja na liście nadwyżek bez przypisanej strefy | BR-24, BR-26 | `app.py:455-467` |
+| 4 | Zapisz alert i dołącz komunikat | system | czas przerwy, nadwyżka | wiersz `DLUGA_PRZERWA` w pliku alertów; ramka „Przerwa trwała … (nadwyżka: …)” na ekranie potwierdzenia | BR-9 | `app.py:468-470`, `index.html:616-621` |
 | 5 | Przeczytaj komunikat o nadwyżce | pracownik | ekran potwierdzenia | pracownik wie, że przerwa została przekroczona | — | `index.html:616-621` |
 | 6 | Przejrzyj nadwyżki | administrator | zakładka Przerwy z licznikiem oczekujących | lista: pracownik, czas przerwy, nadwyżka, data, przypisana strefa | BR-28 | `admin.html:745-770` |
 | 7 | Wybierz strefę dla nadwyżki | administrator | okno „Przypisz strefę do nadwyżki” z listą stref ze słownika | wybrana strefa | BR-26 | `admin.html:772-792` |
-| 8 | Zmień status na przypisana | system | numer nadwyżki, nazwa strefy | nadwyżka ze strefą i statusem „przypisana”; licznik oczekujących maleje | BR-26, BR-27 | `app.py:932-946` |
+| 8 | Zmień status na przypisana | system | numer nadwyżki, nazwa strefy | nadwyżka ze strefą i statusem „przypisana”; licznik oczekujących maleje | BR-26, BR-27 | `app.py:957-972` |
 | 9 | Uwzględnij nadwyżkę w rozliczeniu strefy | administrator, poza aplikacją | lista nadwyżek | czas pracy strefy obciążony nadwyżką w rozliczeniu miesięcznym (Z5) | — | — |
 
 ## Podprocesy
@@ -79,28 +79,28 @@ flowchart TD
 |---|---|---|
 | A1 | lista w kolejności powstania; pozycje „oczekuje” wyróżnione kolorem; przy zakładce licznik oczekujących | `admin.html:745-770` |
 | A2, A3 | okno pokazuje nazwisko i wielkość nadwyżki; lista stref to cały słownik stref, nie tylko uprawnienia pracownika | `admin.html:772-792` |
-| A5 | zapis wpisuje nazwę strefy (wielkimi literami) i status; pozycja przypisana nie ma już przycisku | `app.py:932-946`, `admin.html:755-760` |
+| A5 | zapis wpisuje nazwę strefy (wielkimi literami) i status; pozycja przypisana nie ma już przycisku | `app.py:957-972`, `admin.html:755-760` |
 
 ## Ścieżki alternatywne i wyjątki
 
 | Wyjątek | Warunek wystąpienia | Obsługa | Skutek dla procesu | Źródło w kodzie |
 |---|---|---|---|---|
-| Przerwa zamknięta nie przez pracownika | administrator przesuwa lub kończy zmianę osobie na przerwie; automatyczne zamknięcie o północy | wpis ma flagę i powstaje nadwyżka jak przy zamknięciu przez pracownika (US-005) | nadwyżka trafia na listę do rozliczenia | `app.py:415-454` |
-| Zmiana progu po fakcie | administrator zmienia próg przerwy w konfiguracji | istniejące nadwyżki nie są przeliczane | nadwyżki sprzed zmiany liczone starym progiem | `app.py:436-438` |
-| Nieistniejący numer nadwyżki | żądanie z numerem spoza listy (możliwe tylko poza ekranem) | serwer odpowiada sukcesem, nic nie zmienia | brak | `app.py:938-945` |
-| Strefa spoza słownika | nazwa spoza listy w oknie (np. z ręcznie zbudowanego żądania) | serwer odrzuca: 400 „Nieznana strefa X” (US-005) | nadwyżka zostaje w statusie „oczekuje” | `app.py:937` |
-| Dwóch administratorów rozlicza tę samą nadwyżkę | równoczesny zapis | decyzja pod blokadą; druga dostaje 409 „Nadwyżka już rozliczona” i komunikat w oknie (US-006) | pierwsza decyzja zostaje | `app.py:938-945` |
-| Cofnięcie przypisania | administrator chce zmienić strefę | brak takiej funkcji | zmiana tylko przez edycję pliku poza aplikacją | `app.py:932-946` |
-| Pracownik usunięty ze słownika | usunięcie po powstaniu nadwyżki | nadwyżka zostaje z kopią nazwiska | lista zawiera pozycje osób spoza słownika | `app.py:1080-1088` |
+| Przerwa zamknięta nie przez pracownika | administrator przesuwa lub kończy zmianę osobie na przerwie; automatyczne zamknięcie o północy | wpis ma flagę i powstaje nadwyżka jak przy zamknięciu przez pracownika (US-005) | nadwyżka trafia na listę do rozliczenia | `app.py:431-470` |
+| Zmiana progu po fakcie | administrator zmienia próg przerwy w konfiguracji | istniejące nadwyżki nie są przeliczane | nadwyżki sprzed zmiany liczone starym progiem | `app.py:452-454` |
+| Nieistniejący numer nadwyżki | żądanie z numerem spoza listy (możliwe tylko poza ekranem) | serwer odpowiada sukcesem, nic nie zmienia | brak | `app.py:963-970` |
+| Strefa spoza słownika | nazwa spoza listy w oknie (np. z ręcznie zbudowanego żądania) | serwer odrzuca: 400 „Nieznana strefa X” (US-005) | nadwyżka zostaje w statusie „oczekuje” | `app.py:962` |
+| Dwóch administratorów rozlicza tę samą nadwyżkę | równoczesny zapis | decyzja pod blokadą; druga dostaje 409 „Nadwyżka już rozliczona” i komunikat w oknie (US-006) | pierwsza decyzja zostaje | `app.py:963-970` |
+| Cofnięcie przypisania | administrator chce zmienić strefę | brak takiej funkcji | zmiana tylko przez edycję pliku poza aplikacją | `app.py:957-972` |
+| Pracownik usunięty ze słownika | usunięcie po powstaniu nadwyżki | nadwyżka zostaje z kopią nazwiska | lista zawiera pozycje osób spoza słownika | `app.py:1115-1124` |
 
 ## Reguły biznesowe
 
 | ID | Warunek → działanie | Źródło w kodzie |
 |---|---|---|
-| BR-24 | Przerwę ponad próg zamyka ktokolwiek (pracownik na skanerze, administrator, auto-zamknięcie) → utwórz nadwyżkę; jedno miejsce zamykania pobytu | `app.py:415-454` |
-| BR-25 | Nadwyżka powstaje → jej wielkość to czas przerwy minus próg obowiązujący w chwili zamknięcia; późniejsza zmiana progu niczego nie przelicza | `app.py:436-438` |
-| BR-26 | Administrator przypisuje strefę → nazwa musi istnieć w słowniku stref; status zmienia się z „oczekuje” na „przypisana” i nie wraca | `app.py:932-947` |
-| BR-27 | Nadwyżka przypisana → ewidencja i wpis przerwy pozostają bez zmian | `app.py:932-946` |
+| BR-24 | Przerwę ponad próg zamyka ktokolwiek (pracownik na skanerze, administrator, auto-zamknięcie) → utwórz nadwyżkę; jedno miejsce zamykania pobytu | `app.py:431-470` |
+| BR-25 | Nadwyżka powstaje → jej wielkość to czas przerwy minus próg obowiązujący w chwili zamknięcia; późniejsza zmiana progu niczego nie przelicza | `app.py:452-454` |
+| BR-26 | Administrator przypisuje strefę → nazwa musi istnieć w słowniku stref; status zmienia się z „oczekuje” na „przypisana” i nie wraca | `app.py:957-973` |
+| BR-27 | Nadwyżka przypisana → ewidencja i wpis przerwy pozostają bez zmian | `app.py:957-972` |
 | BR-28 | Zakładka Przerwy → licznik przy nazwie zakładki pokazuje liczbę nadwyżek „oczekuje” | `admin.html:748-749` |
 
 ## Wymagania funkcjonalne

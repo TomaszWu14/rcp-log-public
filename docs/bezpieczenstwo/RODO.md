@@ -51,6 +51,7 @@ Okresy poniżej to propozycja do potwierdzenia; mechanizm usuwania to historyjka
 | Słownik pracowników | `pracownicy.json` | do ustania zatrudnienia + usunięcie wpisu (dziś ręcznie, T3) | — | kod przestaje działać przy skanie |
 | Kopie zapasowe | `backup/` | **30 dni** (Z7, potwierdzone) | data kopii | mechanizm do zbudowania (T11) |
 | Logi serwera / kontenera | Coolify | 30 dni | — | zawierają hasło startowe (R11) i adresy IP |
+| Dziennik audytu panelu | `audyt.csv` | 12 miesięcy | data wpisu | kto co zmienił (login administratora, kod pracownika, adres przy logowaniu); rozliczalność operacji na danych osobowych (US-012) |
 | Konta administratorów | `admins.json` | do usunięcia konta | — | dane dostępowe |
 
 Zasada dla US-009: usuwanie pliku po okresie, nie anonimizacja wierszy (pliki są dzienne/miesięczne, więc granica
@@ -70,7 +71,7 @@ jest naturalna); wpisy w plikach miesięcznych usuwane razem z plikiem po upływ
 
 Zrobione: klucz sesji wymagany, hasło startowe jednorazowe (US-001); podgląd obecności tylko po zalogowaniu
 (US-002); limit prób, CSRF, `SameSite`/`HttpOnly`/`Secure`, ochrona CSV (US-003); obraz bez roota, TLS na proxy.
-Brakuje: mechanizm retencji (US-009), dziennik audytu operacji administratora (R10), szyfrowanie dysku z danymi
+Dziennik audytu operacji administratora: `audyt.csv` (US-012). Brakuje: mechanizm retencji (US-009), szyfrowanie dysku z danymi
 (decyzja infrastrukturalna), ograniczenie dostępu do serwera i logów do administratora.
 
 ## Rejestr czynności przetwarzania (wpis)

@@ -338,6 +338,22 @@ def append_alert(pracownik, imie, typ, opis):
         csv.writer(f, delimiter=";").writerow(
             [_csv_safe(v) for v in (datetime.now().isoformat(), pracownik, imie, typ, opis, "NIE")])
 
+# ── Dziennik audytu (US-012) ──────────────────────────────────────────────────
+AUDYT_FILE_PATH = DATA_DIR / "audyt.csv"
+AUDYT_HEADERS   = ["ts", "admin", "akcja", "obiekt", "szczegoly"]
+
+def zapisz_audyt(akcja, obiekt="", szczegoly=""):
+    """Kto, kiedy, co zmienił w panelu — plik tylko dopisywany, bez edycji z aplikacji."""
+    if not AUDYT_FILE_PATH.exists():
+        with open(AUDYT_FILE_PATH, "w", newline="", encoding="utf-8-sig") as f:
+            csv.writer(f, delimiter=";").writerow(AUDYT_HEADERS)
+    with open(AUDYT_FILE_PATH, "a", newline="", encoding="utf-8-sig") as f:
+        csv.writer(f, delimiter=";").writerow([_csv_safe(v) for v in (
+            datetime.now().isoformat(timespec="seconds"), session.get("admin_user", "?"), akcja, obiekt, szczegoly)])
+
+def read_audyt(limit=200):
+    return list(reversed(read_csv_rows(AUDYT_FILE_PATH)[-limit:]))
+
 def read_alerts(limit=100):
     rows = read_csv_rows(ALERTS_FILE_PATH)
     return list(reversed(rows[-limit:]))
@@ -787,8 +803,10 @@ def admin_login():
             session["admin_logged"] = True
             session["admin_user"]   = user
             session["must_change"]  = adm[user]["must_change"]
+            zapisz_audyt("logowanie", user, ip)
             return redirect(url_for("admin_panel"))
         _login_failed(ip)
+        zapisz_audyt("logowanie_nieudane", user, ip)
         err = "Nieprawidłowy login lub hasło"
     return render_template("admin_login.html", error=err)
 
@@ -820,6 +838,7 @@ def admin_haslo():
                 adm[user] = {"hash": hash_pw(p1), "must_change": False}
                 save_admins(adm)
             session["must_change"] = False
+            zapisz_audyt("zmiana_hasla", user)
             return redirect(url_for("admin_panel"))
     return render_template("admin_haslo.html", error=err, wymuszona=bool(session.get("must_change")))
 
@@ -923,6 +942,12 @@ def adm_alerty():
     if not is_admin(): return jsonify({"error":"Brak dostępu"}), 401
     return jsonify(read_alerts(200))
 
+# Dziennik audytu (US-012): tylko odczyt; plik dopisywany przez zapisz_audyt()
+@app.route("/admin/api/audyt")
+def adm_audyt():
+    if not is_admin(): return jsonify({"error":"Brak dostępu"}), 401
+    return jsonify(read_audyt(200))
+
 # Nadwyżki przerw
 @app.route("/admin/api/nadwyzki")
 def adm_nadwyzki():
@@ -943,6 +968,7 @@ def adm_nadwyzka_przypisz(nid):
         n["przypisana_strefa"] = strefa
         n["status"] = "przypisana"
         save_nadwyzki(nadwyzki)
+        zapisz_audyt("nadwyzka_przypisana", str(nid), f"{n['pracownik']} → {strefa}")
     return jsonify({"ok":True})
 
 # Korekty
@@ -963,6 +989,7 @@ def adm_korekta_decyzja(kid):
         k["status"]  = "zatwierdzona" if decyzja=="tak" else "odrzucona"
         k["decyzja"] = decyzja
         save_korekty(korekty)
+        zapisz_audyt("korekta_decyzja", str(kid), f"{k['pracownik']}: {k['status']}")
     return jsonify({"ok":True})
 
 # ── ADMIN: ręczne zarządzanie sesjami ────────────────────────────────────────
@@ -991,9 +1018,11 @@ def adm_move():
         if nowa_str == "KONIEC_ZMIANY":
             state.pop(kod, None)
             _w(STATE_FILE, state)
+            zapisz_audyt("koniec_zmiany", kod)
             return jsonify({"ok":True,"akcja":"koniec_zmiany","imie_nazwisko":worker["imie"]})
         state[kod] = {"strefa":nowa_str,"podstrefa":podstrefa,"ts_wejscia":now_iso}
         _w(STATE_FILE, state)
+    zapisz_audyt("przesuniecie", kod, f"→ {nowa_str}" + (f"/{podstrefa}" if podstrefa else ""))
     return jsonify({"ok":True,"akcja":"zmiana_strefy","imie_nazwisko":worker["imie"],"nowa_strefa":nowa_str})
 
 @app.route("/admin/api/start", methods=["POST"])
@@ -1018,6 +1047,7 @@ def adm_start():
             zamknij_pobyt(kod, worker["imie"], sesja, now, f"ADMIN:{session.get('admin_user','?')}:start_override")
         state[kod] = {"strefa":strefa,"podstrefa":podstrefa,"ts_wejscia":now_iso}
         _w(STATE_FILE, state)
+    zapisz_audyt("start_reczny", kod, f"→ {strefa}")
     return jsonify({"ok":True,"imie_nazwisko":worker["imie"],"strefa":strefa})
 
 # Strefy CRUD
@@ -1033,12 +1063,14 @@ def adm_add_strefa():
     n = d.get("nazwa","").strip().upper()
     if not n: return jsonify({"ok":False,"error":"Brak nazwy"}), 400
     s = load_strefy(); s[n]={"kolor":d.get("kolor","#185FA5"),"podstrefy":[]}; save_strefy(s)
+    zapisz_audyt("strefa_dodana", n)
     return jsonify({"ok":True})
 
 @app.route("/admin/api/strefy/<nazwa>",    methods=["DELETE"])
 def adm_del_strefa(nazwa):
     if not is_admin(): return jsonify({"error":"Brak dostępu"}), 401
     s = load_strefy(); s.pop(nazwa.upper(),None); save_strefy(s)
+    zapisz_audyt("strefa_usunieta", nazwa.upper())
     return jsonify({"ok":True})
 
 @app.route("/admin/api/strefy/<nazwa>/podstrefy", methods=["POST"])
@@ -1050,6 +1082,7 @@ def adm_add_pod(nazwa):
     if nazwa not in s: return jsonify({"ok":False,"error":"Brak strefy"}), 404
     if pod not in s[nazwa]["podstrefy"]: s[nazwa]["podstrefy"].append(pod)
     save_strefy(s)
+    zapisz_audyt("podstrefa_dodana", nazwa, pod)
     return jsonify({"ok":True})
 
 @app.route("/admin/api/strefy/<nazwa>/podstrefy/<pod>", methods=["DELETE"])
@@ -1059,6 +1092,7 @@ def adm_del_pod(nazwa,pod):
     if nazwa in s:
         s[nazwa]["podstrefy"]=[p for p in s[nazwa]["podstrefy"] if p!=pod.upper()]
         save_strefy(s)
+        zapisz_audyt("podstrefa_usunieta", nazwa, pod.upper())
     return jsonify({"ok":True})
 
 # Workers CRUD
@@ -1075,6 +1109,7 @@ def adm_add_worker():
     if not kod or not imie: return jsonify({"ok":False,"error":"Brak kodu lub imienia"}), 400
     if not kod.startswith("HU_"): return jsonify({"ok":False,"error":"Kod musi zaczynać się od HU_"}), 400
     w=load_workers(); w[kod]={"imie":imie,"strefy":[]}; save_workers(w)
+    zapisz_audyt("pracownik_dodany", kod, imie)
     return jsonify({"ok":True})
 
 @app.route("/admin/api/workers/<kod>",     methods=["DELETE"])
@@ -1083,6 +1118,7 @@ def adm_del_worker(kod):
     w=load_workers(); kod=kod.upper()
     if kod not in w: return jsonify({"ok":False,"error":"Nie znaleziono"}), 404
     del w[kod]; save_workers(w)
+    zapisz_audyt("pracownik_usuniety", kod)
     with _lock:
         s = _r(STATE_FILE, {}); s.pop(kod, None); _w(STATE_FILE, s)
     return jsonify({"ok":True})
@@ -1094,6 +1130,7 @@ def adm_set_worker_strefy(kod):
     w=load_workers(); kod=kod.upper()
     if kod not in w: return jsonify({"ok":False,"error":"Nie znaleziono"}), 404
     w[kod]["strefy"]=[s.upper() for s in lista]; save_workers(w)
+    zapisz_audyt("uprawnienia", kod, ", ".join(w[kod]["strefy"]))
     return jsonify({"ok":True})
 
 # Admins CRUD
@@ -1109,6 +1146,7 @@ def adm_add_admin():
     u=d.get("username","").strip(); p=d.get("password","")
     if not u or not p: return jsonify({"ok":False,"error":"Brak danych"}), 400
     a=load_admins(); a[u]={"hash":hash_pw(p),"must_change":False}; save_admins(a)
+    zapisz_audyt("admin_dodany", u)
     return jsonify({"ok":True})
 
 @app.route("/admin/api/admins/<user>",     methods=["DELETE"])
@@ -1117,6 +1155,7 @@ def adm_del_admin(user):
     if user==session.get("admin_user"):
         return jsonify({"ok":False,"error":"Nie możesz usunąć własnego konta"}), 400
     a=load_admins(); a.pop(user,None); save_admins(a)
+    zapisz_audyt("admin_usuniety", user)
     return jsonify({"ok":True})
 
 # Config
@@ -1132,6 +1171,7 @@ def adm_save_config():
     if blad := sprawdz_konfiguracje(d):
         return jsonify({"ok":False,"error":blad}), 400
     cfg=load_config(); cfg.update(d); save_config(cfg)
+    zapisz_audyt("konfiguracja", "", json.dumps(d, ensure_ascii=False))
     return jsonify({"ok":True})
 
 # Eksport
@@ -1144,6 +1184,7 @@ def adm_export(typ):
         "dzien":   DATA_DIR / f"ewidencja_{today}.csv",
         "miesiac": DATA_DIR / f"ewidencja_{month}.csv",
         "alerty":  ALERTS_FILE_PATH,
+        "audyt":   AUDYT_FILE_PATH,
     }
     f = files.get(typ)
     if not f or not f.exists():
@@ -1226,6 +1267,7 @@ def adm_grafik_import():
                 grafik[kod] = {}
             grafik[kod].update(dni)
         save_grafik(grafik)
+        zapisz_audyt("grafik_import", f.filename, f"{sum(len(v) for v in patch.values())} wpisów, {len(patch)} pracowników")
     return jsonify({"ok": bool(patch), "zaimportowano": sum(len(v) for v in patch.values()),
                     "pracownicy": len(patch), "bledy": bledy})
 
@@ -1262,6 +1304,7 @@ def adm_grafik_entry():
         grafik[kod] = {}
     grafik[kod][date_iso] = parse_shift(shift) if shift else {"od":None,"do":None,"typ":"W"}
     save_grafik(grafik)
+    zapisz_audyt("grafik_edycja", kod, f"{date_iso}: {shift or 'W'}")
     return jsonify({"ok":True})
 
 

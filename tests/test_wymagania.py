@@ -301,6 +301,26 @@ class Wymagania(unittest.TestCase):
         r = wyslij("g.xlsx", b"0" * (3 * 1024 * 1024))
         self.assertEqual((r.status_code, r.json["error"]), (413, "Plik lub żądanie za duże (limit 2 MB)"))
 
+    def test_ADM_15_dziennik_audytu_operacji_administratora(self):
+        self.assertEqual(self.c.get("/admin/api/audyt").status_code, 401)
+        t = self.csrf()
+        self.c.post("/admin/login", data={"username": "admin", "password": "zle", "csrf": t})
+        self.login()
+        self.c.post("/admin/api/strefy", json={"nazwa": "nowa"})
+        self.c.post("/admin/api/config", json={"prog_przerwa_min": 25})
+        self.rejestruj("PICKING")
+        self.c.post("/admin/api/move", json={"pracownik": "HU_KOWALSKI_JAN", "strefa": "PRZYJECIA"})
+        wpisy = self.c.get("/admin/api/audyt").json
+        akcje = [w["akcja"] for w in wpisy]                                   # najnowsze pierwsze
+        self.assertEqual(akcje[:4], ["przesuniecie", "konfiguracja", "strefa_dodana", "zmiana_hasla"])
+        self.assertIn("logowanie_nieudane", akcje)
+        self.assertTrue(all(w["admin"] == "admin" for w in wpisy if w["akcja"] != "logowanie_nieudane"))
+        self.assertEqual((wpisy[0]["obiekt"], wpisy[0]["szczegoly"]), ("HU_KOWALSKI_JAN", "→ PRZYJECIA"))
+        self.assertIn("prog_przerwa_min", wpisy[1]["szczegoly"])
+        r = self.c.get("/admin/export/audyt")
+        self.assertEqual(r.status_code, 200)
+        self.assertIn(b"ts;admin;akcja;obiekt;szczegoly", r.data)
+
     # ── Grafik ───────────────────────────────────────────────────────────────
     def test_GRF_02_kody_zmian(self):
         p = self.A.parse_shift
