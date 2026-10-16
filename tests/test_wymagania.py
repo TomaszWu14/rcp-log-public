@@ -61,8 +61,11 @@ class Wymagania(unittest.TestCase):
         return self.c.post("/api/rejestruj", json={"pracownik": kod, "strefa": strefa, "force": force})
 
     def ewidencja_dzis(self):
-        daily, _ = self.A.get_csv_paths(datetime.now())
-        return self.A.read_csv_rows(daily)
+        """Wpisy ze wszystkich plików dziennych — tuż po północy pobyt zaczęty przed nią ląduje w pliku z wczoraj."""
+        rows = []
+        for p in sorted((self.tmp / "data").glob("ewidencja_????-??-??.csv")):
+            rows += self.A.read_csv_rows(p)
+        return rows
 
     # ── Rejestracja ──────────────────────────────────────────────────────────
     def test_REJ_01_kod_bez_wzgledu_na_wielkosc_liter_i_spacje(self):
@@ -113,8 +116,8 @@ class Wymagania(unittest.TestCase):
         self.assertEqual(len(wpisy), 1)
         self.assertEqual(wpisy[0]["strefa"], "PICKING")
         self.assertEqual(wpisy[0]["ts_wyjscia"], r.json["ts"])
-        _, monthly = self.A.get_csv_paths(datetime.now())
-        self.assertEqual(len(self.A.read_csv_rows(monthly)), 1)
+        miesieczne = list((self.tmp / "data").glob("ewidencja_????-??.csv"))
+        self.assertEqual(sum(len(self.A.read_csv_rows(p)) for p in miesieczne), 1)
 
     def test_SES_03_csv_otwiera_sie_w_excelu(self):
         self.rejestruj("PICKING")
