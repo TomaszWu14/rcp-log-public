@@ -18,6 +18,7 @@ widoczne w działaniu aplikacji.
 | [D9](#d9-skaner-bez-logowania-panel-z-logowaniem) | Skaner bez logowania, panel z logowaniem | dostęp |
 | [D10](#d10-zadania-cykliczne-jako-wątki-wewnątrz-serwera) | Zadania cykliczne jako wątki wewnątrz serwera | architektura |
 | [D11](#d11-tryb-demo-w-tym-samym-kodzie) | Tryb demo w tym samym kodzie | wdrożenie |
+| [D12](#d12-korekta-nanoszona-na-wpis-przez-administratora) | Korekta nanoszona na wpis przez administratora (zmienia D6) | proces |
 
 ### D1. Pliki JSON i CSV zamiast bazy danych
 
@@ -122,7 +123,7 @@ widoczne w działaniu aplikacji.
   człowieka.
 - **Opcje.** Zewnętrzny harmonogram systemu operacyjnego; osobny proces; wątki uruchamiane przy starcie
   serwera.
-- **Wybór i uzasadnienie.** Wątki w procesie serwera (`app.py:540, 602, 1442`). Jedno polecenie uruchamia
+- **Wybór i uzasadnienie.** Wątki w procesie serwera (`app.py:540, 602, 1515`). Jedno polecenie uruchamia
   wszystko; brak dodatkowej konfiguracji na stanowisku.
 - **Konsekwencje.** ➕ Zero konfiguracji. ➖ Zadania żyją tylko, gdy serwer działa: kopia o 02:00 nie
   powstanie przy wyłączonym serwerze (BR-56), a nieoczekiwany błąd kończy wątek kontroli po cichu
@@ -138,14 +139,25 @@ widoczne w działaniu aplikacji.
   danych, automatyczne logowanie, blokada zmian słowników, cykliczne odtwarzanie danych.
 - **Konsekwencje.** ➕ Jedna baza kodu; demo zawsze zgodne z aktualną wersją. ➕ Reset nie dotyka katalogu
   produkcyjnego (`app.py:64`). ➖ Lista blokad jest utrzymywana ręcznie: nowy adres zmieniający dane trzeba
-  do niej dopisać (`app.py:1385-1390`). ➖ W demo działają przesunięcia, korekty i nadwyżki, więc gość
+  do niej dopisać (`app.py:1458-1463`). ➖ W demo działają przesunięcia, korekty i nadwyżki, więc gość
   może „zepsuć” scenę demo do następnego resetu.
+
+### D12. Korekta nanoszona na wpis przez administratora
+
+- **Kontekst.** D6 zostawiała poprawkę ewidencji człowiekowi w dwóch plikach CSV; pominięcie jednego rozspójniało
+  ewidencję (BR-32), a zgłoszenie nie wskazywało wpisu (BR-33). Krok 4 listy „przed wdrożeniem”.
+- **Opcje.** Zostawić D6; pracownik wskazuje wpis przy zgłoszeniu; administrator wybiera wpis i nanosi poprawkę w aplikacji.
+- **Wybór i uzasadnienie.** Administrator (Z30, US-014). Pracownik dalej zgłasza opisem — ekran skanera bez zmian;
+  administrator wybiera dzień i wpis pracownika, ustawia godziny i strefę, aplikacja zmienia plik dnia i miesiąca razem.
+- **Konsekwencje.** ➕ Oba pliki spójne; wpis oznaczony `KOREKTA#<nr>`; stara i nowa wartość w dzienniku audytu (US-012).
+  ➕ Korekta naniesiona tylko raz. ➖ Nie przenosi wpisu na inny dzień (D3) ani nie dodaje brakującego wpisu — nadal ręcznie.
+  ➖ Ciągłość osi czasu dnia (D2) nie jest pilnowana: poprawiony wpis może nachodzić na sąsiedni.
 
 ## Znane ograniczenia rozwiązania
 
 | Ograniczenie | Konsekwencja | Źródło |
 |---|---|---|
-| Brak naliczania wynagrodzeń i integracji kadrowo-płacowej | dane przekazywane przez eksport CSV | `app.py:1178-1192` |
+| Brak naliczania wynagrodzeń i integracji kadrowo-płacowej | dane przekazywane przez eksport CSV | `app.py:1251-1265` |
 | Korekta nie zmienia ewidencji | poprawka ręczna w dwóch plikach | BR-32 |
 | Brak zmian nocnych przez północ | pobyt zamykany o 23:59:59 | BR-17, D3 |
 | Uprawnienia tylko per strefa | podstrefy dostępne dla każdego z uprawnieniem do strefy | BR-5, D8 |
@@ -165,13 +177,13 @@ widoczne w działaniu aplikacji.
 |---|---|---|---|
 | T1 | ~~Nadwyżka tylko przy zamknięciu przerwy przez pracownika~~ — naprawione (US-005): jedna funkcja `zamknij_pobyt()` dla skanera, administratora i auto-zamknięcia | BR-24, [P3](01-procesy/P3-nadwyzki-przerw.md) | `app.py:431-470` |
 | T2 | ~~Dwa domyślne progi długiego dyżuru~~ — naprawione (US-005): jedna stała `ALERT_DYZUR_H = 10` dla alertu i Live (Z13) | Z13, [P2](01-procesy/P2-nadzor-i-alerty.md) | `app.py:77, 551, 737` |
-| T3 | Usunięcie pracownika kasuje trwający pobyt bez wpisu; zostawia grafik, nadwyżki, korekty | BR-49 | `app.py:1115-1124` |
+| T3 | Usunięcie pracownika kasuje trwający pobyt bez wpisu; zostawia grafik, nadwyżki, korekty | BR-49 | `app.py:1188-1197` |
 | T4 | Ponowny skan tej samej strefy rozbija pobyt | BR-12 | `app.py:699-715` |
-| T5 | Porównanie z grafikiem liczy tylko zamknięte wpisy; dzień, który się nie zaczął, ma status „nieobecność” | [P5](01-procesy/P5-grafik-i-obecnosc.md) wyjątki | `app.py:1326-1357` |
-| T6 | Import grafiku: dopasowanie po fragmencie nazwiska, literówka w kodzie zmiany = dzień wolny, numer dnia w nagłówku = bieżący miesiąc, wiersz legendy w szablonie zgłaszany jako błąd | BR-36, BR-37, BR-38, [P5](01-procesy/P5-grafik-i-obecnosc.md) wyjątki | `app.py:200, 202-213, 260-265, 1231` |
+| T5 | Porównanie z grafikiem liczy tylko zamknięte wpisy; dzień, który się nie zaczął, ma status „nieobecność” | [P5](01-procesy/P5-grafik-i-obecnosc.md) wyjątki | `app.py:1399-1430` |
+| T6 | Import grafiku: dopasowanie po fragmencie nazwiska, literówka w kodzie zmiany = dzień wolny, numer dnia w nagłówku = bieżący miesiąc, wiersz legendy w szablonie zgłaszany jako błąd | BR-36, BR-37, BR-38, [P5](01-procesy/P5-grafik-i-obecnosc.md) wyjątki | `app.py:200, 202-213, 260-265, 1304` |
 | T7 | Nowe alerty w pamięci serwera: giną przy restarcie, pobiera je pierwsza karta panelu, nowszy alert tego samego pracownika nadpisuje starszy | BR-19, [P2](01-procesy/P2-nadzor-i-alerty.md) wyjątki | `app.py:543, 568, 576, 590, 761-762` |
-| T8 | Dodanie pracownika, strefy lub konta o istniejącej nazwie nadpisuje rekord | BR-48, BR-51 | `app.py:1065, 1111, 1098` |
-| T9 | ~~Przesunięcie i ręczny start nie sprawdzały uprawnień ani słownika stref; nazwa strefy przy nadwyżce była wolnym tekstem~~ — naprawione (US-005): `sprawdz_strefe()` (400 / 403), nadwyżka tylko do strefy ze słownika | BR-20, BR-21, BR-26 | `app.py:472-479, 962, 1009-1010, 1039-1040` |
+| T8 | Dodanie pracownika, strefy lub konta o istniejącej nazwie nadpisuje rekord | BR-48, BR-51 | `app.py:1138, 1184, 1171` |
+| T9 | ~~Przesunięcie i ręczny start nie sprawdzały uprawnień ani słownika stref; nazwa strefy przy nadwyżce była wolnym tekstem~~ — naprawione (US-005): `sprawdz_strefe()` (400 / 403), nadwyżka tylko do strefy ze słownika | BR-20, BR-21, BR-26 | `app.py:472-479, 962, 1082-1083, 1112-1113` |
 | T10 | Przekroczona przerwa daje dwa wiersze `DLUGA_PRZERWA` w pliku alertów: w trakcie i przy zamknięciu | BR-9, BR-15 | `app.py:567, 468` |
 | T11 | Kopia tylko w godzinie 02 przy działającym serwerze; brak retencji; ~~błąd tylko w konsoli~~ — od US-010 błąd w logu z pełnym śladem, kopia jako funkcja `kopia_zapasowa()` z testem | BR-56, BR-57 | `app.py:521-538` |
 | T12 | ~~Równoczesne decyzje dwóch administratorów: wygrywał ostatni zapis~~ — naprawione (US-006): decyzja pod blokadą; druga decyzja o rozliczonej pozycji dostaje 409 z komunikatem, nieistniejący numer 404 | [P3](01-procesy/P3-nadwyzki-przerw.md), [P4](01-procesy/P4-korekty-ewidencji.md) wyjątki | `app.py:963-970, 984-991` |
@@ -189,11 +201,11 @@ Prototyp nie przeszedł przeglądu bezpieczeństwa. Przed jakimkolwiek wdrożeni
 | B2 | ~~Konto `admin/admin123` bez wymuszenia zmiany, dane logowania w konsoli~~ — naprawione (US-001): hasło startowe z `RCP_ADMIN_PASSWORD` albo losowe wypisane raz; zmiana wymuszona przy pierwszym logowaniu | `app.py:413-420, 818-843` |
 | B3 | ~~Migracja starych skrótów haseł ustawiała stałe hasło~~ — naprawione (US-001): konto dostaje nowe hasło startowe jak wyżej | `app.py:495-505` |
 | B4 | ~~Podgląd obecności dostępny bez logowania~~ — naprawione (US-002): `/api/status` bez sesji administratora odpowiada 401 z pustym ciałem | `app.py:729-731` |
-| B5 | Przewidywalna treść kodu QR; brak unieważniania kodu zgubionej karty, a zgubiona karta dostaje duplikat z tym samym kodem (Z3) | `app.py:1110`, D9 |
+| B5 | Przewidywalna treść kodu QR; brak unieważniania kodu zgubionej karty, a zgubiona karta dostaje duplikat z tym samym kodem (Z3) | `app.py:1183`, D9 |
 | B6 | ~~Brak limitu prób logowania i ochrony CSRF~~ — naprawione (US-003): 5 nieudanych prób z adresu w 10 min blokuje logowanie na 15 min (429); token CSRF na formularzach logowania, zmiany hasła i importu grafiku; ciasteczko `SameSite=Lax`, `HttpOnly`, `Secure` przy `RCP_PROXY=1` | `app.py:43-63, 380-410, 791-812` |
-| B7 | ~~Konfiguracja zapisywała dowolne klucze; ścieżka kopii mogła wskazać dowolny katalog~~ — naprawione (US-011): biała lista kluczy, zakresy progów, katalog kopii tylko pod `RCP_BACKUP_ROOT` (domyślnie katalog aplikacji) | `app.py:106-128, 1168-1175` |
+| B7 | ~~Konfiguracja zapisywała dowolne klucze; ścieżka kopii mogła wskazać dowolny katalog~~ — naprawione (US-011): biała lista kluczy, zakresy progów, katalog kopii tylko pod `RCP_BACKUP_ROOT` (domyślnie katalog aplikacji) | `app.py:106-128, 1241-1248` |
 | B8 | ~~Treść nieznanego kodu trafiała do pliku alertów bez oczyszczenia~~ — naprawione (US-003): pola CSV zaczynające się od `= + - @` lub tabulatora dostają apostrof | `app.py:297-299, 303, 338-339` |
-| B9 | Dodanie administratora o istniejącym loginie po cichu zmienia hasło tego konta | `app.py:1148` |
+| B9 | Dodanie administratora o istniejącym loginie po cichu zmienia hasło tego konta | `app.py:1221` |
 
 ### Interfejs
 
@@ -206,13 +218,13 @@ Najważniejsza: ekran pracownika nie wraca sam do ekranu startu (U1).
 |---|---|---|
 | odczyt JSON | uszkodzony plik: wpis ERROR w logu i wartość domyślna (US-010); brak pliku nie jest błędem | `app.py:135-142` |
 | zapis JSON | ~~bez obsługi błędu i nieatomowy~~ — od US-006 zapis przez plik tymczasowy i `os.replace`: przerwany zapis zostawia poprzednią wersję; błąd nadal nie jest logowany | `app.py:144-153` |
-| wiele miejsc | ~~błędy pomijane bez śladu (`except: pass`)~~ — US-010: wyjątki zawężone do oczekiwanych typów, odczyty logują ERROR/WARNING, parsowanie dat grafiku w `_data_z_naglowka()` | `app.py:202-213, 314, 322-323, 373, 421-424, 1338-1339, 1369` |
+| wiele miejsc | ~~błędy pomijane bez śladu (`except: pass`)~~ — US-010: wyjątki zawężone do oczekiwanych typów, odczyty logują ERROR/WARNING, parsowanie dat grafiku w `_data_z_naglowka()` | `app.py:202-213, 314, 322-323, 373, 421-424, 1411-1412, 1442` |
 | wątek kontroli | ~~inny wyjątek kończył wątek po cichu~~ — US-010: każdy wyjątek przebiegu trafia do logu z pełnym śladem, wątek działa dalej (`_przebieg`) | `app.py:512-519, 597-600` |
-| daty z plików | uszkodzony zapis pobytu daje błąd serwera | `app.py:562, 690, 706, 740, 1013, 1043` |
+| daty z plików | uszkodzony zapis pobytu daje błąd serwera | `app.py:562, 690, 706, 740, 1086, 1116` |
 | data dashboardu | zły format w adresie daje błąd serwera | `app.py:884-885` |
-| plik grafiku | ~~nieprawidłowy plik dawał błąd serwera; pole dopuszczało `.xls`~~ — od US-011: tylko `.xlsx`, uszkodzony plik → 400 z komunikatem, powyżej 2 MB → 413 | `app.py:1255-1262`, `admin.html:388` |
+| plik grafiku | ~~nieprawidłowy plik dawał błąd serwera; pole dopuszczało `.xls`~~ — od US-011: tylko `.xlsx`, uszkodzony plik → 400 z komunikatem, powyżej 2 MB → 413 | `app.py:1328-1335`, `admin.html:388` |
 | treść żądań | treść niebędąca obiektem JSON daje błąd serwera | `app.py:613, 663, 776` |
-| opis korekty, lista uprawnień, konfiguracja, wpis grafiku | bez walidacji po stronie serwera | `app.py:780, 1129-1132, 1170-1173, 1297-1306` |
+| opis korekty, lista uprawnień, konfiguracja, wpis grafiku | bez walidacji po stronie serwera | `app.py:780, 1202-1205, 1243-1246, 1370-1379` |
 | nieistniejący numer nadwyżki lub korekty | od US-006 odpowiedź 404 „Nie znaleziono …” | `app.py:963-970, 984-991` |
 | ekran | nie sprawdza odpowiedzi serwera w kilku akcjach; brak obsługi wygaśnięcia sesji i błędów sieci w panelu | `index.html:640-645`, `admin.html:863-867, 972-975, 1165-1173, 529-532` |
 
@@ -226,8 +238,8 @@ Kolejność według wpływu na wiarygodność ewidencji i bezpieczeństwo danych
    ~~limit prób logowania i ochrona CSRF (B6)~~ — zrobione (US-003).
 3. ~~Spójne zamykanie przerw (T1); jeden próg długiego dyżuru (T2); usunięcie `PRZEKROCZENIE_ZMIANY` (T15)~~ — zrobione (US-005). ~~Jeden próg długiego
    dyżuru 10 h (T2, Z13); usunięcie pozostałości `PRZEKROCZENIE_ZMIANY` (T15, Z14).
-4. **Korekta powiązana z konkretnym wpisem**, która po zatwierdzeniu zmienia ewidencję w obu plikach
-   (D6, BR-32, BR-33).
+4. ~~Korekta powiązana z konkretnym wpisem, zmieniająca ewidencję w obu plikach (D6, BR-32, BR-33)~~ — zrobione (US-014, D12);
+   zostaje dodawanie brakującego wpisu i pilnowanie nakładania się wpisów.
 5. **Polityka retencji danych osobowych** — opisana w [RODO.md](bezpieczenstwo/RODO.md) (US-007: podstawy,
    okresy dla ewidencji, alertów, nadwyżek, korekt; kopie 30 dni, [Z7](00-przeglad.md#ustalenia-potwierdzone));
    do potwierdzenia z IOD, mechanizm usuwania w US-009; oraz decyzja o anonimizacji danych

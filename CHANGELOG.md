@@ -32,6 +32,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie 
 - Odwołania `app.py:linia` w dokumentacji naprawione po podwójnym przeliczeniu w US-003; skrypt blokuje drugi przebieg.
 
 ### Added
+- US-014: naniesienie zatwierdzonej korekty na wybrany wpis — plik dnia i miesiąca zmieniane razem, oznaczenie
+  `KOREKTA#<nr>`, stara i nowa wartość w dzienniku audytu; panel Korekty → „✎ Nanieś” (D12 zmienia D6).
 - US-013: zakładka „🧾 Audyt” w panelu — ostatnie 200 wpisów, filtr po loginie / akcji / obiekcie, link do pełnego CSV.
 - US-012: dziennik audytu `audyt.csv` (kto, kiedy, co: logowania, zmiana hasła, słowniki, konta, konfiguracja,
   przesunięcia, decyzje, grafik), `/admin/api/audyt`, eksport `/admin/export/audyt`.

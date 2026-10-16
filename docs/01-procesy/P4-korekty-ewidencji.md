@@ -137,8 +137,8 @@ flowchart TD
 | BR-29 | Zgłoszenie korekty → przyjmij tylko dla kodu ze słownika pracowników; opis to dowolny tekst, którego serwer nie wymaga | `app.py:768-785` |
 | BR-30 | Zgłoszenie przyjęte → nadaj kolejny numer, zapisz chwilę zgłoszenia, kopię nazwiska i status „oczekuje” | `app.py:767-784` |
 | BR-31 | Administrator podejmuje decyzję → „tak” daje status „zatwierdzona”, każda inna wartość „odrzucona”; decyzja jest jednorazowa | `app.py:984-991`, `admin.html:853-856` |
-| BR-32 | Decyzja zapisana → ewidencja pozostaje bez zmian; poprawkę nanosi człowiek w pliku dnia i pliku miesiąca | `app.py:980-993, 301-307` |
-| BR-33 | Zgłoszenie → nie wskazuje konkretnego wpisu ewidencji; powiązanie wynika tylko z opisu | `app.py:767-784` |
+| BR-32 | Korekta zatwierdzona → administrator wybiera wpis pracownika z danego dnia i nanosi nowe godziny i strefę; aplikacja zmienia plik dnia i plik miesiąca razem, oznacza wpis `KOREKTA#<nr>`, zapisuje starą i nową wartość w audycie; korekta odrzucona lub już naniesiona → 409 (US-014, D12) | `app.py:996-1068` |
+| BR-33 | Zgłoszenie → nie wskazuje konkretnego wpisu; wpis wybiera administrator przy nanoszeniu (D12) | `app.py:767-784, 1013-1021` |
 | BR-34 | Zakładka Korekty → lista od najnowszych, licznik przy zakładce pokazuje liczbę zgłoszeń „oczekuje” | `admin.html:842-847` |
 
 ## Wymagania funkcjonalne
@@ -148,3 +148,4 @@ flowchart TD
 | WF-21 | Jako pracownik chcę zgłosić błąd w rejestracji opisem, aby administrator mógł go poprawić. | **Given** pracownik jest na ekranie startu. **When** otwiera „Zgłoś korektę wpisu”, wpisuje opis i swój kod. **Then** zgłoszenie pojawia się w zakładce Korekty ze statusem „oczekuje”; pusty opis jest zatrzymany komunikatem „Opisz problem”. | ręcznie |
 | WF-22 | Jako administrator chcę, żeby zgłoszenia przyjmowano tylko od znanych pracowników, aby lista nie zawierała obcych wpisów. | **Given** kod nie istnieje w słowniku. **When** zgłoszenie z tym kodem dociera do serwera. **Then** serwer je odrzuca i lista korekt pozostaje bez zmian. | `test_KOR_02` |
 | WF-23 | Jako administrator chcę zatwierdzać lub odrzucać korekty, aby każda zmiana ewidencji miała decyzję i ślad. | **Given** zgłoszenie ma status „oczekuje”. **When** administrator klika ✓ albo ✕. **Then** status zmienia się na „zatwierdzona” albo „odrzucona”, a przyciski znikają. | ręcznie |
+| WF-40 | Jako administrator chcę nanieść zatwierdzoną korektę na konkretny wpis w aplikacji, aby oba pliki ewidencji zostały poprawione jednocześnie i ze śladem. | **Given** korekta pracownika i jego wpis PICKING 08:00–09:00. **When** administrator wybiera ten wpis i ustawia PRZYJECIA 08:00–10:00. **Then** plik dnia i miesiąca mają poprawiony wpis (120 min, `KOREKTA#<nr>`), korekta jest zatwierdzona i naniesiona, audyt ma starą i nową wartość; drugie naniesienie → 409. | `test_KOR_06` |

@@ -57,7 +57,7 @@ flowchart LR
 ```
 
 W trybie demo ekran 4 jest pomijany: wejście na adres panelu od razu otwiera ekran 5 jako gość demo,
-a ekran 1 ma dodatkowo przyciski z przykładowymi kodami i link do panelu (`app.py:1424-1430`,
+a ekran 1 ma dodatkowo przyciski z przykładowymi kodami i link do panelu (`app.py:1497-1503`,
 `index.html:307-319`).
 
 ## Ekrany skanera
@@ -105,7 +105,7 @@ a ekran 1 ma dodatkowo przyciski z przykładowymi kodami i link do panelu (`app.
 | Ścieżka | Zachowanie | Źródło |
 |---|---|---|
 | Gość a zalogowany | ekrany 1–3 działają bez logowania; adres panelu bez sesji przekierowuje do 4; dane panelu bez sesji odpowiadają odmową; podgląd obecności (`/api/status`) bez sesji odpowiada 401 z pustym ciałem (od US-002) | `app.py:729-731, 845-852` |
-| Tryb demo | logowanie automatyczne; „Wyloguj” ukryty; pasek z informacją o odtwarzaniu danych; akcje zablokowane kończą się komunikatem „Niedostępne w trybie demo” | `app.py:1424-1435`, `admin.html:163-165, 471-479` |
+| Tryb demo | logowanie automatyczne; „Wyloguj” ukryty; pasek z informacją o odtwarzaniu danych; akcje zablokowane kończą się komunikatem „Niedostępne w trybie demo” | `app.py:1497-1508`, `admin.html:163-165, 471-479` |
 | Modal a pełny ekran | skaner: trzy ekrany pełne i cztery modale na jednej stronie; panel: zakładki, trzy modale i natywne okna przeglądarki (potwierdzenie, wpisanie wartości, lista błędów importu) | `index.html:295-397`, `admin.html:670-690, 1165-1187` |
 | Błąd walidacji | skaner: czerwony komunikat u dołu, użytkownik zostaje na ekranie; logowanie: komunikat w formularzu; panel: komunikat tam, gdzie ekran sprawdza odpowiedź serwera | `index.html:666-670`, `admin.html:480-485` |
 | Przerwanie procesu | „✕” na ekranie 2, „Wróć” i klik w tło w modalach; przerwanie przed „Potwierdź” niczego nie zapisuje | `index.html:546, 560-566` |
@@ -120,7 +120,7 @@ a ekran 1 ma dodatkowo przyciski z przykładowymi kodami i link do panelu (`app.
 | U3 | korektę można zgłosić tylko z ekranu startu, z ręcznym wpisaniem kodu w natywnym oknie | zgłoszenie w cudzym imieniu jest możliwe; zgłoszenie z ekranu pracownika niemożliwe | `index.html:306, 627-642` |
 | U4 | decyzja o korekcie, usunięcie podstrefy i edycja komórki grafiku nie sprawdzają odpowiedzi serwera | komunikat sukcesu mimo błędu | `admin.html:863-867, 972-975, 1165-1173` |
 | U5 | po wygaśnięciu sesji administratora zakładki przestają się ładować bez komunikatu | administrator nie wie, że trzeba się zalogować ponownie | `admin.html:529-532` i pozostałe funkcje ładujące |
-| U6 | eksport nieistniejącego pliku otwiera stronę z samym tekstem błędu, bez nawigacji | powrót przyciskiem przeglądarki | `app.py:1190-1191` |
+| U6 | eksport nieistniejącego pliku otwiera stronę z samym tekstem błędu, bez nawigacji | powrót przyciskiem przeglądarki | `app.py:1263-1264` |
 | U7 | poza trybem demo nie ma linku z panelu do skanera ani ze skanera do panelu | adresy trzeba wpisać ręcznie | `index.html:307-319`, `admin.html:163-165` |
 | U8 | przy ostrzeżeniu o szybkiej zmianie ekran otwiera jednocześnie modal ostrzeżenia i modal potwierdzenia | dwa nakładające się okna | `index.html:584-589` |
 | U9 | macierz uprawnień nie odświeża się po dodaniu pracownika lub strefy w innej zakładce | trzeba przeładować stronę | `admin.html:1197` |

@@ -16,5 +16,6 @@ tabel wymagań w [01-procesy](../01-procesy/); tu śledzimy pracę od audytu wzw
 | B7, R7, R9, T6 | US-011 | `test_ADM_10_konfiguracja_biala_lista_i_zakresy`, `test_ADM_14_naglowki_bezpieczenstwa`, `test_GRF_05_import_odrzuca_zly_plik_i_za_duzy` | #27 | zrobione |
 | R10 (audyt), NFR-007 | US-012 | `test_ADM_15_dziennik_audytu_operacji_administratora` | #28 | zrobione |
 | R10 (audyt, UI) | US-013 | `test_ADM_16_zakladka_audyt_w_panelu` + sprawdzenie w przeglądarce (demo) | #29 | zrobione |
+| D6/D12, BR-32, BR-33, WF-40 | US-014 | `test_KOR_06_korekta_naniesiona_na_wpis_w_obu_plikach` | #30 | zrobione |
 | T11, R10, Z29 | US-009 | `test_SYS_07_retencja_plikow`, `test_SYS_08_retencja_kopii` (do napisania) | — | backlog |
 | B5, R4 | US-008 | — | — | decyzja PO |

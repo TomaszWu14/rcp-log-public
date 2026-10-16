@@ -992,6 +992,79 @@ def adm_korekta_decyzja(kid):
         zapisz_audyt("korekta_decyzja", str(kid), f"{k['pracownik']}: {k['status']}")
     return jsonify({"ok":True})
 
+# ── Naniesienie zatwierdzonej korekty na wpis ewidencji (US-014, D6 → D12) ────────
+def _przepisz_csv(path, zmien):
+    """Przepisuje plik ewidencji atomowo; `zmien(row)` zwraca nowy wiersz albo None (bez zmian)."""
+    rows, trafione = read_csv_rows(path), 0
+    for i, r in enumerate(rows):
+        nowy = zmien(r)
+        if nowy is not None:
+            rows[i], trafione = nowy, trafione + 1
+    if trafione:
+        tmp = Path(str(path) + ".tmp")
+        with open(tmp, "w", newline="", encoding="utf-8-sig") as f:
+            w = csv.DictWriter(f, fieldnames=CSV_HEADERS, delimiter=";", extrasaction="ignore")
+            w.writeheader()
+            w.writerows({k: _csv_safe(v) for k, v in r.items()} for r in rows)
+        os.replace(tmp, path)
+    return trafione
+
+@app.route("/admin/api/korekty/<int:kid>/wpisy")
+def adm_korekta_wpisy(kid):
+    """Wpisy pracownika z danego dnia — do wyboru wpisu, na który nanosi się korektę."""
+    if not is_admin(): return jsonify({"error":"Brak dostępu"}), 401
+    k = next((k for k in load_korekty() if k["id"] == kid), None)
+    if not k: return jsonify({"ok":False,"error":"Nie znaleziono zgłoszenia"}), 404
+    try: dzien = datetime.fromisoformat(request.args.get("data") or k["ts_zgloszenia"][:10])
+    except ValueError: return jsonify({"ok":False,"error":"Zła data"}), 400
+    daily, _ = get_csv_paths(dzien)
+    return jsonify([r for r in read_csv_rows(daily) if r.get("pracownik") == k["pracownik"]])
+
+@app.route("/admin/api/korekty/<int:kid>/nanies", methods=["POST"])
+def adm_korekta_nanies(kid):
+    """Zmienia wybrany wpis w pliku dziennym i miesięcznym; korekta musi być zatwierdzona albo oczekiwać
+    (wtedy zostaje zatwierdzona). Ślad: korekta_info = KOREKTA#<nr>, wpis w audycie ze starą i nową wartością."""
+    if not is_admin(): return jsonify({"error":"Brak dostępu"}), 401
+    d = request.json or {}
+    try:
+        stare_wej = datetime.fromisoformat(d["ts_wejscia"])
+        nowe_wej  = datetime.fromisoformat(d.get("nowe_wejscie") or d["ts_wejscia"])
+        nowe_wyj  = datetime.fromisoformat(d["nowe_wyjscie"])
+    except (KeyError, ValueError):
+        return jsonify({"ok":False,"error":"Podaj wpis (ts_wejscia) i poprawne godziny"}), 400
+    if not nowe_wej < nowe_wyj:
+        return jsonify({"ok":False,"error":"Wyjście musi być późniejsze niż wejście"}), 400
+    if not (nowe_wej.date() == nowe_wyj.date() == stare_wej.date()):
+        return jsonify({"ok":False,"error":"Korekta nie może przenosić wpisu na inny dzień (D3)"}), 400
+    strefa = (d.get("strefa") or "").strip().upper()
+    if strefa and strefa not in load_strefy():
+        return jsonify({"ok":False,"error":f"Nieznana strefa {strefa}"}), 400
+    with _lock:
+        korekty = load_korekty()
+        k = next((k for k in korekty if k["id"] == kid), None)
+        if not k: return jsonify({"ok":False,"error":"Nie znaleziono zgłoszenia"}), 404
+        if k["status"] == "odrzucona": return jsonify({"ok":False,"error":"Korekta odrzucona — nie można jej nanieść"}), 409
+        if k.get("naniesiona"): return jsonify({"ok":False,"error":"Korekta już naniesiona"}), 409
+        stary = {}
+        def zmien(r):
+            if r.get("pracownik") != k["pracownik"] or r.get("ts_wejscia") != stare_wej.isoformat(timespec="seconds"):
+                return None
+            stary.update(r)
+            czas = round((nowe_wyj - nowe_wej).total_seconds() / 60, 2)
+            return {**r, "ts_wejscia": nowe_wej.isoformat(timespec="seconds"), "ts_wyjscia": nowe_wyj.isoformat(timespec="seconds"),
+                    "strefa": strefa or r["strefa"], "czas_min": czas, "czas_fmt": fmt_czas(czas), "korekta_info": f"KOREKTA#{kid}"}
+        daily, monthly = get_csv_paths(stare_wej)
+        if not _przepisz_csv(daily, zmien):
+            return jsonify({"ok":False,"error":"Nie znaleziono wpisu pracownika z tą godziną wejścia"}), 404
+        _przepisz_csv(monthly, zmien)
+        k.update(status="zatwierdzona", decyzja=k.get("decyzja") or "tak", naniesiona=True,
+                 wpis=stare_wej.isoformat(timespec="seconds"))
+        save_korekty(korekty)
+        zapisz_audyt("korekta_naniesiona", str(kid),
+                     f"{k['pracownik']}: {stary.get('strefa')} {stary.get('ts_wejscia','')[11:16]}–{stary.get('ts_wyjscia','')[11:16]}"
+                     f" → {strefa or stary.get('strefa')} {nowe_wej:%H:%M}–{nowe_wyj:%H:%M}")
+    return jsonify({"ok":True})
+
 # ── ADMIN: ręczne zarządzanie sesjami ────────────────────────────────────────
 @app.route("/admin/api/move", methods=["POST"])
 def adm_move():
