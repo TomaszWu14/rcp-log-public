@@ -42,11 +42,11 @@ flowchart TD
 | Nr | Krok | Aktor | Wejście | Wyjście | Reguła biznesowa | Źródło w kodzie |
 |---|---|---|---|---|---|---|
 | 1 | Ustaw filtry historii i szukaj | administrator | data od, data do (domyślnie ostatnie 7 dni), pracownik, strefa | żądanie historii | BR-55 | `admin.html:282-294, 813-839` |
-| 2 | Zbierz wpisy z plików dni | system | pliki dni z zakresu | lista wpisów: najnowsze pierwsze, maks. 500 | BR-55 | `app.py:794-815` |
+| 2 | Zbierz wpisy z plików dni | system | pliki dni z zakresu | lista wpisów: najnowsze pierwsze, maks. 500 | BR-55 | `app.py:838-859` |
 | 3 | Pobierz plik CSV | administrator | przycisk „CSV dziś”, „CSV mies.” albo „Alerty” | żądanie pliku | BR-54 | `admin.html:174-177` |
-| 4 | Wyślij plik do pobrania | system | plik dnia dzisiejszego, miesiąca bieżącego albo alertów | plik z oryginalną nazwą | BR-54, BR-58 | `app.py:1092-1105` |
+| 4 | Wyślij plik do pobrania | system | plik dnia dzisiejszego, miesiąca bieżącego albo alertów | plik z oryginalną nazwą | BR-54, BR-58 | `app.py:1138-1151` |
 | 5 | Otwórz plik w Excelu i przetwórz | kierownik magazynu, poza aplikacją | plik CSV | dalsze rozliczenia (poza zakresem) | BR-58 | — |
-| 6 | Wykonaj kopię zapasową | kopia w tle | wszystkie pliki CSV i JSON w katalogu danych, ścieżka z konfiguracji | kopie z prefiksem daty i godziny | BR-56, BR-57 | `app.py:471-480` |
+| 6 | Wykonaj kopię zapasową | kopia w tle | wszystkie pliki CSV i JSON w katalogu danych, ścieżka z konfiguracji | kopie z prefiksem daty i godziny | BR-56, BR-57 | `app.py:515-524` |
 
 ## Podprocesy
 
@@ -66,9 +66,9 @@ flowchart TD
 
 | Krok | Opis | Źródło w kodzie |
 |---|---|---|
-| A1 | zakres dat porównywany z datą w nazwie pliku dnia; pliki miesięczne nie są używane | `app.py:803-809` |
-| A3 | filtr „zawiera” bez wielkości liter; pracownik po kodzie, nie po nazwisku | `app.py:811-812` |
-| A5 | ucięcie do 500 wierszy bez informacji, że było ich więcej; ekran pokazuje „Wyniki: N (max 500)” | `app.py:814-815`, `admin.html:838` |
+| A1 | zakres dat porównywany z datą w nazwie pliku dnia; pliki miesięczne nie są używane | `app.py:847-853` |
+| A3 | filtr „zawiera” bez wielkości liter; pracownik po kodzie, nie po nazwisku | `app.py:855-856` |
+| A5 | ucięcie do 500 wierszy bez informacji, że było ich więcej; ekran pokazuje „Wyniki: N (max 500)” | `app.py:858-859`, `admin.html:838` |
 
 ### P7.2 Kopia zapasowa
 
@@ -89,34 +89,34 @@ flowchart TD
 
 | Krok | Opis | Źródło w kodzie |
 |---|---|---|
-| G1, G2 | kopia tylko raz na dobę i tylko wtedy, gdy serwer działa między 02:00 a 02:59; znacznik „wykonano dzisiaj” jest w pamięci, więc restart serwera w tej godzinie może dać drugą kopię | `app.py:471-478` |
-| A1 | katalog z konfiguracji (domyślnie `backup/` obok kodu), tworzony razem z katalogami nadrzędnymi | `app.py:473-476` |
-| A2 | każdy plik kopiowany z zachowaniem daty modyfikacji; nazwa kopii: `RRRRMMDD_GGMM_` + nazwa oryginału; stare kopie nie są usuwane | `app.py:461-469` |
-| A4 | błąd w logu serwera z pełnym śladem (US-010); próba ponawiana co minutę do końca godziny 02 | `app.py:452-459, 471-478` |
-| tryb demo | zadanie nie startuje; zgodnie z ustaleniem instancja demo nie potrzebuje kopii (Z7) | `app.py:480` |
+| G1, G2 | kopia tylko raz na dobę i tylko wtedy, gdy serwer działa między 02:00 a 02:59; znacznik „wykonano dzisiaj” jest w pamięci, więc restart serwera w tej godzinie może dać drugą kopię | `app.py:515-522` |
+| A1 | katalog z konfiguracji (domyślnie `backup/` obok kodu), tworzony razem z katalogami nadrzędnymi | `app.py:517-520` |
+| A2 | każdy plik kopiowany z zachowaniem daty modyfikacji; nazwa kopii: `RRRRMMDD_GGMM_` + nazwa oryginału; stare kopie nie są usuwane | `app.py:505-513` |
+| A4 | błąd w logu serwera z pełnym śladem (US-010); próba ponawiana co minutę do końca godziny 02 | `app.py:496-503, 515-522` |
+| tryb demo | zadanie nie startuje; zgodnie z ustaleniem instancja demo nie potrzebuje kopii (Z7) | `app.py:524` |
 
 ## Ścieżki alternatywne i wyjątki
 
 | Wyjątek | Warunek wystąpienia | Obsługa | Skutek dla procesu | Źródło w kodzie |
 |---|---|---|---|---|
-| Eksport innego dnia lub miesiąca | odbiorca potrzebuje danych z przeszłości | brak wyboru daty w eksporcie | dane z przeszłości tylko przez Historię (podgląd) albo kopię pliku z serwera | `app.py:1095-1101` |
-| Brak pliku do eksportu | dziś nie było jeszcze wpisów | strona z samym tekstem „Brak pliku”, bez nawigacji | administrator wraca przyciskiem przeglądarki | `app.py:1103-1104` |
-| Więcej niż 500 wpisów w zakresie | szeroki zakres dat przy dużej obsadzie | lista ucięta do 500 najnowszych | starsze wpisy niewidoczne; trzeba zawęzić zakres | `app.py:815` |
-| Serwer wyłączony o 02:00 | przerwa serwisowa, awaria zasilania | brak kopii tego dnia; zadanie nie nadrabia | luka w kopiach | `app.py:475` |
-| Katalog kopii niedostępny | zła ścieżka, brak uprawnień, pełny dysk | błąd w konsoli; ponowne próby co minutę do 03:00 | brak kopii; nikt nie jest powiadomiony | `app.py:452-459, 478` |
-| Rosnący katalog kopii | codzienne kopie wszystkich plików | brak retencji | dysk zapełnia się z czasem; ustalona retencja to 30 dni na tym samym serwerze, mechanizm do zbudowania ([Z7](../00-przeglad.md#ustalenia-potwierdzone)) | `app.py:461-469` |
-| Formuła w pliku alertów | nieznany kod zaczynający się od „=” zapisany w alercie | od US-003 pole zaczynające się od „=”, „+”, „-”, „@” dostaje apostrof i Excel pokazuje je jako tekst | po otwarciu eksportu alertów w Excelu komórka działa jak formuła | `app.py:559, 291-295` |
-| Eksport w trybie demo | gość demo pobiera plik | działa; dane fikcyjne | — | `app.py:1290-1295` (brak na liście blokad) |
+| Eksport innego dnia lub miesiąca | odbiorca potrzebuje danych z przeszłości | brak wyboru daty w eksporcie | dane z przeszłości tylko przez Historię (podgląd) albo kopię pliku z serwera | `app.py:1141-1147` |
+| Brak pliku do eksportu | dziś nie było jeszcze wpisów | strona z samym tekstem „Brak pliku”, bez nawigacji | administrator wraca przyciskiem przeglądarki | `app.py:1149-1150` |
+| Więcej niż 500 wpisów w zakresie | szeroki zakres dat przy dużej obsadzie | lista ucięta do 500 najnowszych | starsze wpisy niewidoczne; trzeba zawęzić zakres | `app.py:859` |
+| Serwer wyłączony o 02:00 | przerwa serwisowa, awaria zasilania | brak kopii tego dnia; zadanie nie nadrabia | luka w kopiach | `app.py:519` |
+| Katalog kopii niedostępny | zła ścieżka, brak uprawnień, pełny dysk | błąd w konsoli; ponowne próby co minutę do 03:00 | brak kopii; nikt nie jest powiadomiony | `app.py:496-503, 522` |
+| Rosnący katalog kopii | codzienne kopie wszystkich plików | brak retencji | dysk zapełnia się z czasem; ustalona retencja to 30 dni na tym samym serwerze, mechanizm do zbudowania ([Z7](../00-przeglad.md#ustalenia-potwierdzone)) | `app.py:505-513` |
+| Formuła w pliku alertów | nieznany kod zaczynający się od „=” zapisany w alercie | od US-003 pole zaczynające się od „=”, „+”, „-”, „@” dostaje apostrof i Excel pokazuje je jako tekst | po otwarciu eksportu alertów w Excelu komórka działa jak formuła | `app.py:603, 335-339` |
+| Eksport w trybie demo | gość demo pobiera plik | działa; dane fikcyjne | — | `app.py:1342-1347` (brak na liście blokad) |
 
 ## Reguły biznesowe
 
 | ID | Warunek → działanie | Źródło w kodzie |
 |---|---|---|
-| BR-54 | Administrator eksportuje → dostępne tylko plik dnia dzisiejszego, plik bieżącego miesiąca i plik alertów; brak pliku → komunikat „Brak pliku” | `app.py:1092-1105` |
-| BR-55 | Administrator przegląda historię → pliki dni z zakresu dat wybierane po nazwie pliku; pracownik i strefa filtrowane jako „zawiera”; najnowsze pierwsze; najwyżej 500 wierszy | `app.py:794-815` |
-| BR-56 | Zegar serwera wskazuje godzinę 02 i kopia nie była dziś wykonana → skopiuj wszystkie pliki CSV i JSON z katalogu danych do katalogu z konfiguracji z prefiksem daty i godziny; nie w trybie demo | `app.py:471-480` |
-| BR-57 | Kopia się nie udała → wpis w konsoli serwera, ponowna próba co minutę do końca godziny 02 | `app.py:452-459, 478` |
-| BR-58 | Każdy plik ewidencji i alertów → separator średnik, kodowanie UTF-8 z BOM, stały nagłówek kolumn; otwiera się w Excelu dwuklikiem | `app.py:61-64, 248-263, 284-295` |
+| BR-54 | Administrator eksportuje → dostępne tylko plik dnia dzisiejszego, plik bieżącego miesiąca i plik alertów; brak pliku → komunikat „Brak pliku” | `app.py:1138-1151` |
+| BR-55 | Administrator przegląda historię → pliki dni z zakresu dat wybierane po nazwie pliku; pracownik i strefa filtrowane jako „zawiera”; najnowsze pierwsze; najwyżej 500 wierszy | `app.py:838-859` |
+| BR-56 | Zegar serwera wskazuje godzinę 02 i kopia nie była dziś wykonana → skopiuj wszystkie pliki CSV i JSON z katalogu danych do katalogu z konfiguracji z prefiksem daty i godziny; nie w trybie demo | `app.py:515-524` |
+| BR-57 | Kopia się nie udała → wpis w konsoli serwera, ponowna próba co minutę do końca godziny 02 | `app.py:496-503, 522` |
+| BR-58 | Każdy plik ewidencji i alertów → separator średnik, kodowanie UTF-8 z BOM, stały nagłówek kolumn; otwiera się w Excelu dwuklikiem | `app.py:79-82, 292-307, 328-339` |
 
 ## Wymagania funkcjonalne
 

@@ -5,6 +5,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie 
 ## [Unreleased]
 
 ### Security
+- US-011: konfiguracja z białą listą kluczy i zakresami, katalog kopii tylko pod `RCP_BACKUP_ROOT`; limit żądania 2 MB
+  (413); import grafiku tylko `.xlsx`, uszkodzony plik → 400; nagłówki CSP, `X-Content-Type-Options`, `Referrer-Policy`,
+  `X-Frame-Options`, HSTS za proxy (B7, R7, R9).
 - US-003: limit prób logowania (5 / 10 min z adresu → 429 na 15 min); token CSRF na formularzach logowania,
   zmiany hasła i imporcie grafiku; ciasteczko sesji `SameSite=Lax`, `HttpOnly`, `Secure` przy `RCP_PROXY=1`;
   pola CSV zaczynające się od `= + - @` lub tabulatora dostają apostrof (B6, B8).

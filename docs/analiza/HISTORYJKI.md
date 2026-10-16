@@ -117,6 +117,21 @@ Then  używa wartości domyślnych i loguje ERROR z nazwą pliku
 **Zrealizowane** (PR #26): logger `rcp` (`logging.basicConfig`), `_przebieg()` dla trzech wątków, `kopia_zapasowa(now)`
 i `_data_z_naglowka()` wydzielone i przetestowane; `test_SYS_01`, `test_SYS_10`, `test_SYS_11`; `pyproject.toml` bez wyjątków ruff.
 
+### US-011 Walidacja konfiguracji, limit żądania, nagłówki bezpieczeństwa (B7, R7, R9, T6)
+**Jako** administrator **chcę**, żeby serwer odrzucał błędną konfigurację i podejrzane pliki oraz wysyłał nagłówki
+bezpieczeństwa, **aby** panel nie dał się wywrócić jednym żądaniem ani osadzić na obcej stronie.
+```gherkin
+Given próg przerwy 999 albo nieznany klucz
+When  POST /admin/api/config
+Then  400 z komunikatem, konfiguracja bez zmian
+
+Given plik .xls albo uszkodzony .xlsx, albo plik 3 MB
+When  import grafiku
+Then  400 z komunikatem albo 413 (limit 2 MB)
+```
+**Zrealizowane** (PR #27): `sprawdz_konfiguracje()`, `MAX_CONTENT_LENGTH`, `naglowki_bezpieczenstwa()` (CSP, nosniff,
+Referrer-Policy, X-Frame-Options, HSTS za proxy); `test_ADM_10`, `test_ADM_14`, `test_GRF_05`; ryzyko R13 (CSP inline) zaakceptowane.
+
 ## Could
 
 ### US-008 Tokeny na kartach zamiast przewidywalnych kodów (B5, R4)

@@ -268,6 +268,39 @@ class Wymagania(unittest.TestCase):
         self.assertEqual(r.status_code, 400)
         self.assertIn("admin", self.A.load_admins())
 
+    def test_ADM_10_konfiguracja_biala_lista_i_zakresy(self):
+        self.login()
+        post = lambda d: self.c.post("/admin/api/config", json=d)   # noqa: E731
+        self.assertEqual(post({"prog_przerwa_min": 999}).status_code, 400)
+        self.assertEqual(post({"zly_klucz": 1}).json["error"], "Nieznany klucz konfiguracji: zly_klucz")
+        poza = "C:/Windows" if os.name == "nt" else "/etc"
+        self.assertIn("katalog kopii musi leżeć w", post({"backup_path": poza}).json["error"])
+        self.assertEqual(post({"prog_przerwa_min": "20", "backup_path": "kopie"}).status_code, 200)
+        cfg = self.A.load_config()
+        self.assertEqual(cfg["prog_przerwa_min"], 20)
+        self.assertEqual(Path(cfg["backup_path"]), (self.A.BACKUP_ROOT / "kopie").resolve())
+        self.assertEqual(post({"backup_path": ""}).status_code, 200)   # puste = katalog domyślny
+        self.assertEqual(Path(self.A.load_config()["backup_path"]), Path(self.A.DEFAULT_CONFIG["backup_path"]).resolve())
+
+    def test_ADM_14_naglowki_bezpieczenstwa(self):
+        h = self.c.get("/").headers
+        self.assertIn("frame-ancestors 'none'", h["Content-Security-Policy"])
+        self.assertEqual(h["X-Content-Type-Options"], "nosniff")
+        self.assertEqual(h["Referrer-Policy"], "same-origin")
+        self.assertEqual(h["X-Frame-Options"], "DENY")
+        self.assertNotIn("Strict-Transport-Security", h)        # tylko za proxy (RCP_PROXY=1)
+
+    def test_GRF_05_import_odrzuca_zly_plik_i_za_duzy(self):
+        self.login()
+        def wyslij(nazwa, dane):
+            return self.c.post("/admin/api/grafik/import", data={"file": (io.BytesIO(dane), nazwa)},
+                               content_type="multipart/form-data", headers={"X-CSRF-Token": self.token})
+        self.assertEqual(wyslij("g.xls", b"x").status_code, 400)
+        r = wyslij("g.xlsx", b"to nie jest xlsx")
+        self.assertEqual((r.status_code, r.json["error"]), (400, "Nieprawidłowy plik .xlsx — nie udało się go odczytać"))
+        r = wyslij("g.xlsx", b"0" * (3 * 1024 * 1024))
+        self.assertEqual((r.status_code, r.json["error"]), (413, "Plik lub żądanie za duże (limit 2 MB)"))
+
     # ── Grafik ───────────────────────────────────────────────────────────────
     def test_GRF_02_kody_zmian(self):
         p = self.A.parse_shift
