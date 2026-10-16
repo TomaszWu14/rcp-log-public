@@ -15,5 +15,6 @@ tabel wymagań w [01-procesy](../01-procesy/); tu śledzimy pracę od audytu wzw
 | DEV-3, T11 (log) | US-010 | `test_SYS_01_kopia_zapasowa_kopiuje_csv_i_json_z_prefiksem`, `test_SYS_10_blad_w_zadaniu_w_tle_trafia_do_logu_i_nie_zabija_watku`, `test_SYS_11_uszkodzony_json_jest_logowany_a_nie_cicho_pusty` | #26 | zrobione |
 | B7, R7, R9, T6 | US-011 | `test_ADM_10_konfiguracja_biala_lista_i_zakresy`, `test_ADM_14_naglowki_bezpieczenstwa`, `test_GRF_05_import_odrzuca_zly_plik_i_za_duzy` | #27 | zrobione |
 | R10 (audyt), NFR-007 | US-012 | `test_ADM_15_dziennik_audytu_operacji_administratora` | #28 | zrobione |
+| R10 (audyt, UI) | US-013 | `test_ADM_16_zakladka_audyt_w_panelu` + sprawdzenie w przeglądarce (demo) | #29 | zrobione |
 | T11, R10, Z29 | US-009 | `test_SYS_07_retencja_plikow`, `test_SYS_08_retencja_kopii` (do napisania) | — | backlog |
 | B5, R4 | US-008 | — | — | decyzja PO |

@@ -193,6 +193,7 @@ select option{background:var(--card2);}
   <button class="tab"     onclick="tab('config',this)">⚙️ Config</button>
   <button class="tab"     onclick="tab('grafik',this)">📅 Grafik</button>
   <button class="tab"     onclick="tab('macierz',this)">🔲 Macierz uprawnień</button>
+  <button class="tab"     onclick="tab('audyt',this)">🧾 Audyt</button>
 </div>
 
 <!-- ══ DASHBOARD ══ -->
@@ -299,6 +300,18 @@ select option{background:var(--card2);}
   <div class="c" style="padding:0;overflow:hidden;">
     <table><thead><tr><th>Data</th><th>Pracownik</th><th>Opis</th><th>Status</th><th>Akcja</th></tr></thead>
     <tbody id="korBody"></tbody></table>
+  </div>
+</div>
+
+<!-- ══ AUDYT (US-013) ══ -->
+<div class="panel" id="p-audyt">
+  <div class="c" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <input id="audytFiltr" placeholder="Filtruj: login, akcja, obiekt…" oninput="renderAudyt()" style="flex:1;min-width:200px" aria-label="Filtruj dziennik audytu">
+    <a href="/admin/export/audyt" class="btn btn-grey">⬇ Pełny dziennik CSV</a>
+  </div>
+  <div class="c" style="padding:0;overflow:hidden;">
+    <table><thead><tr><th>Chwila</th><th>Administrator</th><th>Akcja</th><th>Obiekt</th><th>Szczegóły</th></tr></thead>
+    <tbody id="audytBody"></tbody></table>
   </div>
 </div>
 
@@ -462,6 +475,7 @@ function tab(name, btn) {
     strefy: loadStrefy, admins: loadAdmins, config: loadConfig,
     grafik:  loadGrafik,
     macierz: loadMacierz,
+    audyt:   loadAudyt,
   };
   loaders[name]?.();
 }
@@ -839,6 +853,25 @@ async function loadHistoria() {
 }
 
 // ── KOREKTY ───────────────────────────────────────────────────────────────
+// Dziennik audytu (US-013): ostatnie 200 wpisów, filtr po stronie przeglądarki, pełny plik w eksporcie
+let audytDane = [];
+async function loadAudyt() {
+  const r = await fetch('/admin/api/audyt');
+  audytDane = r.ok ? await r.json() : [];
+  renderAudyt();
+}
+function renderAudyt() {
+  const q = (document.getElementById('audytFiltr').value||'').toLowerCase();
+  const rows = audytDane.filter(a => !q || [a.admin,a.akcja,a.obiekt,a.szczegoly].join(' ').toLowerCase().includes(q));
+  const tb = document.getElementById('audytBody');
+  if (!rows.length) { tb.innerHTML=`<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">${audytDane.length?'Brak wpisów pasujących do filtra':'Dziennik jest pusty'}</td></tr>`; return; }
+  tb.innerHTML = rows.map(a => `<tr>
+      <td class="t-muted mono" style="font-size:.72rem">${escHtml((a.ts||'').replace('T',' '))}</td>
+      <td>${escHtml(a.admin)}</td>
+      <td><span class="pill${a.akcja==='logowanie_nieudane'?' prz':''}">${escHtml(a.akcja)}</span></td>
+      <td>${escHtml(a.obiekt)}</td>
+      <td class="t-muted" style="font-size:.75rem;max-width:360px">${escHtml(a.szczegoly)}</td></tr>`).join('');
+}
 async function loadKorekty() {
   const r = await fetch('/admin/api/korekty');
   const data = await r.json();

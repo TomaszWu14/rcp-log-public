@@ -305,6 +305,14 @@ class Wymagania(unittest.TestCase):
         r = wyslij("g.xlsx", b"0" * (3 * 1024 * 1024))
         self.assertEqual((r.status_code, r.json["error"]), (413, "Plik lub żądanie za duże (limit 2 MB)"))
 
+    def test_ADM_16_zakladka_audyt_w_panelu(self):
+        self.login()
+        html = self.c.get("/admin").get_data(as_text=True)
+        self.assertIn("tab('audyt',this)", html)
+        self.assertIn('id="audytBody"', html)
+        self.assertIn("audyt:   loadAudyt", html)
+        self.assertIn("escHtml(a.szczegoly)", html)   # dane z dziennika zawsze escapowane
+
     def test_ADM_15_dziennik_audytu_operacji_administratora(self):
         self.assertEqual(self.c.get("/admin/api/audyt").status_code, 401)
         t = self.csrf()

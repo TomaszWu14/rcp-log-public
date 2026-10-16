@@ -69,7 +69,7 @@ jest sesja administratora.
 | GET, POST `/admin/api/admins`; DELETE `/admin/api/admins/<login>` | konta administratorów | sesja; w demo zablokowane | P6 |
 | GET, POST `/admin/api/config` | konfiguracja | sesja; w demo zapis zablokowany | P6 |
 | GET `/admin/export/<dzien\|miesiac\|alerty\|audyt>` | eksport CSV | sesja | P7 |
-| GET `/admin/api/audyt` | ostatnie 200 wpisów dziennika audytu (nieużywane jeszcze przez ekran) | sesja | P6 |
+| GET `/admin/api/audyt` | ostatnie 200 wpisów dziennika audytu (zakładka „Audyt”, US-013) | sesja | P6 |
 | GET `/admin/api/grafik/template`; POST `/admin/api/grafik/import`; GET `/admin/api/grafik`; POST `/admin/api/grafik/entry`; GET `/admin/api/grafik/porownanie` | szablon, import, widok, edycja, porównanie grafiku | sesja; w demo import zablokowany | P5 |
 
 Dane dashboardu zawierają także czas per strefa i per pracownik, których ekran nie wyświetla

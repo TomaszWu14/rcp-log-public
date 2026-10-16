@@ -98,6 +98,7 @@ a ekran 1 ma dodatkowo przyciski z przykładowymi kodami i link do panelu (`app.
 | 5.9 | Config | progi i ścieżka kopii | próg przerwy (5–120 min), szybka zmiana (1–60 min), długi dyżur (1–24 h), tolerancja grafiku (0–60 min), ścieżka kopii | „💾 Zapisz ustawienia” | informacja o zamykaniu pobytów o 23:59:59; w trybie demo zapis zablokowany | `admin.html:358-377, 1001-1021` |
 | 5.10 | Grafik | plan zmian i porównanie z obecnością | miesiąc; plik `.xlsx` | „🔄 Załaduj”; „📊 Porównanie z obecnością”; „⬆ Importuj Excel”; „⬇ Pobierz szablon”; klik w komórkę otwiera natywne okno z kodem zmiany | lista błędów importu w natywnym oknie; w trybie demo import zablokowany, edycja działa | `admin.html:379-406, 1074-1194` |
 | 5.11 | Macierz uprawnień | uprawnienia hurtowo | wyszukiwarka pracownika | zaznaczanie komórek; „▼” cała kolumna; „✓ Zaznacz widocznych”; „✕ Odznacz widocznych”; „💾 Zapisz wszystkie uprawnienia” | budowana raz; nie odświeża się po zmianach w innych zakładkach | `admin.html:409-427, 1196-1334` |
+| 5.12 | Audyt | kto, kiedy i co zmienił w panelu | filtr tekstowy (login, akcja, obiekt) | lista 200 najnowszych wpisów; „⬇ Pełny dziennik CSV” | sesja administratora (US-013) | `admin.html` zakładka `audyt`, `/admin/api/audyt` |
 
 ## Ścieżki alternatywne
 
