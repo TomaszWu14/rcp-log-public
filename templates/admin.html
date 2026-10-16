@@ -301,6 +301,19 @@ select option{background:var(--card2);}
     <table><thead><tr><th>Data</th><th>Pracownik</th><th>Opis</th><th>Status</th><th>Akcja</th></tr></thead>
     <tbody id="korBody"></tbody></table>
   </div>
+  <!-- US-014: naniesienie zatwierdzonej korekty na konkretny wpis ewidencji -->
+  <div class="c" id="naniesBox" style="display:none">
+    <h3 style="margin-bottom:10px">Nanieś korektę <span id="naniesNr"></span></h3>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">
+      <label>Dzień<br><input type="date" id="naniesData" onchange="loadNaniesWpisy()"></label>
+      <label>Wpis<br><select id="naniesWpis" onchange="fillNanies()"></select></label>
+      <label>Wejście<br><input type="time" id="naniesWej"></label>
+      <label>Wyjście<br><input type="time" id="naniesWyj"></label>
+      <label>Strefa<br><select id="naniesStrefa"></select></label>
+      <button class="btn btn-green" onclick="saveNanies()">Zapisz w ewidencji</button>
+      <button class="btn btn-grey" onclick="document.getElementById('naniesBox').style.display='none'">Anuluj</button>
+    </div>
+  </div>
 </div>
 
 <!-- ══ AUDYT (US-013) ══ -->
@@ -881,9 +894,12 @@ async function loadKorekty() {
   if (!data.length) { tb.innerHTML=`<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">Brak zgłoszeń</td></tr>`; return; }
   tb.innerHTML = [...data].reverse().map(k => {
     const st = {oczekuje:`<span class="pill wait">oczekuje</span>`,zatwierdzona:`<span class="pill ok">zatwierdzona</span>`,odrzucona:`<span class="pill rej">odrzucona</span>`}[k.status]||k.status;
-    const btns = k.status==='oczekuje'
+    const nanies = (k.status!=='odrzucona' && !k.naniesiona)
+      ? `<button class="btn btn-blue" onclick="openNanies(${k.id})" style="margin-left:4px" title="Popraw wpis w ewidencji">✎ Nanieś</button>` : '';
+    const btns = (k.status==='oczekuje'
       ? `<button class="btn btn-green" onclick="decKorekta(${k.id},'tak')">✓</button>
-         <button class="btn btn-red" onclick="decKorekta(${k.id},'nie')" style="margin-left:4px">✕</button>` : '—';
+         <button class="btn btn-red" onclick="decKorekta(${k.id},'nie')" style="margin-left:4px">✕</button>` : '')
+      + nanies + (k.naniesiona ? `<span class="t-muted" style="font-size:.72rem">naniesiona</span>` : '') || '—';
     return `<tr>
       <td class="t-muted" style="font-size:.72rem">${escHtml((k.ts_zgloszenia||'').slice(0,16).replace('T',' '))}</td>
       <td><strong>${escHtml(k.imie)}</strong></td>
@@ -892,6 +908,44 @@ async function loadKorekty() {
       <td>${btns}</td>
     </tr>`;
   }).join('');
+}
+let naniesId = null, naniesWpisy = [];
+async function openNanies(id) {
+  naniesId = id;
+  const k = (await (await fetch('/admin/api/korekty')).json()).find(x => x.id === id);
+  document.getElementById('naniesNr').textContent = `#${id} — ${k.imie}`;
+  document.getElementById('naniesData').value = (k.ts_zgloszenia||'').slice(0,10);
+  const s = await (await fetch('/admin/api/strefy')).json();
+  document.getElementById('naniesStrefa').innerHTML = Object.keys(s).map(n=>`<option>${escHtml(n)}</option>`).join('');
+  document.getElementById('naniesBox').style.display = 'block';
+  loadNaniesWpisy();
+}
+async function loadNaniesWpisy() {
+  const d = document.getElementById('naniesData').value;
+  naniesWpisy = await (await fetch(`/admin/api/korekty/${naniesId}/wpisy?data=${d}`)).json();
+  const sel = document.getElementById('naniesWpis');
+  sel.innerHTML = naniesWpisy.length
+    ? naniesWpisy.map((w,i)=>`<option value="${i}">${escHtml(w.strefa)} ${escHtml((w.ts_wejscia||'').slice(11,16))}–${escHtml((w.ts_wyjscia||'').slice(11,16))}</option>`).join('')
+    : '<option value="">brak wpisów tego dnia</option>';
+  fillNanies();
+}
+function fillNanies() {
+  const w = naniesWpisy[document.getElementById('naniesWpis').value];
+  if (!w) return;
+  document.getElementById('naniesWej').value = w.ts_wejscia.slice(11,16);
+  document.getElementById('naniesWyj').value = w.ts_wyjscia.slice(11,16);
+  document.getElementById('naniesStrefa').value = w.strefa;
+}
+async function saveNanies() {
+  const w = naniesWpisy[document.getElementById('naniesWpis').value];
+  if (!w) { toast('Wybierz wpis', false); return; }
+  const dzien = w.ts_wejscia.slice(0,10);
+  const r = await fetch(`/admin/api/korekty/${naniesId}/nanies`, {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ts_wejscia: w.ts_wejscia, nowe_wejscie: `${dzien}T${document.getElementById('naniesWej').value}:00`,
+      nowe_wyjscie: `${dzien}T${document.getElementById('naniesWyj').value}:00`, strefa: document.getElementById('naniesStrefa').value})});
+  const d = await r.json();
+  if (d.ok) { toast('Korekta naniesiona w ewidencji'); document.getElementById('naniesBox').style.display='none'; loadKorekty(); }
+  else toast(d.error, false);
 }
 async function decKorekta(id, dec) {
   const r = await fetch(`/admin/api/korekty/${id}`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({decyzja:dec})});

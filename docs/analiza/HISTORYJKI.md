@@ -146,6 +146,15 @@ Then  wpis logowanie_nieudane z loginem i adresem
 **Zrealizowane** (PR #28): `zapisz_audyt()` w 17 miejscach, `audyt.csv` tylko dopisywany, `/admin/api/audyt`, eksport `audyt`;
 `test_ADM_15`. Zakładka w panelu — US-013 (PR #29): „🧾 Audyt” z filtrem i linkiem do pełnego CSV; `test_ADM_16`.
 
+### US-014 Korekta nanoszona na wpis (krok 4 listy, D6 → D12)
+**Jako** administrator **chcę** nanieść zatwierdzoną korektę na konkretny wpis w aplikacji, **aby** plik dnia i miesiąca były spójne i miały ślad.
+```gherkin
+Given korekta pracownika i jego wpis PICKING 08:00–09:00
+When  administrator nanosi PRZYJECIA 08:00–10:00
+Then  oba pliki mają poprawiony wpis z KOREKTA#<nr>, w audycie stara i nowa wartość; drugi raz → 409
+```
+**Zrealizowane** (PR #30): `adm_korekta_wpisy`, `adm_korekta_nanies`, `_przepisz_csv` (atomowo); panel Korekty → „✎ Nanieś”; `test_KOR_06`; Z30.
+
 ## Could
 
 ### US-008 Tokeny na kartach zamiast przewidywalnych kodów (B5, R4)

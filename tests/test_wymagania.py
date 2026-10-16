@@ -234,6 +234,34 @@ class Wymagania(unittest.TestCase):
         self.assertEqual(self.A.load_korekty()[0]["status"], "zatwierdzona")
         self.assertEqual(self.c.post("/admin/api/korekty/99", json={"decyzja": "tak"}).status_code, 404)
 
+    def test_KOR_06_korekta_naniesiona_na_wpis_w_obu_plikach(self):
+        dzien = datetime.now().replace(hour=8, minute=0, second=0, microsecond=0)
+        wej = dzien.isoformat(timespec="seconds")
+        self.A.save_state({"HU_KOWALSKI_JAN": {"strefa": "PICKING", "podstrefa": "", "ts_wejscia": wej}})
+        with self.A._lock:
+            self.A.zamknij_pobyt("HU_KOWALSKI_JAN", "Kowalski Jan", self.A.load_state()["HU_KOWALSKI_JAN"],
+                                 dzien.replace(hour=9))
+        self.c.post("/api/korekta", json={"pracownik": "HU_KOWALSKI_JAN", "opis": "byłem w PRZYJECIA do 10"})
+        self.login()
+        wpisy = self.c.get(f"/admin/api/korekty/1/wpisy?data={dzien:%Y-%m-%d}").json
+        self.assertEqual([w["ts_wejscia"] for w in wpisy], [wej])
+        ok = lambda **kw: self.c.post("/admin/api/korekty/1/nanies", json={"ts_wejscia": wej, **kw})   # noqa: E731
+        self.assertEqual(ok(nowe_wyjscie=f"{dzien:%Y-%m-%d}T07:00:00").json["error"], "Wyjście musi być późniejsze niż wejście")
+        self.assertEqual(ok(nowe_wyjscie=f"{dzien:%Y-%m-%d}T10:00:00", strefa="XYZ").status_code, 400)
+        r = ok(nowe_wyjscie=f"{dzien:%Y-%m-%d}T10:00:00", strefa="PRZYJECIA")
+        self.assertEqual(r.status_code, 200)
+        daily, monthly = self.A.get_csv_paths(dzien)
+        for path in (daily, monthly):
+            w = self.A.read_csv_rows(path)[0]
+            self.assertEqual((w["strefa"], w["ts_wyjscia"][11:16], w["czas_min"], w["korekta_info"]),
+                             ("PRZYJECIA", "10:00", "120.0", "KOREKTA#1"))
+        k = self.A.load_korekty()[0]
+        self.assertEqual((k["status"], k["naniesiona"]), ("zatwierdzona", True))
+        self.assertEqual(ok(nowe_wyjscie=f"{dzien:%Y-%m-%d}T11:00:00").status_code, 409)   # drugi raz nie
+        audyt = self.c.get("/admin/api/audyt").json[0]
+        self.assertEqual(audyt["akcja"], "korekta_naniesiona")
+        self.assertIn("PICKING 08:00–09:00 → PRZYJECIA 08:00–10:00", audyt["szczegoly"])
+
     def test_PRZ_05_druga_decyzja_o_tej_samej_nadwyzce_409(self):
         self._przerwa_od(42)
         self.rejestruj("PICKING")

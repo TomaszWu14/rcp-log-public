@@ -91,7 +91,7 @@ flowchart TD
 | Strefa spoza słownika | nazwa spoza listy w oknie (np. z ręcznie zbudowanego żądania) | serwer odrzuca: 400 „Nieznana strefa X” (US-005) | nadwyżka zostaje w statusie „oczekuje” | `app.py:962` |
 | Dwóch administratorów rozlicza tę samą nadwyżkę | równoczesny zapis | decyzja pod blokadą; druga dostaje 409 „Nadwyżka już rozliczona” i komunikat w oknie (US-006) | pierwsza decyzja zostaje | `app.py:963-970` |
 | Cofnięcie przypisania | administrator chce zmienić strefę | brak takiej funkcji | zmiana tylko przez edycję pliku poza aplikacją | `app.py:957-972` |
-| Pracownik usunięty ze słownika | usunięcie po powstaniu nadwyżki | nadwyżka zostaje z kopią nazwiska | lista zawiera pozycje osób spoza słownika | `app.py:1115-1124` |
+| Pracownik usunięty ze słownika | usunięcie po powstaniu nadwyżki | nadwyżka zostaje z kopią nazwiska | lista zawiera pozycje osób spoza słownika | `app.py:1188-1197` |
 
 ## Reguły biznesowe
 

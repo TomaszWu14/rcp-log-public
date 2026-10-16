@@ -36,7 +36,7 @@ administrator widzi obsadę na żywo, a przerwa ponad próg wywołuje alert i tr
 ## Dokumentacja analityczna
 
 Dokumentacja przedwdrożeniowa odtworzona z kodu: procesy P1–P7 z diagramami BPMN w Mermaid i torami
-aktorów, reguły biznesowe BR-1–BR-58, wymagania WF-1–WF-39 z kryteriami Given/When/Then, model danych,
+aktorów, reguły biznesowe BR-1–BR-58, wymagania WF-1–WF-40 z kryteriami Given/When/Then, model danych,
 user flow, integracje i dziennik decyzji. Główny proces poniżej, reszta w [`docs/`](docs/00-przeglad.md).
 
 ```mermaid
@@ -89,7 +89,7 @@ flowchart TD
 | [02. Model danych](docs/02-dane/model-danych.md) | ERD, słownik encji z cyklem życia, słownik pojęć, spójność danych |
 | [03. User flow](docs/03-user-flow/user-flow.md) | przejścia między ekranami, zakładki panelu, ślepe ścieżki |
 | [04. Integracje](docs/04-integracje.md) | diagram kontekstu, interfejsy, adresy HTTP, środowisko uruchomieniowe, tryb demo |
-| [05. Decyzje i ograniczenia](docs/05-decyzje-i-ograniczenia.md) | decyzje D1–D11, ograniczenia, dług techniczny, lista przed wdrożeniem produkcyjnym |
+| [05. Decyzje i ograniczenia](docs/05-decyzje-i-ograniczenia.md) | decyzje D1–D12, ograniczenia, dług techniczny, lista przed wdrożeniem produkcyjnym |
 | [Archiwum](docs/archiwum/README.md) | pierwsza wersja dokumentacji (01–07); jej identyfikatory wymagań są nazwami testów |
 
 ## Proces pracy (BA / DEV / SEC)
