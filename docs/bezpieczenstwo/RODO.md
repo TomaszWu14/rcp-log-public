@@ -37,7 +37,7 @@ ciągłej) ją wymaga. Rekomendacja SEC: zrobić uproszczoną DPIA na podstawie 
 
 ## Retencja (Z29)
 
-Dziś aplikacja niczego nie usuwa ([05](../05-decyzje-i-ograniczenia.md#znane-ograniczenia-rozwiązania), T11).
+Od US-009 aplikacja usuwa dane po okresach z konfiguracji (`retencja_*_dni`, przebieg raz na dobę po kopii zapasowej, wpis `retencja` w audycie). Wcześniej niczego nie usuwała ([05](../05-decyzje-i-ograniczenia.md#znane-ograniczenia-rozwiązania), T11).
 Okresy poniżej to propozycja do potwierdzenia; mechanizm usuwania to historyjka **US-009**.
 
 | Dane | Plik | Okres | Liczony od | Uzasadnienie |
@@ -71,7 +71,7 @@ jest naturalna); wpisy w plikach miesięcznych usuwane razem z plikiem po upływ
 
 Zrobione: klucz sesji wymagany, hasło startowe jednorazowe (US-001); podgląd obecności tylko po zalogowaniu
 (US-002); limit prób, CSRF, `SameSite`/`HttpOnly`/`Secure`, ochrona CSV (US-003); obraz bez roota, TLS na proxy.
-Dziennik audytu operacji administratora: `audyt.csv` (US-012). Brakuje: mechanizm retencji (US-009), szyfrowanie dysku z danymi
+Dziennik audytu operacji administratora: `audyt.csv` (US-012). Retencja: US-009. Brakuje: szyfrowanie dysku z danymi
 (decyzja infrastrukturalna), ograniczenie dostępu do serwera i logów do administratora.
 
 ## Rejestr czynności przetwarzania (wpis)

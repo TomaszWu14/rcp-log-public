@@ -483,6 +483,32 @@ class Wymagania(unittest.TestCase):
         self.assertIn("20261015_0200_alerty.csv", nazwy)
         self.assertTrue(all(n.startswith("20261015_0200_") for n in nazwy))
 
+    def test_SYS_07_retencja_plikow_alertow_i_kopii(self):
+        A, d = self.A, self.tmp / "data"
+        now = datetime(2026, 10, 16, 3, 0)
+        for n in ("ewidencja_2025-01-10.csv", "ewidencja_2025-01.csv", "ewidencja_2026-10-15.csv", "ewidencja_2026-10.csv"):
+            (d / n).write_text("id;pracownik\n", encoding="utf-8-sig")
+        with open(A.ALERTS_FILE_PATH, "a", encoding="utf-8-sig", newline="") as f:
+            f.write("2026-01-01T10:00:00;HU_X;X;NIEZNANY_KOD;stary;NIE\r\n2026-10-15T10:00:00;HU_Y;Y;NIEZNANY_KOD;nowy;NIE\r\n")
+        kopie = self.tmp / "kopie"; kopie.mkdir()
+        (kopie / "20260901_0200_alerty.csv").write_text("x"); (kopie / "20261015_0200_alerty.csv").write_text("x")
+        cfg = A.load_config(); cfg["backup_path"] = str(kopie); A.save_config(cfg)
+        with self.assertLogs("rcp", level="INFO"):
+            A.retencja(now)
+        # ewidencja domyślnie bez usuwania (Z31) — wszystkie 4 pliki zostają
+        self.assertEqual(len(list(d.glob("ewidencja_*.csv"))), 4)
+        self.assertEqual([a["opis"] for a in A.read_alerts()], ["nowy"])            # alerty > 90 dni usunięte
+        self.assertEqual(sorted(p.name for p in kopie.iterdir()), ["20261015_0200_alerty.csv"])
+        self.assertEqual((A.read_audyt()[0]["akcja"], A.read_audyt()[0]["admin"]), ("retencja", "system"))
+        cfg = A.load_config(); cfg["retencja_ewidencja_dni"] = 365; A.save_config(cfg)   # wariant B po decyzji IOD
+        A.retencja(now)
+        self.assertEqual(sorted(p.name for p in d.glob("ewidencja_*.csv")), ["ewidencja_2026-10-15.csv", "ewidencja_2026-10.csv"])
+
+    def test_SYS_08_zakresy_retencji_w_konfiguracji(self):
+        self.login()
+        self.assertEqual(self.c.post("/admin/api/config", json={"retencja_kopie_dni": 999}).status_code, 400)
+        self.assertEqual(self.c.post("/admin/api/config", json={"retencja_ewidencja_dni": 0}).status_code, 200)
+
     def test_SYS_10_blad_w_zadaniu_w_tle_trafia_do_logu_i_nie_zabija_watku(self):
         with self.assertLogs("rcp", level="ERROR") as cm:
             ok = self.A._przebieg("kontrola pobytów", lambda: 1 / 0)

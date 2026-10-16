@@ -101,6 +101,9 @@ When  przebieg kopii zapasowej
 Then  kopia jest usunięta
 ```
 Okresy jako klucze konfiguracji z wartościami domyślnymi z `RODO.md`; kopia zapasowa niezależna od godziny pracy serwera (T11).
+**Zrealizowane** (PR #31): klucze `retencja_ewidencja_dni` (0 = bez usuwania, Z31), `retencja_alerty_dni` 90, `retencja_audyt_dni` 365,
+`retencja_kopie_dni` 30 z zakresami; `retencja(now)` — całe pliki ewidencji, wiersze alertów i audytu, stare kopie; wpis `retencja`
+w audycie (aktor `system`); kopia przy pierwszym przebiegu po 02:00. `test_SYS_07`, `test_SYS_08`.
 
 ### US-010 Błędy do logu zamiast `except: pass` (DEV-3)
 **Jako** administrator **chcę**, żeby każdy błąd w tle i przy odczycie plików zostawiał ślad w logu, a wątki kontroli

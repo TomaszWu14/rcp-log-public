@@ -16,7 +16,7 @@ Dotyczy planowanej instancji produkcyjnej (Z16); demo przetwarza dane fikcyjne.
 | R7 | config bez walidacji, dowolny `backup_path` (B7) | 2 | 1 | **naprawione** 2026-10-15 (US-011) | DEV | US-011 | zamknięte |
 | R8 | CSV injection przez nieznany kod (B8) | 2 | 1 | **naprawione** 2026-10-15 (US-003) | DEV | US-003 | zamknięte |
 | R9 | brak limitu żądania, nagłówków; nasłuch na `0.0.0.0`; demo bez limitu żądań | 2 | 1 | **naprawione** 2026-10-15 (US-011): limit 2 MB, nagłówki, HSTS za proxy; `0.0.0.0` i demo — wyjątki poniżej | DEV | US-011 | zamknięte |
-| R10 | brak retencji (poza kopiami, Z7) i ~~audytu operacji~~ | 2 | 1 | audyt: **naprawione** 2026-10-16 (US-012, `audyt.csv`); retencja opisana w [RODO.md](RODO.md), mechanizm — US-009 | BA+SEC | US-009 | 2026-11-15 |
+| R10 | brak retencji i audytu operacji | 2 | 1 | **naprawione** 2026-10-16: audyt (US-012), retencja (US-009, `retencja()` po każdej kopii); okres ewidencji = 0 (bez usuwania) do decyzji IOD (Z28, Z31) | BA+SEC | US-009 | 2026-11-15 |
 | R12 | limit prób logowania w pamięci jednego procesu, per adres (szczegóły w wyjątkach) | 1 | 2 | zaakceptować (Z27) | SEC | US-003 | 2026-11-15 |
 | R13 | CSP z `'unsafe-inline'` dla skryptów i stylów — szablony mają cały JS i CSS inline (brak builda frontendu, D1); XSS w szablonie nie jest blokowany przez CSP | 2 | 1 | zaakceptować do czasu wydzielenia JS do plików statycznych | SEC | US-011 | 2026-11-15 |
 
