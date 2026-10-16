@@ -16,7 +16,7 @@ from io import BytesIO
 from pathlib import Path
 
 import openpyxl
-from flask import Flask, jsonify, redirect, render_template, request, send_file, session, url_for
+from flask import Flask, has_request_context, jsonify, redirect, render_template, request, send_file, session, url_for
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -101,9 +101,18 @@ DEFAULT_CONFIG = {
     "ostrzezenie_szybka_zmiana_min": 5,
     "alert_dlugi_dyżur_h": 10,
     "grafik_tolerancja_min": 15,
+    # Retencja w dniach (US-009, RODO.md, Z31); 0 = bez usuwania. Ewidencja 0 do decyzji IOD (Z28).
+    "retencja_ewidencja_dni": 0,
+    "retencja_alerty_dni": 90,
+    "retencja_audyt_dni": 365,
+    "retencja_kopie_dni": 30,
 }
 # Zakresy progów (biała lista kluczy konfiguracji, R7 / US-011); kopie tylko pod RCP_BACKUP_ROOT (domyślnie katalog aplikacji)
 CONFIG_ZAKRESY = {
+    "retencja_ewidencja_dni": (0, 4000),
+    "retencja_alerty_dni": (0, 3650),
+    "retencja_audyt_dni": (0, 3650),
+    "retencja_kopie_dni": (0, 365),
     "prog_przerwa_min": (1, 240),
     "ostrzezenie_szybka_zmiana_min": (0, 60),
     "alert_dlugi_dyżur_h": (1, 24),
@@ -349,7 +358,7 @@ def zapisz_audyt(akcja, obiekt="", szczegoly=""):
             csv.writer(f, delimiter=";").writerow(AUDYT_HEADERS)
     with open(AUDYT_FILE_PATH, "a", newline="", encoding="utf-8-sig") as f:
         csv.writer(f, delimiter=";").writerow([_csv_safe(v) for v in (
-            datetime.now().isoformat(timespec="seconds"), session.get("admin_user", "?"), akcja, obiekt, szczegoly)])
+            datetime.now().isoformat(timespec="seconds"), (session.get("admin_user", "?") if has_request_context() else "system"), akcja, obiekt, szczegoly)])
 
 def read_audyt(limit=200):
     return list(reversed(read_csv_rows(AUDYT_FILE_PATH)[-limit:]))
@@ -528,14 +537,63 @@ def kopia_zapasowa(now=None):
         shutil.copy2(f, dest / f"{stamp}_{f.name}")
     log.info("Kopia zapasowa zapisana w %s", dest)
 
+def _przytnij_csv(path, naglowki, dni, now):
+    """Usuwa z pliku wiersze z kolumną ts starszą niż `dni`; przepisanie przez plik tymczasowy."""
+    rows = read_csv_rows(path)
+    granica = (now - timedelta(days=dni)).isoformat()
+    zostaja = [r for r in rows if (r.get("ts") or "") >= granica]
+    if len(zostaja) == len(rows): return 0
+    tmp = Path(str(path) + ".tmp")
+    with open(tmp, "w", newline="", encoding="utf-8-sig") as f:
+        w = csv.DictWriter(f, fieldnames=naglowki, delimiter=";", extrasaction="ignore")
+        w.writeheader(); w.writerows(zostaja)
+    os.replace(tmp, path)
+    return len(rows) - len(zostaja)
+
+def retencja(now=None):
+    """Usuwa dane po okresach z konfiguracji (US-009): całe pliki ewidencji dnia/miesiąca, wiersze alertów
+    i audytu, stare kopie zapasowe. Każde usunięcie trafia do logu i do dziennika audytu."""
+    now, cfg, usuniete = now or datetime.now(), load_config(), []
+    dni = cfg.get("retencja_ewidencja_dni", 0)
+    if dni:
+        granica = (now - timedelta(days=dni)).date()
+        for f in DATA_DIR.glob("ewidencja_*.csv"):
+            stem = f.stem.replace("ewidencja_", "")
+            try:
+                koniec = (date.fromisoformat(stem) if len(stem) == 10
+                          else (date.fromisoformat(stem + "-01") + timedelta(days=31)).replace(day=1) - timedelta(days=1))
+            except ValueError:
+                continue
+            if koniec < granica:
+                f.unlink(); usuniete.append(f.name)
+    for path, nagl, klucz in ((ALERTS_FILE_PATH, ALERTS_HEADERS, "retencja_alerty_dni"),
+                              (AUDYT_FILE_PATH, AUDYT_HEADERS, "retencja_audyt_dni")):
+        if cfg.get(klucz, 0) and path.exists() and (n := _przytnij_csv(path, nagl, cfg[klucz], now)):
+            usuniete.append(f"{path.name}: {n} wierszy")
+    dni = cfg.get("retencja_kopie_dni", 0)
+    dest = Path(cfg.get("backup_path", BASE_DIR / "backup"))
+    if dni and dest.is_dir():
+        granica = (now - timedelta(days=dni)).strftime("%Y%m%d")
+        for f in dest.iterdir():
+            if f.is_file() and f.name[:8].isdigit() and f.name[:8] < granica:
+                f.unlink(); usuniete.append(f"kopia {f.name}")
+    for u in usuniete:
+        log.info("Retencja: usunięto %s", u)
+    if usuniete:
+        zapisz_audyt("retencja", "", "; ".join(usuniete)[:2000])
+    return usuniete
+
 def backup_job():
+    # Kopia raz na dobę: o 02:00 albo — jeśli serwer wtedy nie działał — przy pierwszym przebiegu po 02:00 (T11).
+    # Po kopii przebieg retencji (US-009).
     global _last_backup
     while True:
         time_module.sleep(60)
         now = datetime.now()
-        if _last_backup == now.date() or now.hour != 2: continue   # kopia o 02:00, raz na dobę
+        if _last_backup == now.date() or now.hour < 2: continue
         if _przebieg("kopia zapasowa", kopia_zapasowa):
             _last_backup = now.date()
+            _przebieg("retencja", retencja)
 
 if not DEMO: threading.Thread(target=backup_job, daemon=True).start()
 
