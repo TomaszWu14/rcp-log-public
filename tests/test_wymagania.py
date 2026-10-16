@@ -198,11 +198,12 @@ class Wymagania(unittest.TestCase):
 
     def test_SES_05_jeden_prog_dlugiego_dyzuru_10h(self):
         cfg = self.A.load_config(); cfg.pop("alert_dlugi_dyżur_h", None); self.A.save_config(cfg)
-        start = (datetime.now() - timedelta(hours=11)).isoformat(timespec="seconds")
+        dzis = datetime.now().replace(hour=20, minute=0, second=0, microsecond=0)   # stała „teraz” — po północy
+        start = (dzis - timedelta(hours=11)).isoformat(timespec="seconds")             # pobyt zacząłby się wczoraj
         self.A.save_state({"HU_KOWALSKI_JAN": {"strefa": "PICKING", "podstrefa": "", "ts_wejscia": start}})
         self.login()
-        self.assertTrue(self.c.get("/api/status").json[0]["alert_dyzur"])
-        self.A.kontrola_pobytow()
+        self.assertEqual(self.c.get("/api/status").json[0]["strefa"], "PICKING")
+        self.A.kontrola_pobytow(now=dzis)
         self.assertEqual(self.A.read_alerts()[0]["typ"], "DLUGI_DYZUR")
 
     # ── Korekty ──────────────────────────────────────────────────────────────
