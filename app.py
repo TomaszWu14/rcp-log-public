@@ -53,6 +53,11 @@ def naglowki_bezpieczenstwa(resp):
     resp.headers.setdefault("X-Content-Type-Options", "nosniff")
     resp.headers.setdefault("Referrer-Policy", "same-origin")
     resp.headers.setdefault("X-Frame-Options", "DENY")
+    # Skaner działa jak klawiatura (bez kamery/mikrofonu/lokalizacji); izolacja okna od otwieranych stron
+    resp.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=()")
+    resp.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
+    if resp.mimetype == "application/json":   # dane pracowników z API nie trafiają do cache przeglądarki/proxy
+        resp.headers.setdefault("Cache-Control", "no-store")
     if PROXY:
         resp.headers.setdefault("Strict-Transport-Security", "max-age=31536000")
     return resp
@@ -1574,4 +1579,5 @@ if DEMO:
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5050)), debug=False)
+    # 0.0.0.0 zamierzone: skanery łączą się z sieci lokalnej (ryzyko R9, jak B104 w pyproject.toml)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5050)), debug=False)  # nosemgrep: python.flask.security.audit.app-run-param-config.avoid_app_run_with_bad_host

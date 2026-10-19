@@ -11,12 +11,14 @@ przed uruchomieniem z prawdziwymi danymi pracowników sprawdź listę „przed w
 
 ## Zgłaszanie podatności
 
-Nie otwieraj publicznego issue z działającym exploitem. Użyj zakładki *Security → Report a vulnerability*
-albo napisz na adres z profilu [@TomaszWu14](https://github.com/TomaszWu14). Odpowiedź w ciągu 7 dni.
+Nie otwieraj publicznego issue z działającym exploitem. Zgłoś podatność prywatnie przez GitHub:
+zakładka *Security → Report a vulnerability*
+([formularz](https://github.com/TomaszWu14/rcp-log-public/security/advisories/new)).
+Odpowiedź najczęściej do 7 dni.
 Zgłoszenia dotyczące instancji demo (zaśmiecenie danych, niedostępność) nie są podatnościami —
 dane resetują się same.
 
 ## Zakres
 
-W zakresie: `app.py`, `run.py`, `demo_data.py`, `templates/`, `Dockerfile`, `docker-compose.yaml`.
+W zakresie: gałąź domyślna (`main`) — `app.py`, `run.py`, `demo_data.py`, `templates/`, `Dockerfile`, `docker-compose.yaml`.
 Poza zakresem: biblioteki zewnętrzne (zgłaszaj u ich autorów), infrastruktura Coolify.

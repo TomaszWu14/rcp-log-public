@@ -5,6 +5,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie 
 ## [Unreleased]
 
 ### Security
+- Wspólna podstawa bezpieczeństwa: gitleaks jako przypięte binarium (sha256), Semgrep `p/owasp-top-ten` i Trivy `fs`
+  jako bramki CI, pip-audit także dla `requirements-dev.txt`, akcje przypięte do SHA, Dependabot z grupami
+  minor+patch (+ docker); nagłówki `Permissions-Policy`, `Cross-Origin-Opener-Policy`, `Cache-Control: no-store` na JSON.
 - US-011: konfiguracja z białą listą kluczy i zakresami, katalog kopii tylko pod `RCP_BACKUP_ROOT`; limit żądania 2 MB
   (413); import grafiku tylko `.xlsx`, uszkodzony plik → 400; nagłówki CSP, `X-Content-Type-Options`, `Referrer-Policy`,
   `X-Frame-Options`, HSTS za proxy (B7, R7, R9).

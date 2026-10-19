@@ -8,12 +8,14 @@ on:
 permissions:
   contents: read
 
+# Akcje firm trzecich przypięte do SHA (komentarz = wersja); narzędzia pobierane jako binaria
+# z przypiętą wersją i sumą sha256. Aktualizacje proponuje Dependabot (.github/dependabot.yml).
 jobs:
   lint-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.11"
           cache: pip
@@ -25,34 +27,82 @@ jobs:
 
   security:
     runs-on: ubuntu-latest
+    env:
+      GITLEAKS_VERSION: 8.30.1
+      GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+      TRIVY_VERSION: 0.74.0
+      TRIVY_SHA256: 2ae6fe3ee734b7fdf11335663e18c75ea12dccc76062f09f164a3b0f8be4371a
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v7
+          fetch-depth: 0   # gitleaks czyta commity (PR: base..head, push: cała historia)
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.11"
           cache: pip
       - run: pip install -r requirements-dev.txt
       - name: SAST (bandit) — blokuje ustalenia o wadze średniej i wyższej
-        run: bandit -c pyproject.toml -r app.py run.py demo_data.py --severity-level medium
-      - name: SCA (pip-audit)
-        run: pip-audit -r requirements.txt
+        run: bandit -c pyproject.toml -r app.py run.py demo_data.py tools --severity-level medium
+      - name: SCA (pip-audit) — zależności obrazu i narzędzi CI
+        run: |
+          pip-audit -r requirements.txt
+          pip-audit -r requirements-dev.txt
+      - name: Instalacja gitleaks i Trivy (przypięte wersje + sha256)
+        working-directory: ${{ runner.temp }}
+        run: |
+          curl -sSfL -o gitleaks.tgz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  gitleaks.tgz" | sha256sum -c -
+          tar -xzf gitleaks.tgz gitleaks
+          curl -sSfL -o trivy.tgz \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          echo "${TRIVY_SHA256}  trivy.tgz" | sha256sum -c -
+          tar -xzf trivy.tgz trivy
       - name: Sekrety (gitleaks)
-        uses: gitleaks/gitleaks-action@v3
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          args=(git --redact --no-banner)
+          # PR: tylko jego commity; push do main: cała historia.
+          if [ -n "$BASE" ]; then args+=(--log-opts="$BASE..$HEAD"); fi
+          "$RUNNER_TEMP/gitleaks" "${args[@]}" .
+      - name: Repo (trivy fs) — blokuje HIGH/CRITICAL z dostępną poprawką
+        run: >-
+          "$RUNNER_TEMP/trivy" fs --scanners vuln,secret,misconfig --severity HIGH,CRITICAL
+          --ignore-unfixed --exit-code 1 --no-progress .
+
+  semgrep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - run: pip install "semgrep==1.181.0"
+      # Fałszywy alarm: komentarz `nosemgrep` z identyfikatorem reguły i powodem w tej samej linii.
+      - name: SAST (semgrep p/owasp-top-ten) — znalezisko blokuje
+        run: >-
+          semgrep scan --config p/owasp-top-ten --metrics off --error --text
+          app.py run.py demo_data.py tools templates
 
   image:
     runs-on: ubuntu-latest
+    env:
+      TRIVY_VERSION: 0.74.0
+      TRIVY_SHA256: 2ae6fe3ee734b7fdf11335663e18c75ea12dccc76062f09f164a3b0f8be4371a
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build obrazu
         run: docker build -t rcp-log:ci .
+      - name: Instalacja Trivy (przypięta wersja + sha256)
+        working-directory: ${{ runner.temp }}
+        run: |
+          curl -sSfL -o trivy.tgz \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          echo "${TRIVY_SHA256}  trivy.tgz" | sha256sum -c -
+          tar -xzf trivy.tgz trivy
       - name: Skan obrazu (trivy) — blokuje HIGH/CRITICAL z dostępną poprawką
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          image-ref: rcp-log:ci
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
-          exit-code: "1"
+        run: >-
+          "$RUNNER_TEMP/trivy" image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed
+          --exit-code 1 --no-progress rcp-log:ci

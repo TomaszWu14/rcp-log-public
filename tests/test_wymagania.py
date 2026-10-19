@@ -321,6 +321,13 @@ class Wymagania(unittest.TestCase):
         self.assertEqual(h["Referrer-Policy"], "same-origin")
         self.assertEqual(h["X-Frame-Options"], "DENY")
         self.assertNotIn("Strict-Transport-Security", h)        # tylko za proxy (RCP_PROXY=1)
+        self.assertIn("camera=()", h["Permissions-Policy"])
+        self.assertEqual(h["Cross-Origin-Opener-Policy"], "same-origin")
+        self.assertNotIn("no-store", h.get("Cache-Control", ""))   # strony HTML bez wymuszenia
+        api = self.c.post("/api/scan", json={}).headers           # odpowiedź JSON (także błąd 4xx)
+        self.assertEqual(api["Content-Type"], "application/json")
+        self.assertEqual(api["Cache-Control"], "no-store")
+        self.assertEqual(api["Cross-Origin-Opener-Policy"], "same-origin")
 
     def test_GRF_05_import_odrzuca_zly_plik_i_za_duzy(self):
         self.login()
