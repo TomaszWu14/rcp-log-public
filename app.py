@@ -53,6 +53,11 @@ def naglowki_bezpieczenstwa(resp):
     resp.headers.setdefault("X-Content-Type-Options", "nosniff")
     resp.headers.setdefault("Referrer-Policy", "same-origin")
     resp.headers.setdefault("X-Frame-Options", "DENY")
+    # Skaner działa jak klawiatura (bez kamery/mikrofonu/lokalizacji); izolacja okna od otwieranych stron
+    resp.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=()")
+    resp.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
+    if resp.mimetype == "application/json":   # dane pracowników z API nie trafiają do cache przeglądarki/proxy
+        resp.headers.setdefault("Cache-Control", "no-store")
     if PROXY:
         resp.headers.setdefault("Strict-Transport-Security", "max-age=31536000")
     return resp

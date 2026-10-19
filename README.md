@@ -107,6 +107,20 @@ z Product Ownerem akceptującym zakres i ryzyka. Każdy krok w dokumentach i PR-
 
 CI (GitHub Actions): ruff, testy, bandit, pip-audit, gitleaks na każdym PR.
 
+### Bezpieczeństwo
+
+CI (`.github/workflows/ci.yml`) na każdym PR i pushu do `main` blokuje merge, gdy:
+
+- **sekrety** — gitleaks (przypięta wersja + sha256) znajdzie sekret w commitach PR-a (na `main`: cała historia),
+- **SAST** — bandit (waga średnia i wyższa) albo Semgrep `p/owasp-top-ten` zgłosi ustalenie,
+- **zależności** — pip-audit (`requirements*.txt`) albo Trivy (repo i obraz) znajdzie podatność HIGH/CRITICAL
+  z dostępną poprawką.
+
+Akcje GitHub są przypięte do SHA; Dependabot co tydzień proponuje aktualizacje (pip, actions, docker). Aplikacja
+wysyła nagłówki CSP, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`,
+`Cross-Origin-Opener-Policy`, `Cache-Control: no-store` na JSON i HSTS za proxy (`RCP_PROXY=1`).
+Zgłaszanie podatności: [SECURITY.md](SECURITY.md).
+
 ## Jak uruchomić
 
 Wymagany Python 3.11 lub nowszy.

@@ -44,14 +44,14 @@ flowchart TD
 
 | Nr | Krok | Aktor | Wejście | Wyjście | Reguła biznesowa | Źródło w kodzie |
 |---|---|---|---|---|---|---|
-| 1 | Zaloguj się do panelu | administrator | login, hasło | sesja administratora w przeglądarce | BR-44, BR-45, BR-46 | `app.py:848-906` |
-| 2 | Dodaj lub usuń strefę i podstrefy | administrator | nazwa, kolor; nazwy podstref | słownik stref | BR-48, BR-50 | `app.py:1185-1228`, `admin.html:329-345` |
-| 3 | Dodaj lub usuń pracownika | administrator | kod `HU_…`, nazwisko i imię | słownik pracowników | BR-47, BR-48, BR-49 | `app.py:1230-1255`, `admin.html:306-327` |
-| 4 | Nadaj uprawnienia do stref | administrator | lista stref per pracownik (edytor albo macierz) | lista uprawnień | BR-3 | `app.py:1257-1265`, `admin.html:409-425` |
-| 5 | Dodaj lub usuń administratora | administrator | login, hasło | konta administratorów | BR-45, BR-51 | `app.py:1268-1290`, `admin.html:347-356` |
-| 6 | Zmień progi alertów i ścieżkę kopii | administrator | próg przerwy, próg szybkiej zmiany, próg długiego dyżuru, tolerancja grafiku, ścieżka kopii | konfiguracja | BR-52 | `app.py:1293-1306`, `admin.html:358-377` |
-| 7 | Sprawdź reguły | system | dane z formularza | zgoda albo odmowa z komunikatem | BR-46, BR-47, BR-51 | `app.py:1235-1244, 1283-1290, 1555-1566` |
-| 8 | Zapisz słownik lub konfigurację | system | zatwierdzone dane | plik słownika lub konfiguracji nadpisany | — | `app.py:164-178` |
+| 1 | Zaloguj się do panelu | administrator | login, hasło | sesja administratora w przeglądarce | BR-44, BR-45, BR-46 | `app.py:853-911` |
+| 2 | Dodaj lub usuń strefę i podstrefy | administrator | nazwa, kolor; nazwy podstref | słownik stref | BR-48, BR-50 | `app.py:1190-1233`, `admin.html:329-345` |
+| 3 | Dodaj lub usuń pracownika | administrator | kod `HU_…`, nazwisko i imię | słownik pracowników | BR-47, BR-48, BR-49 | `app.py:1235-1260`, `admin.html:306-327` |
+| 4 | Nadaj uprawnienia do stref | administrator | lista stref per pracownik (edytor albo macierz) | lista uprawnień | BR-3 | `app.py:1262-1270`, `admin.html:409-425` |
+| 5 | Dodaj lub usuń administratora | administrator | login, hasło | konta administratorów | BR-45, BR-51 | `app.py:1273-1295`, `admin.html:347-356` |
+| 6 | Zmień progi alertów i ścieżkę kopii | administrator | próg przerwy, próg szybkiej zmiany, próg długiego dyżuru, tolerancja grafiku, ścieżka kopii | konfiguracja | BR-52 | `app.py:1298-1311`, `admin.html:358-377` |
+| 7 | Sprawdź reguły | system | dane z formularza | zgoda albo odmowa z komunikatem | BR-46, BR-47, BR-51 | `app.py:1240-1249, 1288-1295, 1560-1571` |
+| 8 | Zapisz słownik lub konfigurację | system | zatwierdzone dane | plik słownika lub konfiguracji nadpisany | — | `app.py:169-183` |
 
 ## Podprocesy
 
@@ -87,11 +87,11 @@ flowchart TD
 
 | Krok | Opis | Źródło w kodzie |
 |---|---|---|
-| A0 | w trybie demo każdy odwiedzający dostaje sesję „demo”; strona logowania przekierowuje do panelu; wylogowanie jest ukryte | `app.py:1555-1561`, `admin.html:178-180` |
-| G1 | sesja to podpisane ciasteczko przeglądarki; bez sesji ekran panelu przekierowuje do logowania, a dane panelu odpowiadają odmową | `app.py:386, 903-910` |
-| G2, A3 | hasło porównywane ze skrótem zapisanym w pliku kont; po zalogowaniu zapamiętany jest login, którym podpisywane są ręczne zmiany pobytów | `app.py:857-866` |
-| G3, A4 | po zalogowaniu hasłem startowym (z `RCP_ADMIN_PASSWORD` albo wypisanym raz w konsoli) każdy adres `/admin*` przekierowuje do `/admin/haslo`, dopóki administrator nie ustawi własnego hasła (≥ 12 znaków) | `app.py:422-429, 876-901` |
-| wylogowanie | „Wyloguj” kasuje sesję | `app.py:871-874` |
+| A0 | w trybie demo każdy odwiedzający dostaje sesję „demo”; strona logowania przekierowuje do panelu; wylogowanie jest ukryte | `app.py:1560-1566`, `admin.html:178-180` |
+| G1 | sesja to podpisane ciasteczko przeglądarki; bez sesji ekran panelu przekierowuje do logowania, a dane panelu odpowiadają odmową | `app.py:391, 908-915` |
+| G2, A3 | hasło porównywane ze skrótem zapisanym w pliku kont; po zalogowaniu zapamiętany jest login, którym podpisywane są ręczne zmiany pobytów | `app.py:862-871` |
+| G3, A4 | po zalogowaniu hasłem startowym (z `RCP_ADMIN_PASSWORD` albo wypisanym raz w konsoli) każdy adres `/admin*` przekierowuje do `/admin/haslo`, dopóki administrator nie ustawi własnego hasła (≥ 12 znaków) | `app.py:427-434, 881-906` |
+| wylogowanie | „Wyloguj” kasuje sesję | `app.py:876-879` |
 
 ### P6.2 Nadawanie uprawnień do stref
 
@@ -118,7 +118,7 @@ flowchart TD
 | A1 | edytor w zakładce Pracownicy: przełączniki wszystkich stref ze słownika | `admin.html:905-926` |
 | A2 | macierz pracownik × strefa z wyszukiwarką; „Zaznacz / Odznacz widocznych” działa na przefiltrowanych wierszach; przycisk w nagłówku kolumny przełącza całą kolumnę | `admin.html:1197-1300` |
 | A4, A6 | zapis macierzy wysyła listę stref **każdego** pracownika z macierzy, także niezmienionych, po kolei | `admin.html:1304-1334` |
-| A5, A6 | serwer zastępuje listę w całości; nazwy stref zamieniane na wielkie litery, nie sprawdzane ze słownikiem | `app.py:1257-1265` |
+| A5, A6 | serwer zastępuje listę w całości; nazwy stref zamieniane na wielkie litery, nie sprawdzane ze słownikiem | `app.py:1262-1270` |
 | odświeżenie | macierz nie odświeża się po dodaniu pracownika lub strefy w innej zakładce; trzeba przeładować stronę | `admin.html:1197` |
 
 ### P6.3 Pierwsze uruchomienie i dane startowe
@@ -141,44 +141,44 @@ flowchart TD
 
 | Krok | Opis | Źródło w kodzie |
 |---|---|---|
-| A1 | katalog `data/` (albo `data_demo/` w trybie demo) obok kodu aplikacji | `app.py:63-65` |
-| A2 | jedenaście przykładowych stref z kolorami i podstrefami: `PICKING`, `PRZYJECIA`, `KURIER1`, `KURIER2`, `BUS`, `EXPORT`, `INV`, `ZWROTY`, `KONTENERY`, `ADMIN_MAG` i `PRZERWA` (nazwy przykładowe, Z15); progi: przerwa 30 min, szybka zmiana 5 min, długi dyżur 10 h, tolerancja grafiku 15 min (wartości robocze z prototypu, Z4); ścieżka kopii `backup/` obok kodu | `app.py:84-109, 491-496` |
-| A3 | trzech przykładowych pracowników z uprawnieniami (patrz [Do anonimizacji](../00-przeglad.md#do-anonimizacji)) | `app.py:499-503` |
-| A4 | konto `admin` z hasłem startowym z `RCP_ADMIN_PASSWORD`; bez zmiennej hasło losowe wypisane raz w konsoli; pierwsze logowanie wymusza zmianę hasła (`/admin/haslo`, co najmniej 12 znaków) | `app.py:422-429, 504-505, 876-901` |
-| A5 | konta z hasłem w starym formacie (64 znaki szesnastkowe) dostają nowe hasło startowe jak w A4 | `app.py:506-514` |
-| tryb demo | przy starcie i co N minut dane są kasowane i generowane na nowo; konto demo ma losowe hasło | `app.py:1523-1547` |
+| A1 | katalog `data/` (albo `data_demo/` w trybie demo) obok kodu aplikacji | `app.py:68-70` |
+| A2 | jedenaście przykładowych stref z kolorami i podstrefami: `PICKING`, `PRZYJECIA`, `KURIER1`, `KURIER2`, `BUS`, `EXPORT`, `INV`, `ZWROTY`, `KONTENERY`, `ADMIN_MAG` i `PRZERWA` (nazwy przykładowe, Z15); progi: przerwa 30 min, szybka zmiana 5 min, długi dyżur 10 h, tolerancja grafiku 15 min (wartości robocze z prototypu, Z4); ścieżka kopii `backup/` obok kodu | `app.py:89-114, 496-501` |
+| A3 | trzech przykładowych pracowników z uprawnieniami (patrz [Do anonimizacji](../00-przeglad.md#do-anonimizacji)) | `app.py:504-508` |
+| A4 | konto `admin` z hasłem startowym z `RCP_ADMIN_PASSWORD`; bez zmiennej hasło losowe wypisane raz w konsoli; pierwsze logowanie wymusza zmianę hasła (`/admin/haslo`, co najmniej 12 znaków) | `app.py:427-434, 509-510, 881-906` |
+| A5 | konta z hasłem w starym formacie (64 znaki szesnastkowe) dostają nowe hasło startowe jak w A4 | `app.py:511-519` |
+| tryb demo | przy starcie i co N minut dane są kasowane i generowane na nowo; konto demo ma losowe hasło | `app.py:1528-1552` |
 
 ## Ścieżki alternatywne i wyjątki
 
 | Wyjątek | Warunek wystąpienia | Obsługa | Skutek dla procesu | Źródło w kodzie |
 |---|---|---|---|---|
-| Kod pracownika bez prefiksu | kod nie zaczyna się od `HU_` | odmowa „Kod musi zaczynać się od HU_” | pracownik niedodany | `app.py:1241` |
-| Istniejący kod lub nazwa strefy | ponowne dodanie tej samej pozycji | rekord nadpisany bez ostrzeżenia | pracownik traci uprawnienia, strefa traci podstrefy | `app.py:1196, 1242` |
-| Usunięcie pracownika z trwającym pobytem | pracownik jest w strefie w chwili usunięcia | pobyt skasowany bez wpisu ewidencji | czas od ostatniego skanu przepada; grafik, nadwyżki i korekty zostają | `app.py:1246-1255` |
-| Usunięcie strefy w użyciu | strefa jest w uprawnieniach lub trwających pobytach | słownik zmieniony, reszta nie | kafelek z kolorem domyślnym na skanerze; ewidencja z nazwą spoza słownika | `app.py:1200-1205` |
-| Zmiana nazwy strefy lub nazwiska | brak funkcji edycji | usunięcie i ponowne dodanie | stare nazwy zostają we wpisach, nadwyżkach i korektach | `app.py:1190-1205, 1235-1244` |
-| Strefa o nazwie zarezerwowanej | nazwa `KONIEC_ZMIANY` | brak blokady | kafelek, który zamyka pobyt zamiast go otwierać | `app.py:1194, 737` |
-| Pracownik bez uprawnień | nowo dodany pracownik przed nadaniem stref | ekran pokazuje tylko „Koniec zmiany” | rejestracja niemożliwa do czasu nadania uprawnień | `app.py:1242` |
-| Usunięcie własnego konta | administrator usuwa konto, na którym pracuje | odmowa „Nie możesz usunąć własnego konta” | zawsze zostaje co najmniej jedno konto | `app.py:1286-1287` |
-| Istniejący login administratora | dodanie konta o zajętym loginie | hasło tego konta zmienione bez ostrzeżenia | przejęcie konta przez innego administratora | `app.py:1279` |
-| Konfiguracja poza zakresem | wartości spoza ograniczeń ekranu wysłane poza ekranem | serwer zapisuje dowolne klucze i wartości | ścieżka kopii może wskazać dowolny katalog serwera | `app.py:1298-1306` |
-| Próby logowania | wielokrotne błędne hasła | brak limitu prób | podatność na zgadywanie hasła | `app.py:848-869` |
-| Tryb demo | gość demo zmienia słowniki, konta, konfigurację lub importuje grafik | odmowa „Niedostępne w trybie demo” i komunikat na ekranie | — | `app.py:1516-1566`, `admin.html:470-478` |
+| Kod pracownika bez prefiksu | kod nie zaczyna się od `HU_` | odmowa „Kod musi zaczynać się od HU_” | pracownik niedodany | `app.py:1246` |
+| Istniejący kod lub nazwa strefy | ponowne dodanie tej samej pozycji | rekord nadpisany bez ostrzeżenia | pracownik traci uprawnienia, strefa traci podstrefy | `app.py:1201, 1247` |
+| Usunięcie pracownika z trwającym pobytem | pracownik jest w strefie w chwili usunięcia | pobyt skasowany bez wpisu ewidencji | czas od ostatniego skanu przepada; grafik, nadwyżki i korekty zostają | `app.py:1251-1260` |
+| Usunięcie strefy w użyciu | strefa jest w uprawnieniach lub trwających pobytach | słownik zmieniony, reszta nie | kafelek z kolorem domyślnym na skanerze; ewidencja z nazwą spoza słownika | `app.py:1205-1210` |
+| Zmiana nazwy strefy lub nazwiska | brak funkcji edycji | usunięcie i ponowne dodanie | stare nazwy zostają we wpisach, nadwyżkach i korektach | `app.py:1195-1210, 1240-1249` |
+| Strefa o nazwie zarezerwowanej | nazwa `KONIEC_ZMIANY` | brak blokady | kafelek, który zamyka pobyt zamiast go otwierać | `app.py:1199, 742` |
+| Pracownik bez uprawnień | nowo dodany pracownik przed nadaniem stref | ekran pokazuje tylko „Koniec zmiany” | rejestracja niemożliwa do czasu nadania uprawnień | `app.py:1247` |
+| Usunięcie własnego konta | administrator usuwa konto, na którym pracuje | odmowa „Nie możesz usunąć własnego konta” | zawsze zostaje co najmniej jedno konto | `app.py:1291-1292` |
+| Istniejący login administratora | dodanie konta o zajętym loginie | hasło tego konta zmienione bez ostrzeżenia | przejęcie konta przez innego administratora | `app.py:1284` |
+| Konfiguracja poza zakresem | wartości spoza ograniczeń ekranu wysłane poza ekranem | serwer zapisuje dowolne klucze i wartości | ścieżka kopii może wskazać dowolny katalog serwera | `app.py:1303-1311` |
+| Próby logowania | wielokrotne błędne hasła | brak limitu prób | podatność na zgadywanie hasła | `app.py:853-874` |
+| Tryb demo | gość demo zmienia słowniki, konta, konfigurację lub importuje grafik | odmowa „Niedostępne w trybie demo” i komunikat na ekranie | — | `app.py:1521-1571`, `admin.html:470-478` |
 
 ## Reguły biznesowe
 
 | ID | Warunek → działanie | Źródło w kodzie |
 |---|---|---|
-| BR-44 | Wejście do panelu lub jego danych → wymagana sesja administratora; bez niej ekran przekierowuje do logowania, a dane odpowiadają odmową | `app.py:386, 903-910` i każdy adres `/admin/api/*` |
-| BR-45 | Logowanie → login i hasło porównane z zapisanym skrótem hasła; hasła nigdy nie są przechowywane jawnie | `app.py:384-385, 857-866, 1229` |
-| BR-46 | Tryb demo włączony → każdy odwiedzający jest zalogowany jako „demo”; zmiany stref, pracowników, kont, konfiguracji i import grafiku są odrzucane | `app.py:1516-1566` |
-| BR-47 | Nowy pracownik → kod musi zaczynać się od `HU_` i jest zapisywany wielkimi literami; nazwisko wymagane; lista uprawnień początkowo pusta | `app.py:1235-1244` |
-| BR-48 | Dodanie pracownika lub strefy o istniejącej nazwie → nadpisz rekord (uprawnienia lub podstrefy znikają) | `app.py:1196, 1242` |
-| BR-49 | Usunięcie pracownika → skasuj jego trwający pobyt bez wpisu ewidencji; grafik, nadwyżki, korekty i wpisy ewidencji zostają | `app.py:1246-1255` |
-| BR-50 | Usunięcie strefy lub podstrefy → nie zmieniaj uprawnień, trwających pobytów ani ewidencji | `app.py:1200-1228` |
-| BR-51 | Konta administratorów → nie można usunąć konta, na którym się pracuje; dodanie istniejącego loginu zmienia jego hasło | `app.py:1273-1290` |
-| BR-52 | Zapis konfiguracji → serwer przyjmuje tylko znane klucze i wartości w zakresach (przerwa 1–240 min, szybka zmiana 0–60 min, dyżur 1–24 h, tolerancja 0–120 min), katalog kopii tylko pod `RCP_BACKUP_ROOT`; odrzucenie 400 z komunikatem (US-011) | `app.py:111-137, 1299-1306`, `admin.html:1009-1018` |
-| BR-53 | Pierwsze uruchomienie w pustym katalogu → utwórz słownik stref, konfigurację, puste listy, trzech przykładowych pracowników i konto `admin` z hasłem startowym; stare skróty haseł zastąp hasłem startowym | `app.py:491-516` |
+| BR-44 | Wejście do panelu lub jego danych → wymagana sesja administratora; bez niej ekran przekierowuje do logowania, a dane odpowiadają odmową | `app.py:391, 908-915` i każdy adres `/admin/api/*` |
+| BR-45 | Logowanie → login i hasło porównane z zapisanym skrótem hasła; hasła nigdy nie są przechowywane jawnie | `app.py:389-390, 862-871, 1234` |
+| BR-46 | Tryb demo włączony → każdy odwiedzający jest zalogowany jako „demo”; zmiany stref, pracowników, kont, konfiguracji i import grafiku są odrzucane | `app.py:1521-1571` |
+| BR-47 | Nowy pracownik → kod musi zaczynać się od `HU_` i jest zapisywany wielkimi literami; nazwisko wymagane; lista uprawnień początkowo pusta | `app.py:1240-1249` |
+| BR-48 | Dodanie pracownika lub strefy o istniejącej nazwie → nadpisz rekord (uprawnienia lub podstrefy znikają) | `app.py:1201, 1247` |
+| BR-49 | Usunięcie pracownika → skasuj jego trwający pobyt bez wpisu ewidencji; grafik, nadwyżki, korekty i wpisy ewidencji zostają | `app.py:1251-1260` |
+| BR-50 | Usunięcie strefy lub podstrefy → nie zmieniaj uprawnień, trwających pobytów ani ewidencji | `app.py:1205-1233` |
+| BR-51 | Konta administratorów → nie można usunąć konta, na którym się pracuje; dodanie istniejącego loginu zmienia jego hasło | `app.py:1278-1295` |
+| BR-52 | Zapis konfiguracji → serwer przyjmuje tylko znane klucze i wartości w zakresach (przerwa 1–240 min, szybka zmiana 0–60 min, dyżur 1–24 h, tolerancja 0–120 min), katalog kopii tylko pod `RCP_BACKUP_ROOT`; odrzucenie 400 z komunikatem (US-011) | `app.py:116-142, 1304-1311`, `admin.html:1009-1018` |
+| BR-53 | Pierwsze uruchomienie w pustym katalogu → utwórz słownik stref, konfigurację, puste listy, trzech przykładowych pracowników i konto `admin` z hasłem startowym; stare skróty haseł zastąp hasłem startowym | `app.py:496-521` |
 
 ## Wymagania funkcjonalne
 

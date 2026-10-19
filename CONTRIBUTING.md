@@ -23,7 +23,7 @@ Cel jasny · kryteria testowalne · zależności znane · dane i uprawnienia okr
 ## Definition of Done
 
 - wszystkie kryteria akceptacji (funkcjonalne i bezpieczeństwa) spełnione i pokryte testami,
-- CI zielone: ruff, testy, bandit, pip-audit, gitleaks, trivy — bez nowych ustaleń średnich i wyższych,
+- CI zielone: ruff, testy, bandit, semgrep, pip-audit, gitleaks, trivy — bez nowych ustaleń średnich i wyższych,
 - dokumentacja zaktualizowana (`docs/01-procesy` WF/BR, `04` interfejsy, `02` model danych, ADR jeśli dotyczy, CHANGELOG),
 - przegląd SEC i odbiór BA zapisane w PR,
 - brak sekretów, danych osobowych i danych produkcyjnych w repo, testach i logach,
@@ -46,10 +46,11 @@ Cel jasny · kryteria testowalne · zależności znane · dane i uprawnienia okr
 pip install -r requirements-dev.txt
 ruff check .
 python -m unittest discover tests
-bandit -c pyproject.toml -r app.py run.py demo_data.py --severity-level medium
-pip-audit -r requirements.txt
+bandit -c pyproject.toml -r app.py run.py demo_data.py tools --severity-level medium
+pip-audit -r requirements.txt -r requirements-dev.txt
+semgrep scan --config p/owasp-top-ten --error app.py run.py demo_data.py tools templates   # pip install semgrep
 docker build -t rcp-log:ci .     # obraz skanuje trivy w CI
 ```
 
 Dlaczego te narzędzia: [ADR 0012](docs/architektura/adr/0012-proces-zespolu-i-narzedzia-ci.md).
-Semgrep, mypy i próg pokrycia — odłożone (Z22, Z24).
+Semgrep dodany jako bramka CI (OWASP Top 10); mypy i próg pokrycia — odłożone (Z22, Z24).
