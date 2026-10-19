@@ -1,7 +1,7 @@
 # RCP Log — obraz produkcyjny (Coolify lub dowolny Docker).
 #   docker build -t rcp-log .
 #   docker run --rm -p 5050:5050 -e RCP_DEMO=1 rcp-log
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
