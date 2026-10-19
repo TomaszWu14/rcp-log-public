@@ -1579,4 +1579,5 @@ if DEMO:
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5050)), debug=False)
+    # 0.0.0.0 zamierzone: skanery łączą się z sieci lokalnej (ryzyko R9, jak B104 w pyproject.toml)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5050)), debug=False)  # nosemgrep: python.flask.security.audit.app-run-param-config.avoid_app_run_with_bad_host
