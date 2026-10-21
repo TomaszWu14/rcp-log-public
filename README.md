@@ -2,6 +2,10 @@
 
 # RCP Log
 
+[![CI](https://github.com/TomaszWu14/rcp-log-public/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/TomaszWu14/rcp-log-public/actions/workflows/ci.yml)
+[![Licencja: MIT](https://img.shields.io/badge/licencja-MIT-blue.svg)](LICENSE)
+![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)
+
 Rejestracja czasu pracy w strefach magazynu jednym skanem kodu QR — dla pracowników zmiany
 i administratora, który do tej pory liczył ten czas ręcznie w Excelu.
 
@@ -105,7 +109,7 @@ z Product Ownerem akceptującym zakres i ryzyka. Każdy krok w dokumentach i PR-
 | [Architektura](docs/architektura/ARCHITEKTURA.md) · [API](docs/architektura/API.md) · [ADR](docs/architektura/adr/README.md) | C4 w Mermaid, endpointy z rolą dostępu, decyzje |
 | [CONTRIBUTING](CONTRIBUTING.md) · [SECURITY](SECURITY.md) · [CHANGELOG](CHANGELOG.md) | proces, Definition of Ready/Done, zgłaszanie podatności |
 
-CI (GitHub Actions): ruff, testy, bandit, pip-audit, gitleaks na każdym PR.
+CI (GitHub Actions) na każdym PR: ruff, testy, bandit, Semgrep, pip-audit, gitleaks, Trivy (repo i obraz Dockera).
 
 ### Bezpieczeństwo
 
@@ -215,7 +219,7 @@ docker run --rm -p 5050:5050 -e RCP_DEMO=1 rcp-log
 | `RCP_BACKUP_ROOT` | katalog, pod którym musi leżeć ścieżka kopii z konfiguracji (domyślnie katalog aplikacji) |
 | `PORT` | port serwera (domyślnie 5050) |
 
-Testy akceptacyjne (18 testów, bez dodatkowych zależności; nazwy testów to identyfikatory wymagań
+Testy akceptacyjne (47 testów, bez dodatkowych zależności; nazwy testów to identyfikatory wymagań
 z [archiwalnej listy](docs/archiwum/05-wymagania.md), a mapę na WF-n ma każdy dokument procesu):
 
 ```bash
@@ -233,6 +237,8 @@ docker-compose.yaml konfiguracja publicznego demo na Coolify (rcp.log.twapp.pl)
 render.yaml         konfiguracja demo na Render (alternatywa)
 templates/          skaner (index.html), panel (admin.html), logowanie
 tests/              testy akceptacyjne; nazwy testów to ID z docs/archiwum/05, mapa na WF-n w docs/01-procesy
+tools/              skrypty pomocnicze (przeliczanie odwołań do linii app.py w dokumentacji)
+graphify-out/       graf zależności kodu i dokumentacji (graphify) z raportem
 docs/               dokumentacja przedwdrożeniowa: 00 przegląd, 01-procesy P1–P7, 02-dane, 03-user-flow,
                     04 integracje, 05 decyzje i ograniczenia; archiwum, screenshots, media (logo, film);
                     proces zespołu: AUDYT, analiza/, architektura/, bezpieczenstwo/, testy/, operacje/
@@ -258,8 +264,10 @@ korekty, podgląd na żywo, grafik i porównanie z obecnością, eksport CSV, ko
 Poza zakresem: naliczanie wynagrodzeń i integracja z systemem kadrowym, automatyczna poprawka ewidencji
 po zatwierdzeniu korekty, zmiana nocna przez północ, praca skanera offline.
 
-To prototyp, który nie przeszedł przeglądu bezpieczeństwa (m.in. klucz sesji w kodzie, domyślne hasło
-administratora). Pełna lista: [05. Decyzje i ograniczenia](docs/05-decyzje-i-ograniczenia.md).
+To prototyp. Najważniejsze ustalenia z przeglądu bezpieczeństwa są już naprawione: klucz sesji jest wymagany
+poza trybem demo, hasło startowe trzeba zmienić przy pierwszym logowaniu, jest limit prób logowania, CSRF
+i nagłówki bezpieczeństwa. Otwarte pozostają m.in. przewidywalna treść kodu QR (B5) i nadpisanie hasła przy
+dodaniu istniejącego loginu (B9). Pełna lista: [05. Decyzje i ograniczenia](docs/05-decyzje-i-ograniczenia.md#bezpieczeństwo).
 
 ## Kontekst projektu
 
