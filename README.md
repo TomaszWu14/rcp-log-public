@@ -25,6 +25,8 @@ widzi obsadę na żywo, alert przekroczonej przerwy, korekty i porównanie grafi
 
 **Demo bez logowania:** [rcp.log.twapp.pl](https://rcp.log.twapp.pl) — dane fikcyjne, odtwarzane co 30 min. Lokalnie: [tryb demo](#tryb-demo).
 
+🇬🇧 **English:** [README.en.md](README.en.md)
+
 ## Problem → rozwiązanie
 
 Na zmianie pracuje około 60 osób w około 15 strefach: kompletacja, przyjęcia, wysyłka, przerwa.
