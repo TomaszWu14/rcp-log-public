@@ -18,7 +18,10 @@ RUN apt-get update \
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+# pip jest potrzebny tylko przy budowaniu. Usuwamy go z obrazu, bo jego dołączone biblioteki
+# (urllib3, certifi, msgpack, setuptools) zgłasza Trivy jako HIGH/CRITICAL, a aplikacja ich nie używa.
+RUN pip install -r requirements.txt \
+    && pip uninstall -y pip
 
 COPY app.py run.py demo_data.py ./
 COPY templates/ templates/

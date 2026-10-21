@@ -5,6 +5,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie 
 ## [Unreleased]
 
 ### Security
+- Obraz Dockera bez `pip` po instalacji zależności — jego dołączone biblioteki (urllib3, certifi, msgpack,
+  setuptools) Trivy zgłaszał jako HIGH/CRITICAL i blokowały job `image` (m.in. Dependabot #34, Python 3.14).
 - Wspólna podstawa bezpieczeństwa: gitleaks jako przypięte binarium (sha256), Semgrep `p/owasp-top-ten` i Trivy `fs`
   jako bramki CI, pip-audit także dla `requirements-dev.txt`, akcje przypięte do SHA, Dependabot z grupami
   minor+patch (+ docker); nagłówki `Permissions-Policy`, `Cross-Origin-Opener-Policy`, `Cache-Control: no-store` na JSON.
