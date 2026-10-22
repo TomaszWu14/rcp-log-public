@@ -7,12 +7,13 @@
 Warehouse zone time tracking with a single QR scan. It is built for shift workers and for the administrator
 who used to track this time by hand in Excel.
 
+**▶ Try the demo, no login:** [rcp.log.twapp.pl](https://rcp.log.twapp.pl) is the scanner; type the code
+`HU_KOWALSKI_JAN` and press Enter. Admin panel: [rcp.log.twapp.pl/admin](https://rcp.log.twapp.pl/admin)
+(no password in demo mode). It runs on fictional data and resets every 30 minutes. The UI is in Polish.
+
 ![demo](docs/screenshots/demo.gif)
 
 📹 **Video (1:46, no sound, Polish captions):** [docs/media/rcp-log-prezentacja.mp4](docs/media/rcp-log-prezentacja.mp4)
-
-**Live demo, no login:** [rcp.log.twapp.pl](https://rcp.log.twapp.pl). It runs on fictional data and resets every 30 minutes.
-The UI is in Polish.
 
 ## Problem → solution
 

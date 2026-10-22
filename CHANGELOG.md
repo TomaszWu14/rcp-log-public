@@ -57,6 +57,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie 
   `docs/architektura/` (C4 kontenery, ADR 0012), `docs/testy/`, `docs/operacje/`.
 
 ### Changed
+- README (PL i EN): „Wypróbuj demo” na samej górze — link do skanera z przykładowym kodem i do panelu administratora.
 - Zależności przypięte do dokładnych wersji (`requirements.txt`); narzędzia deweloperskie w `requirements-dev.txt`.
 - `demo_data.py`: usunięty nieużywany import i zmienna (lint).
 
