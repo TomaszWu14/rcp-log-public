@@ -37,6 +37,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie 
 - Odwołania `app.py:linia` w dokumentacji naprawione po podwójnym przeliczeniu w US-003; skrypt blokuje drugi przebieg.
 
 ### Added
+- Monitor publicznego demo (`.github/workflows/demo-monitor.yml`): co 6 h sprawdza `/` i `/admin/login`
+  na rcp.log.twapp.pl; awaria otwiera issue „Demo nie odpowiada” (etykieta `demo`), powrót do normy je zamyka.
 - US-015: ustawienia retencji (ewidencja, alerty, audyt, kopie) w zakładce Config; 0 = bez usuwania.
 - US-009: retencja danych — okresy w konfiguracji (`retencja_*_dni`; ewidencja domyślnie bez usuwania do decyzji IOD),
   usuwanie całych plików ewidencji, wierszy alertów i audytu oraz starych kopii raz na dobę; kopia zapasowa także,
