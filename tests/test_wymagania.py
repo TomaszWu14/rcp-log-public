@@ -30,6 +30,7 @@ def load_app():
     tmp = Path(tempfile.mkdtemp())
     shutil.copy(REPO / "app.py", tmp / "app.py")
     shutil.copy(REPO / "visitor_notify.py", tmp / "visitor_notify.py")
+    shutil.copy(REPO / "visitor_activity.py", tmp / "visitor_activity.py")
     shutil.copytree(REPO / "templates", tmp / "templates")
     spec = importlib.util.spec_from_file_location(f"rcp_{tmp.name}", tmp / "app.py")
     mod = importlib.util.module_from_spec(spec)

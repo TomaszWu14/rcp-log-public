@@ -20,7 +20,7 @@ class PowiadomienieGosc(unittest.TestCase):
     def setUp(self):
         os.environ["RCP_SECRET_KEY"] = "klucz-testowy-" * 4
         os.environ["RCP_ADMIN_PASSWORD"] = "admin123"
-        for k in ("RCP_DEMO", "DEMO_VISITOR_GATE", "NTFY_URL", "NTFY_TOKEN"):
+        for k in ("RCP_DEMO", "DEMO_VISITOR_GATE", "NTFY_URL", "NTFY_TOKEN", "NTFY_WATCH_COMPANIES"):
             os.environ.pop(k, None)
         self.A, self.tmp = load_app()
         self.A.VISITOR_GATE = True
@@ -32,7 +32,7 @@ class PowiadomienieGosc(unittest.TestCase):
         self.addCleanup(mock.patch.stopall)
 
     def tearDown(self):
-        for k in ("NTFY_URL", "NTFY_TOKEN"):
+        for k in ("NTFY_URL", "NTFY_TOKEN", "NTFY_WATCH_COMPANIES"):
             os.environ.pop(k, None)
         shutil.rmtree(self.tmp, ignore_errors=True)
 
@@ -111,10 +111,48 @@ class PowiadomienieGosc(unittest.TestCase):
             self.assertEqual((req.get_method(), U.call_args.kwargs["timeout"]), ("POST", 5))
             self.assertEqual(req.data.decode("utf-8"), "Anna Nowak (Acme) wszedł do rcp-log")
 
+    def test_firma_z_listy_urgent(self):
+        os.environ["NTFY_URL"] = "https://ntfy.example/t"
+        os.environ["NTFY_WATCH_COMPANIES"] = " firma-testowa , acme "
+        self.wyslij(firma="ÄCME   Sp. z o.o.")
+        _, body, headers = self.wyslij_http.call_args.args
+        self.assertEqual((headers["Priority"], headers["Tags"]), ("urgent", "rotating_light"))
+        self.assertEqual(headers["Title"], "UWAGA firma z listy: rcp-log")
+        self.assertEqual(body, "⚠️ Anna Żółć (ÄCME   Sp. z o.o.) wszedł do rcp-log")
+        for k, v in headers.items():
+            self.assertTrue(v.isascii(), k)
+
+    def test_dopasowanie_firmy_diakrytyki_i_wielkosc_liter(self):
+        os.environ["NTFY_WATCH_COMPANIES"] = "zolw, x,  łódź  przemysł "
+        self.assertTrue(VN.firma_na_liscie("Żółw Logistics"))
+        self.assertTrue(VN.firma_na_liscie("LODZ   PRZEMYSL S.A."))
+        self.assertFalse(VN.firma_na_liscie("Xenon"))   # fraza krótsza niż 2 znaki jest pomijana
+        self.assertFalse(VN.firma_na_liscie("Inna"))
+
+    def test_firma_spoza_listy_i_pusta_lista_zwykly_push(self):
+        os.environ["NTFY_URL"] = "https://ntfy.example/t"
+        for lista in ("globex", "", " , "):
+            os.environ["NTFY_WATCH_COMPANIES"] = lista
+            self.wyslij_http.reset_mock()
+            self.wyslij()
+            _, body, headers = self.wyslij_http.call_args.args
+            self.assertEqual((headers["Priority"], headers["Tags"], headers["Title"]),
+                             ("high", "bell", "Nowy gosc: rcp-log"), lista)
+            self.assertEqual(body, "Anna Żółć (Acme) wszedł do rcp-log")
+
+    def test_firma_z_listy_bez_ntfy_url_nic_nie_wysyla(self):
+        os.environ["NTFY_WATCH_COMPANIES"] = "acme"
+        self.assertEqual(self.wyslij().status_code, 302)
+        self.wyslij_http.assert_not_called()
+        self.watek.assert_not_called()
+
     def test_klauzula_rodo_wspomina_ntfy(self):
         html = self.c.get("/wejscie").get_data(as_text=True)
         self.assertIn("O każdej wizycie (imię, nazwisko, firma) dostaję powiadomienie na telefon przez usługę "
-                      "powiadomień push ntfy; poza tym nikomu danych nie przekazuję.", html)
+                      "powiadomień push ntfy. Zapisuję też, ile i jakie ekrany wersji demonstracyjnej obejrzałeś "
+                      "(bez adresu IP), żeby wiedzieć, co zainteresowało gości. Poza tym nikomu danych nie "
+                      "przekazuję.", html)
+        self.assertNotIn("push ntfy; poza tym", html)
         self.assertNotIn("i nikomu ich nie przekazuję", html)
 
 

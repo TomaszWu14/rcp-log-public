@@ -58,7 +58,8 @@ class BramkaGosci(unittest.TestCase):
         self.assertEqual(self.c.get("/").status_code, 200)
         wiersz, = self.A.read_goscie()
         self.assertEqual((wiersz["imie"], wiersz["nazwisko"], wiersz["firma"]), ("Anna", "Nowak", "Acme"))
-        self.assertEqual(list(wiersz), ["created_at", "imie", "nazwisko", "firma"])   # bez IP i user-agenta
+        self.assertEqual(list(wiersz), ["created_at", "imie", "nazwisko", "firma", "id", "page_views",
+                                        "last_seen_at", "sections"])   # bez IP i user-agenta
         for zly in ("//evil.com", "https://evil.com", "/\\evil.com", "evil"):
             self.assertEqual(self.wyslij(next=zly).headers["Location"], "/")
 
