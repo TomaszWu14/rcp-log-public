@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie 
 - Publiczne `/api/scan`, `/api/rejestruj`, `/api/korekta` zwracały 500 na JSON nie będący obiektem lub z polami nie-tekstowymi; teraz 400/403.
 
 ### Security
+- Limit żądań publicznych `/api/scan`, `/api/rejestruj`, `/api/korekta` (kod pracownika to jedyne uwierzytelnienie):
+  20 nieznanych kodów / 10 min i 120 żądań / min z adresu → 429 (adres wg `RCP_PROXY` jak przy logowaniu);
+  po przekroczeniu limitu nie jest już zapisywany alert `NIEZNANY_KOD`, więc nie da się zalać listy alertów.
 - Obraz Dockera bez `pip` po instalacji zależności — jego dołączone biblioteki (urllib3, certifi, msgpack,
   setuptools) Trivy zgłaszał jako HIGH/CRITICAL i blokowały job `image` (m.in. Dependabot #34, Python 3.14).
 - Wspólna podstawa bezpieczeństwa: gitleaks jako przypięte binarium (sha256), Semgrep `p/owasp-top-ten` i Trivy `fs`

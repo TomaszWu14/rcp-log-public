@@ -407,6 +407,37 @@ def _login_failed(ip):
     now = time_module.time()
     _login_fail[ip] = [t for t in _login_fail.get(ip, []) if now - t < LOGIN_WINDOW_MIN * 60] + [now]
 
+# ── Limit żądań publicznych endpointów skanera (kod pracownika to jedyne uwierzytelnienie) ──
+SCAN_RATE_MAX, SCAN_RATE_WINDOW_S = 120, 60          # wszystkie żądania z adresu: 120 / min
+SCAN_FAIL_MAX, SCAN_FAIL_WINDOW_S = 20, 10 * 60      # nieznane kody z adresu: 20 / 10 min
+_scan_hits, _scan_fails = {}, {}                     # adres -> czasy żądań / nieudanych prób (pamięć jednego procesu)
+_scan_guard = threading.Lock()
+
+def _scan_prune(store, ip, now, window):
+    times = [t for t in store.get(ip, []) if now - t < window]
+    if times: store[ip] = times
+    else: store.pop(ip, None)
+    return times
+
+def _scan_over_limit():
+    """Rejestruje żądanie; True gdy adres przekroczył limit ogólny lub limit nieznanych kodów (żądanie nie jest wtedy liczone)."""
+    ip, now = _client_ip(), time_module.time()
+    with _scan_guard:
+        fails = _scan_prune(_scan_fails, ip, now, SCAN_FAIL_WINDOW_S)
+        hits = _scan_prune(_scan_hits, ip, now, SCAN_RATE_WINDOW_S)
+        if len(fails) >= SCAN_FAIL_MAX or len(hits) >= SCAN_RATE_MAX:
+            return True
+        _scan_hits[ip] = hits + [now]
+    return False
+
+def _scan_failed():
+    ip, now = _client_ip(), time_module.time()
+    with _scan_guard:
+        _scan_fails[ip] = _scan_prune(_scan_fails, ip, now, SCAN_FAIL_WINDOW_S) + [now]
+
+def _scan_limit_response():
+    return jsonify({"ok": False, "error": "Zbyt wiele prób. Spróbuj ponownie za kilka minut."}), 429
+
 def _body():
     """Treść JSON jako słownik; lista, liczba lub null dają {} (publiczne endpointy nie mogą kończyć się 500)."""
     d = request.get_json(silent=True)
@@ -681,12 +712,14 @@ def index():
 
 @app.route("/api/scan", methods=["POST"])
 def api_scan():
+    if _scan_over_limit(): return _scan_limit_response()
     kod = _txt(_body().get("kod")).upper()
     if not kod:
         return jsonify({"ok":False,"error":"Pusty kod QR"}), 400
 
     workers = load_workers()
     if kod not in workers:
+        _scan_failed()
         append_alert(kod, kod, "NIEZNANY_KOD", f"Proba skanowania: {kod}")
         return jsonify({"ok":False,"error":"Nieznany kod QR. Skontaktuj się z liderem."}), 403
 
@@ -731,6 +764,7 @@ def api_scan():
 
 @app.route("/api/rejestruj", methods=["POST"])
 def api_rejestruj():
+    if _scan_over_limit(): return _scan_limit_response()
     d         = _body()
     kod       = _txt(d.get("pracownik")).upper()
     nowa_str  = _txt(d.get("strefa")).upper()
@@ -743,6 +777,7 @@ def api_rejestruj():
 
     workers = load_workers()
     if kod not in workers:
+        _scan_failed()
         return jsonify({"ok":False,"error":"Nieznany pracownik"}), 403
 
     worker = workers[kod]
@@ -836,10 +871,12 @@ def api_new_alerts():
 # Korekta zgłoszenie od pracownika (po skanie)
 @app.route("/api/korekta", methods=["POST"])
 def api_korekta():
+    if _scan_over_limit(): return _scan_limit_response()
     d   = _body()
     kod = _txt(d.get("pracownik")).upper()
     workers = load_workers()
     if kod not in workers:
+        _scan_failed()
         return jsonify({"ok":False,"error":"Nieznany pracownik"}), 403
     with _lock:   # numer zgłoszenia i zapis pod blokadą — równoczesne zgłoszenia nie kolidują (US-006)
         korekty = load_korekty()
