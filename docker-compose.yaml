@@ -22,6 +22,17 @@ services:
       - RCP_SECRET_KEY=${SERVICE_PASSWORD_64_RCPLOG}
       # Za proxy TLS Coolify: ciasteczko sesji tylko po HTTPS, adres klienta z X-Forwarded-For.
       - RCP_PROXY=1
+      # Bramka gości: app.py czyta zmienną; compose jest w trybie demo, więc domyślnie 1 (jak bez zmiennej).
+      # Pusta wartość wyłączyłaby bramkę — dlatego default 1, nie pusty.
+      - DEMO_VISITOR_GATE=${DEMO_VISITOR_GATE:-1}
+      # Lista gości dla właściciela: /admin/goscie?token=... (pusty = konto demo dostaje 404).
+      - VISITORS_TOKEN=${VISITORS_TOKEN:-}
+      # Powiadomienia push ntfy o gościach (pusty NTFY_URL = brak powiadomień i ruchu sieciowego).
+      - NTFY_URL=${NTFY_URL:-}
+      - NTFY_TOKEN=${NTFY_TOKEN:-}
+      # Frazy firm rozdzielone przecinkami — wartość tylko w panelu Coolify, nigdy w repo.
+      - NTFY_WATCH_COMPANIES=${NTFY_WATCH_COMPANIES:-}
+      - NTFY_ENGAGED_VIEWS=${NTFY_ENGAGED_VIEWS:-10}
     expose:
       - "5050"
     # Tryb produkcyjny (RCP_DEMO=0; RCP_SECRET_KEY wymagany; hasło startowe admina z RCP_ADMIN_PASSWORD
