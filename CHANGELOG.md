@@ -10,6 +10,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie 
   bezpieczny `next`). `/api/*`, pliki statyczne i `/login` nie są blokowane. Dane w `goscie.csv` (bez IP i user-agenta),
   usuwane po 90 dniach przy zapisie; flaga sesji ważna 30 dni. Lista gości i eksport CSV: `/admin/goscie`
   (konto demo: 404, chyba że `?token=` zgadza się z `VISITORS_TOKEN`, porównanie `hmac.compare_digest`).
+- Powiadomienie push (ntfy) o nowym gościu bramki: po udanym zapisie `POST` na `NTFY_URL` (opcjonalnie `NTFY_TOKEN`
+  jako `Authorization: Bearer`), w wątku w tle z limitem 5 s; błąd tylko w logu, bez `NTFY_URL` brak ruchu sieciowego
+  (`visitor_notify.py`, `urllib` ze stdlib). Klauzula RODO formularza informuje o powiadomieniu przez ntfy.
 
 ### Fixed
 - Publiczne `/api/scan`, `/api/rejestruj`, `/api/korekta` zwracały 500 na JSON nie będący obiektem lub z polami nie-tekstowymi; teraz 400/403.

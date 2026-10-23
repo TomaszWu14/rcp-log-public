@@ -25,8 +25,11 @@ NOWE_HASLO = "Nowe-haslo-testowe-1"
 
 
 def load_app():
+    if str(REPO) not in sys.path:   # moduły obok app.py (np. visitor_notify) importowane z katalogu repo
+        sys.path.insert(0, str(REPO))
     tmp = Path(tempfile.mkdtemp())
     shutil.copy(REPO / "app.py", tmp / "app.py")
+    shutil.copy(REPO / "visitor_notify.py", tmp / "visitor_notify.py")
     shutil.copytree(REPO / "templates", tmp / "templates")
     spec = importlib.util.spec_from_file_location(f"rcp_{tmp.name}", tmp / "app.py")
     mod = importlib.util.module_from_spec(spec)
