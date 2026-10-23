@@ -13,6 +13,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie 
 - Powiadomienie push (ntfy) o nowym gościu bramki: po udanym zapisie `POST` na `NTFY_URL` (opcjonalnie `NTFY_TOKEN`
   jako `Authorization: Bearer`), w wątku w tle z limitem 5 s; błąd tylko w logu, bez `NTFY_URL` brak ruchu sieciowego
   (`visitor_notify.py`, `urllib` ze stdlib). Klauzula RODO formularza informuje o powiadomieniu przez ntfy.
+- Alarm „uwaga, ta firma”: `NTFY_WATCH_COMPANIES` (frazy po przecinku, tylko w env) — firma gościa zawierająca frazę
+  (casefold, bez polskich znaków, zredukowane spacje) dostaje push `Priority: urgent`, `Tags: rotating_light`,
+  tytuł „UWAGA firma z listy: rcp-log” i „⚠️ ” na początku treści.
+- Aktywność gościa: `goscie.csv` ma nowe kolumny `id`, `page_views`, `last_seen_at`, `sections` (starsze wiersze
+  działają, kolumny puste). Id wpisu trafia do podpisanej sesji; `after_request` liczy udane (2xx) GET stron HTML
+  (bez statycznych, `/health`, API, bramki i listy gości) — ekrany, ostatnia aktywność i sekcje (pierwszy segment
+  ścieżki, max 20). Lista `/admin/goscie` i CSV: kolumny Ekrany, Czas („ok. N min”), Najczęściej. Push „Gosc oglada
+  demo” raz, gdy liczba ekranów osiągnie `NTFY_ENGAGED_VIEWS` (domyślnie 10, 0 = wyłączone). Klauzula RODO
+  informuje o zapisie obejrzanych ekranów (`visitor_activity.py`).
 
 ### Fixed
 - Publiczne `/api/scan`, `/api/rejestruj`, `/api/korekta` zwracały 500 na JSON nie będący obiektem lub z polami nie-tekstowymi; teraz 400/403.

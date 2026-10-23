@@ -22,6 +22,7 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 from werkzeug.security import check_password_hash, generate_password_hash
 
+import visitor_activity
 import visitor_notify
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -1563,7 +1564,9 @@ def adm_grafik_porownanie():
 # /api/*, pliki statyczne i /login nie są blokowane. Domyślnie włączona tylko w trybie demo.
 VISITOR_GATE = os.environ.get("DEMO_VISITOR_GATE", "1" if DEMO else "0").lower() in ("1", "true", "yes", "on")
 GOSCIE_FILE = DATA_DIR / "goscie.csv"
-GOSCIE_HEADERS = ["created_at", "imie", "nazwisko", "firma"]   # bez IP i user-agenta (minimalizacja danych)
+# bez IP i user-agenta (minimalizacja danych); kolumny od `id` doszły z aktywnością gościa — starsze wiersze mają je puste
+GOSCIE_HEADERS = ["created_at", "imie", "nazwisko", "firma", "id", "page_views", "last_seen_at", "sections"]
+GOSCIE_CSV_HEADERS = ["created_at", "imie", "nazwisko", "firma", "ekrany", "czas", "najczesciej"]
 GOSCIE_RETENTION_DAYS, GOSCIE_SESSION_DAYS = 90, 30
 GATED_ENDPOINTS = {"index", "admin_panel", "admin_login"}
 
@@ -1584,28 +1587,55 @@ def _bezpieczny_next(v):
 def read_goscie():
     return read_csv_rows(GOSCIE_FILE)
 
+def _zapisz_goscie(wiersze):
+    """Zapis atomowy całej listy gości (wywoływać pod _lock)."""
+    tmp = Path(str(GOSCIE_FILE) + ".tmp")
+    try:
+        with open(tmp, "w", newline="", encoding="utf-8-sig") as f:
+            w = csv.DictWriter(f, fieldnames=GOSCIE_HEADERS, delimiter=";", extrasaction="ignore")
+            w.writeheader()
+            w.writerows(wiersze)
+        os.replace(tmp, GOSCIE_FILE)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
+
 def zapisz_goscia(imie, nazwisko, firma, now=None):
-    """Dopisuje gościa i usuwa wpisy starsze niż 90 dni; zapis atomowy pod blokadą jak inne pliki."""
+    """Dopisuje gościa i usuwa wpisy starsze niż 90 dni; zapis atomowy pod blokadą jak inne pliki. Zwraca id wpisu."""
     now = now or datetime.now()
     granica = now - timedelta(days=GOSCIE_RETENTION_DAYS)
+    gid = secrets.token_hex(8)
     with _lock:
         zostaja = []
         for r in read_goscie():
             try:
-                if datetime.fromisoformat(r.get("created_at", "")) >= granica: zostaja.append(r)
+                if datetime.fromisoformat(r.get("created_at") or "") >= granica: zostaja.append(r)
             except ValueError: pass   # uszkodzony znacznik czasu = wpis do usunięcia
         zostaja.append({"created_at": now.isoformat(timespec="seconds"), "imie": _csv_safe(imie),
-                        "nazwisko": _csv_safe(nazwisko), "firma": _csv_safe(firma)})
-        tmp = Path(str(GOSCIE_FILE) + ".tmp")
-        try:
-            with open(tmp, "w", newline="", encoding="utf-8-sig") as f:
-                w = csv.DictWriter(f, fieldnames=GOSCIE_HEADERS, delimiter=";", extrasaction="ignore")
-                w.writeheader()
-                w.writerows(zostaja)
-            os.replace(tmp, GOSCIE_FILE)
-        except BaseException:
-            tmp.unlink(missing_ok=True)
-            raise
+                        "nazwisko": _csv_safe(nazwisko), "firma": _csv_safe(firma),
+                        "id": gid, "page_views": "0", "last_seen_at": "", "sections": "{}"})
+        _zapisz_goscie(zostaja)
+    return gid
+
+def _bez_apostrofu(v):
+    """Odwraca _csv_safe dla tekstu powiadomienia."""
+    v = v or ""
+    return v[1:] if len(v) > 1 and v[0] == "'" and v[1] in "=+-@\t\r" else v
+
+def zarejestruj_aktywnosc(gid, sciezka, now=None):
+    """Ekran obejrzany przez gościa `gid`: page_views += 1, last_seen_at, sekcja += 1; przy progu — jeden push."""
+    now = now or datetime.now()
+    with _lock:
+        wiersze = read_goscie()
+        wiersz = next((r for r in wiersze if r.get("id") == gid), None)
+        if wiersz is None:
+            return   # wpis usunięty retencją albo z innej instancji
+        ekrany = visitor_activity.zarejestruj_ekran(wiersz, visitor_activity.sekcja_ze_sciezki(sciezka), now)
+        _zapisz_goscie(wiersze)
+    prog = visitor_notify.prog_ekranow()
+    if prog and ekrany == prog:
+        visitor_notify.powiadom_o_zaangazowaniu(
+            *(_bez_apostrofu(wiersz.get(k)) for k in ("imie", "nazwisko", "firma")), ekrany)
 
 def _gosc_wpuszczony():
     try:
@@ -1635,12 +1665,30 @@ def wejscie():
         elif not request.form.get("rodo"):
             err = "Potwierdź zapoznanie się z informacją o przetwarzaniu danych."
         else:
-            zapisz_goscia(*pola)
+            gid = zapisz_goscia(*pola)
             visitor_notify.powiadom_o_gosciu(*pola)
             session.permanent = True
             session["gosc_ts"] = time_module.time()
+            session["gosc_id"] = gid   # podpisane ciasteczko sesji — id wpisu do liczenia aktywności
             return redirect(nast)
     return render_template("wejscie.html", error=err, next=nast, form=request.form), (400 if err else 200)
+
+NIELICZONE_ENDPOINTY = {"wejscie", "adm_goscie", "adm_goscie_csv", "static"}
+
+@app.after_request
+def licz_aktywnosc_goscia(resp):
+    """Udane GET strony HTML od gościa z ważną flagą z id → +1 ekran. Błąd tylko w logu, odpowiedź bez zmian.
+
+    Przekierowania (3xx) nie są liczone — to nie obejrzany ekran, a liczyłyby wejście podwójnie."""
+    try:
+        if (VISITOR_GATE and request.method == "GET" and 200 <= resp.status_code < 300
+                and resp.mimetype == "text/html" and request.endpoint not in NIELICZONE_ENDPOINTY
+                and visitor_activity.liczona_sciezka(request.path)
+                and session.get("gosc_id") and _gosc_wpuszczony()):
+            zarejestruj_aktywnosc(str(session["gosc_id"]), request.path)
+    except Exception as e:  # noqa: BLE001 — statystyka nie może zepsuć strony
+        log.warning("Nie udało się zapisać aktywności gościa: %s", e)
+    return resp
 
 def _dostep_do_goscow():
     """None = dostęp; inaczej odpowiedź odmowna. Token VISITORS_TOKEN (?token=) działa także dla konta demo."""
@@ -1654,15 +1702,19 @@ def _dostep_do_goscow():
 @app.route("/admin/goscie")
 def adm_goscie():
     if (odmowa := _dostep_do_goscow()) is not None: return odmowa
-    return render_template("goscie.html", goscie=list(reversed(read_goscie())), dni=GOSCIE_RETENTION_DAYS)
+    return render_template("goscie.html", goscie=list(reversed(_goscie_z_aktywnoscia())), dni=GOSCIE_RETENTION_DAYS)
+
+def _goscie_z_aktywnoscia():
+    return [{**r, "ekrany": r.get("page_views") or "0", "czas": visitor_activity.czas_wizyty(r),
+             "najczesciej": visitor_activity.najczesciej(r)} for r in read_goscie()]
 
 @app.route("/admin/goscie.csv")
 def adm_goscie_csv():
     if (odmowa := _dostep_do_goscow()) is not None: return odmowa
     out = StringIO()
-    w = csv.DictWriter(out, fieldnames=GOSCIE_HEADERS, delimiter=";", extrasaction="ignore")
+    w = csv.DictWriter(out, fieldnames=GOSCIE_CSV_HEADERS, delimiter=";", extrasaction="ignore")
     w.writeheader()
-    w.writerows({k: _csv_safe(v) for k, v in r.items()} for r in read_goscie())
+    w.writerows({k: _csv_safe(v) for k, v in r.items()} for r in _goscie_z_aktywnoscia())
     buf = BytesIO(out.getvalue().encode("utf-8-sig"))
     return send_file(buf, as_attachment=True, download_name="goscie.csv", mimetype="text/csv")
 

@@ -7,7 +7,7 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f1923; color: #e8edf3; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-.card { background: #1a2535; border: 1px solid #2d3f56; border-radius: 14px; padding: 40px 36px; width: 100%; max-width: 760px; box-shadow: 0 8px 40px rgba(0,0,0,.5); }
+.card { background: #1a2535; border: 1px solid #2d3f56; border-radius: 14px; padding: 40px 36px; width: 100%; max-width: 960px; box-shadow: 0 8px 40px rgba(0,0,0,.5); }
 .logo { font-size: 2rem; margin-bottom: 6px; }
 h1 { font-size: 1.1rem; font-weight: 700; }
 .sub { font-size: .8rem; color: #7a90a8; margin-bottom: 28px; }
@@ -29,9 +29,9 @@ th { color: #7a90a8; font-weight: 600; }
   <p class="sub">Dane przechowywane {{ dni }} dni, potem usuwane automatycznie. Wpisów: {{ goscie|length }}.</p>
   <a class="btn" href="/admin/goscie.csv">⬇ CSV</a>
   <table>
-    <tr><th>Data</th><th>Imię</th><th>Nazwisko</th><th>Firma</th></tr>
-    {% for g in goscie %}<tr><td>{{ g.created_at }}</td><td>{{ g.imie }}</td><td>{{ g.nazwisko }}</td><td>{{ g.firma }}</td></tr>
-    {% else %}<tr><td colspan="4">Brak wpisów.</td></tr>{% endfor %}
+    <tr><th>Data</th><th>Imię</th><th>Nazwisko</th><th>Firma</th><th>Ekrany</th><th>Czas</th><th>Najczęściej</th></tr>
+    {% for g in goscie %}<tr><td>{{ g.created_at }}</td><td>{{ g.imie }}</td><td>{{ g.nazwisko }}</td><td>{{ g.firma }}</td><td>{{ g.ekrany }}</td><td>{{ g.czas }}</td><td>{{ g.najczesciej or "—" }}</td></tr>
+    {% else %}<tr><td colspan="7">Brak wpisów.</td></tr>{% endfor %}
   </table>
   <a href="/admin" class="back">← Panel</a>
 </div>
