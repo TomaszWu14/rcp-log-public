@@ -33,6 +33,12 @@ class BramkaGosci(unittest.TestCase):
         self.assertFalse(self.A.VISITOR_GATE)
         self.assertEqual(self.c.get("/").status_code, 200)
 
+    def test_klauzula_nie_ujawnia_adresu_botom(self):
+        self.A.VISITOR_GATE = True
+        html = self.c.get("/wejscie").get_data(as_text=True)
+        self.assertNotIn("tomasz.wierzbowski" + "@op.pl", html)
+        self.assertIn("tomasz.wierzbowski [at] op.pl", html)
+
     def test_bez_danych_odmowa_i_przekierowanie_do_formularza(self):
         self.A.VISITOR_GATE = True
         for url in ("/", "/admin"):
