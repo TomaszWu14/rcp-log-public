@@ -22,6 +22,8 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 from werkzeug.security import check_password_hash, generate_password_hash
 
+import visitor_notify
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("rcp")   # błędy w tle i odczytach trafiają tu, nie w `except: pass` (US-010)
 
@@ -1634,6 +1636,7 @@ def wejscie():
             err = "Potwierdź zapoznanie się z informacją o przetwarzaniu danych."
         else:
             zapisz_goscia(*pola)
+            visitor_notify.powiadom_o_gosciu(*pola)
             session.permanent = True
             session["gosc_ts"] = time_module.time()
             return redirect(nast)

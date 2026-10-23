@@ -42,7 +42,7 @@ jobs:
           cache: pip
       - run: pip install -r requirements-dev.txt
       - name: SAST (bandit) — blokuje ustalenia o wadze średniej i wyższej
-        run: bandit -c pyproject.toml -r app.py run.py demo_data.py tools --severity-level medium
+        run: bandit -c pyproject.toml -r app.py run.py demo_data.py visitor_notify.py tools --severity-level medium
       - name: SCA (pip-audit) — zależności obrazu i narzędzi CI
         run: |
           pip-audit -r requirements.txt
@@ -84,7 +84,7 @@ jobs:
       - name: SAST (semgrep p/owasp-top-ten) — znalezisko blokuje
         run: >-
           semgrep scan --config p/owasp-top-ten --metrics off --error --text
-          app.py run.py demo_data.py tools templates
+          app.py run.py demo_data.py visitor_notify.py tools templates
 
   image:
     runs-on: ubuntu-latest
