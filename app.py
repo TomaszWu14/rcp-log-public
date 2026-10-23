@@ -12,7 +12,7 @@ import threading
 import time as time_module
 from contextlib import suppress
 from datetime import date, datetime, timedelta
-from io import BytesIO
+from io import BytesIO, StringIO
 from pathlib import Path
 
 import openpyxl
@@ -454,7 +454,7 @@ def csrf_token():
 app.jinja_env.globals["csrf_token"] = csrf_token
 
 # Formularze HTML i multipart z panelu; JSON API chroni SameSite=Lax i wymóg Content-Type: application/json
-CSRF_FORMS = {"admin_login", "admin_haslo", "adm_grafik_import"}
+CSRF_FORMS = {"admin_login", "admin_haslo", "adm_grafik_import", "wejscie"}
 
 @app.before_request
 def sprawdz_csrf():
@@ -1131,7 +1131,7 @@ def adm_korekta_wpisy(kid):
 @app.route("/admin/api/korekty/<int:kid>/nanies", methods=["POST"])
 def adm_korekta_nanies(kid):
     """Zmienia wybrany wpis w pliku dziennym i miesięcznym; korekta musi być zatwierdzona albo oczekiwać
-    (wtedy zostaje zatwierdzona). Ślad: korekta_info = KOREKTA#<nr>, wpis w audycie ze starą i nową wartością."""
+    (wtedy zostaja zatwierdzona). Ślad: korekta_info = KOREKTA#<nr>, wpis w audycie ze starą i nową wartością."""
     if not is_admin(): return jsonify({"error":"Brak dostępu"}), 401
     d = request.json or {}
     try:
@@ -1554,6 +1554,110 @@ def adm_grafik_porownanie():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# BRAMKA GOŚCI DEMO (DEMO_VISITOR_GATE)
+# ══════════════════════════════════════════════════════════════════════════════
+# Miękka kontrola odwiedzin: pierwsza wizyta na stronach HTML (skaner, panel) wymaga przedstawienia się.
+# /api/*, pliki statyczne i /login nie są blokowane. Domyślnie włączona tylko w trybie demo.
+VISITOR_GATE = os.environ.get("DEMO_VISITOR_GATE", "1" if DEMO else "0").lower() in ("1", "true", "yes", "on")
+GOSCIE_FILE = DATA_DIR / "goscie.csv"
+GOSCIE_HEADERS = ["created_at", "imie", "nazwisko", "firma"]   # bez IP i user-agenta (minimalizacja danych)
+GOSCIE_RETENTION_DAYS, GOSCIE_SESSION_DAYS = 90, 30
+GATED_ENDPOINTS = {"index", "admin_panel", "admin_login"}
+
+def _pole_goscia(v):
+    """Pole formularza: tekst 2–100 znaków po przycięciu, bez znaków sterujących; inaczej None."""
+    v = _txt(v)
+    if not 2 <= len(v) <= 100 or any(ord(ch) < 32 or 0x7f <= ord(ch) < 0xa0 for ch in v):
+        return None
+    return v
+
+def _bezpieczny_next(v):
+    """Tylko ścieżka względna w tej aplikacji (bez //host, bez backslasha i znaków sterujących) — inaczej strona główna."""
+    if (isinstance(v, str) and v.startswith("/") and not v.startswith("//") and "\\" not in v
+            and all(ord(ch) >= 32 and ord(ch) != 127 for ch in v)):
+        return v
+    return "/"
+
+def read_goscie():
+    return read_csv_rows(GOSCIE_FILE)
+
+def zapisz_goscia(imie, nazwisko, firma, now=None):
+    """Dopisuje gościa i usuwa wpisy starsze niż 90 dni; zapis atomowy pod blokadą jak inne pliki."""
+    now = now or datetime.now()
+    granica = now - timedelta(days=GOSCIE_RETENTION_DAYS)
+    with _lock:
+        zostaja = []
+        for r in read_goscie():
+            try:
+                if datetime.fromisoformat(r.get("created_at", "")) >= granica: zostaja.append(r)
+            except ValueError: pass   # uszkodzony znacznik czasu = wpis do usunięcia
+        zostaja.append({"created_at": now.isoformat(timespec="seconds"), "imie": _csv_safe(imie),
+                        "nazwisko": _csv_safe(nazwisko), "firma": _csv_safe(firma)})
+        tmp = Path(str(GOSCIE_FILE) + ".tmp")
+        try:
+            with open(tmp, "w", newline="", encoding="utf-8-sig") as f:
+                w = csv.DictWriter(f, fieldnames=GOSCIE_HEADERS, delimiter=";", extrasaction="ignore")
+                w.writeheader()
+                w.writerows(zostaja)
+            os.replace(tmp, GOSCIE_FILE)
+        except BaseException:
+            tmp.unlink(missing_ok=True)
+            raise
+
+def _gosc_wpuszczony():
+    try:
+        return time_module.time() - float(session.get("gosc_ts", 0)) < GOSCIE_SESSION_DAYS * 86400
+    except (TypeError, ValueError):
+        return False
+
+@app.before_request
+def bramka_gosci():
+    if not VISITOR_GATE or request.method not in ("GET", "HEAD") or request.endpoint not in GATED_ENDPOINTS:
+        return
+    if _gosc_wpuszczony() or (is_admin() and not DEMO):   # w demo każdy jest "adminem", więc nie zwalnia z bramki
+        return
+    return redirect(url_for("wejscie", next=request.full_path.rstrip("?")))
+
+@app.route("/wejscie", methods=["GET", "POST"])
+def wejscie():
+    nast, err = _bezpieczny_next(request.values.get("next")), None
+    if not VISITOR_GATE:
+        return redirect(nast)
+    if request.method == "POST":
+        pola = [_pole_goscia(request.form.get(k)) for k in ("imie", "nazwisko", "firma")]
+        if request.form.get("www"):   # pułapka na boty (honeypot) — człowiek tego pola nie widzi
+            return "Odrzucono.", 400
+        if None in pola:
+            err = "Uzupełnij imię, nazwisko i firmę (2–100 znaków, bez znaków sterujących)."
+        elif not request.form.get("rodo"):
+            err = "Potwierdź zapoznanie się z informacją o przetwarzaniu danych."
+        else:
+            zapisz_goscia(*pola)
+            session.permanent = True
+            session["gosc_ts"] = time_module.time()
+            return redirect(nast)
+    return render_template("wejscie.html", error=err, next=nast, form=request.form), (400 if err else 200)
+
+def _widzi_goscow():
+    # W demo każdy odwiedzający jest automatycznie "adminem demo" — listy gości (dane osobowe) nie pokazujemy mu
+    return is_admin() and not (DEMO and session.get("admin_user") == "demo")
+
+@app.route("/admin/goscie")
+def adm_goscie():
+    if not _widzi_goscow(): return redirect(url_for("admin_login"))
+    return render_template("goscie.html", goscie=list(reversed(read_goscie())), dni=GOSCIE_RETENTION_DAYS)
+
+@app.route("/admin/goscie.csv")
+def adm_goscie_csv():
+    if not _widzi_goscow(): return redirect(url_for("admin_login"))
+    out = StringIO()
+    w = csv.DictWriter(out, fieldnames=GOSCIE_HEADERS, delimiter=";", extrasaction="ignore")
+    w.writeheader()
+    w.writerows({k: _csv_safe(v) for k, v in r.items()} for r in read_goscie())
+    buf = BytesIO(out.getvalue().encode("utf-8-sig"))
+    return send_file(buf, as_attachment=True, download_name="goscie.csv", mimetype="text/csv")
+
+# ══════════════════════════════════════════════════════════════════════════════
 # DEMO (RCP_DEMO=1)
 # ══════════════════════════════════════════════════════════════════════════════
 # Logowanie automatyczne, fikcyjne dane z demo_data.py odtwarzane co RCP_DEMO_RESET_MIN minut,
@@ -1574,7 +1678,7 @@ def demo_reset():
     import demo_data
     with _lock:
         for f in list(DATA_DIR.glob("*.csv")) + list(DATA_DIR.glob("*.json")):
-            f.unlink()
+            if f != GOSCIE_FILE: f.unlink()   # lista gości przeżywa reset danych demo (retencja 90 dni)
         save_strefy(DEFAULT_STREFY)
         save_config(DEFAULT_CONFIG)
         save_admins({"demo": {"hash": hash_pw(secrets.token_hex(16)), "must_change": False}})

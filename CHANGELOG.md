@@ -4,6 +4,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie 
 
 ## [Unreleased]
 
+### Added
+- Bramka gości wersji demonstracyjnej (`DEMO_VISITOR_GATE`, domyślnie włączona w trybie demo): pierwsza wizyta na stronie
+  skanera i w panelu `/admin` wymaga podania imienia, nazwiska i firmy oraz zgody na informację RODO (honeypot, CSRF,
+  bezpieczny `next`). `/api/*`, pliki statyczne i `/login` nie są blokowane. Dane w `goscie.csv` (bez IP i user-agenta),
+  usuwane po 90 dniach przy zapisie; flaga sesji ważna 30 dni. Lista gości i eksport CSV: `/admin/goscie`
+  (niedostępna dla automatycznie zalogowanego gościa demo).
+
 ### Fixed
 - Publiczne `/api/scan`, `/api/rejestruj`, `/api/korekta` zwracały 500 na JSON nie będący obiektem lub z polami nie-tekstowymi; teraz 400/403.
 

@@ -214,6 +214,7 @@ docker run --rm -p 5050:5050 -e RCP_DEMO=1 rcp-log
 | Zmienna | Znaczenie |
 |---|---|
 | `RCP_DEMO` | `1` włącza tryb demo |
+| `DEMO_VISITOR_GATE` | `1`/`0` — bramka „przedstaw się” przed skanerem i panelem; domyślnie włączona w trybie demo, poza nim wyłączona; lista gości: `/admin/goscie` |
 | `RCP_DEMO_RESET_MIN` | co ile minut odtworzyć dane demo (domyślnie 30) |
 | `RCP_SECRET_KEY` | klucz podpisu sesji, co najmniej 32 znaki; **wymagany** poza trybem demo (bez niego aplikacja nie startuje) |
 | `RCP_ADMIN_PASSWORD` | hasło startowe konta `admin` przy pierwszym starcie; bez niej hasło jest losowane i wypisane raz w konsoli; w obu wypadkach zmiana wymuszona przy pierwszym logowaniu |
