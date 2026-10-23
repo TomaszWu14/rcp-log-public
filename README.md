@@ -9,6 +9,8 @@
 Rejestracja czasu pracy w strefach magazynu jednym skanem kodu QR — dla pracowników zmiany
 i administratora, który do tej pory liczył ten czas ręcznie w Excelu.
 
+**▶ Zobacz demo: https://rcp.log.twapp.pl** (przy wejściu demo poprosi o imię, nazwisko i firmę)
+
 ![demo](docs/screenshots/demo.gif)
 
 📹 **Film (1:46, bez dźwięku, z napisami):** [docs/media/rcp-log-prezentacja.mp4](docs/media/rcp-log-prezentacja.mp4)
@@ -27,7 +29,7 @@ widzi obsadę na żywo, alert przekroczonej przerwy, korekty i porównanie grafi
 | 1:19 | grafik z Excela porównany z pierwszym skanem dnia |
 | 1:29 | zakres projektu i linki |
 
-**Demo bez logowania:** [rcp.log.twapp.pl](https://rcp.log.twapp.pl) — dane fikcyjne, odtwarzane co 30 min. Lokalnie: [tryb demo](#tryb-demo).
+**Demo bez logowania** (przy wejściu poprosi o imię, nazwisko i firmę): [rcp.log.twapp.pl](https://rcp.log.twapp.pl) — dane fikcyjne, odtwarzane co 30 min. Lokalnie: [tryb demo](#tryb-demo).
 
 🇬🇧 **English:** [README.en.md](README.en.md)
 
