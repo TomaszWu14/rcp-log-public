@@ -2,6 +2,7 @@
 RCP Log v3
 """
 import csv
+import hmac
 import json
 import logging
 import os
@@ -1638,18 +1639,23 @@ def wejscie():
             return redirect(nast)
     return render_template("wejscie.html", error=err, next=nast, form=request.form), (400 if err else 200)
 
-def _widzi_goscow():
-    # W demo każdy odwiedzający jest automatycznie "adminem demo" — listy gości (dane osobowe) nie pokazujemy mu
-    return is_admin() and not (DEMO and session.get("admin_user") == "demo")
+def _dostep_do_goscow():
+    """None = dostęp; inaczej odpowiedź odmowna. Token VISITORS_TOKEN (?token=) działa także dla konta demo."""
+    oczekiwany, podany = os.environ.get("VISITORS_TOKEN", ""), request.args.get("token", "")
+    if oczekiwany and hmac.compare_digest(podany.encode(), oczekiwany.encode()):
+        return None
+    if DEMO and session.get("admin_user") == "demo":   # w demo każdy jest "adminem demo" — bez tokenu listy nie ma
+        return "Nie znaleziono.", 404
+    return None if is_admin() else redirect(url_for("admin_login"))
 
 @app.route("/admin/goscie")
 def adm_goscie():
-    if not _widzi_goscow(): return redirect(url_for("admin_login"))
+    if (odmowa := _dostep_do_goscow()) is not None: return odmowa
     return render_template("goscie.html", goscie=list(reversed(read_goscie())), dni=GOSCIE_RETENTION_DAYS)
 
 @app.route("/admin/goscie.csv")
 def adm_goscie_csv():
-    if not _widzi_goscow(): return redirect(url_for("admin_login"))
+    if (odmowa := _dostep_do_goscow()) is not None: return odmowa
     out = StringIO()
     w = csv.DictWriter(out, fieldnames=GOSCIE_HEADERS, delimiter=";", extrasaction="ignore")
     w.writeheader()

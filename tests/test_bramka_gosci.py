@@ -101,12 +101,21 @@ class BramkaGosci(unittest.TestCase):
         csv_ = self.c.get("/admin/goscie.csv").get_data(as_text=True)
         self.assertIn("'=Acme", csv_)
 
-    def test_demo_nie_pokazuje_listy_gosci_odwiedzajacemu(self):
+    def test_demo_lista_gosci_tylko_z_tokenem(self):
         self.A.zapisz_goscia("Anna", "Nowak", "Acme", datetime.now())
         self.A.DEMO = True
         with self.c.session_transaction() as s:
             s["admin_logged"], s["admin_user"] = True, "demo"
-        self.assertEqual(self.c.get("/admin/goscie").status_code, 302)
+        for url in ("/admin/goscie", "/admin/goscie.csv", "/admin/goscie?token=x"):   # brak zmiennej env
+            self.assertEqual(self.c.get(url).status_code, 404, url)
+        os.environ["VISITORS_TOKEN"] = "tajny-token"
+        try:
+            for url in ("/admin/goscie", "/admin/goscie?token=zly", "/admin/goscie.csv?token="):
+                self.assertEqual(self.c.get(url).status_code, 404, url)
+            self.assertIn("Nowak", self.c.get("/admin/goscie?token=tajny-token").get_data(as_text=True))
+            self.assertIn("Nowak", self.c.get("/admin/goscie.csv?token=tajny-token").get_data(as_text=True))
+        finally:
+            os.environ.pop("VISITORS_TOKEN", None)
 
 
 if __name__ == "__main__":
