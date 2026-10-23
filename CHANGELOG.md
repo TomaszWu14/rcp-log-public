@@ -27,6 +27,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie 
 - Publiczne `/api/scan`, `/api/rejestruj`, `/api/korekta` zwracały 500 na JSON nie będący obiektem lub z polami nie-tekstowymi; teraz 400/403.
 
 ### Security
+- Adres kontaktowy w klauzuli RODO bramki gości zapisany jako `tomasz.wierzbowski [at] op.pl` (bez `@`), by nie trafiał do botów zbierających adresy.
 - Limit żądań publicznych `/api/scan`, `/api/rejestruj`, `/api/korekta` (kod pracownika to jedyne uwierzytelnienie):
   20 nieznanych kodów / 10 min i 120 żądań / min z adresu → 429 (adres wg `RCP_PROXY` jak przy logowaniu);
   po przekroczeniu limitu nie jest już zapisywany alert `NIEZNANY_KOD`, więc nie da się zalać listy alertów.
