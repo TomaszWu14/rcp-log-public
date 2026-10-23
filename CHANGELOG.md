@@ -4,6 +4,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie 
 
 ## [Unreleased]
 
+### Fixed
+- Publiczne `/api/scan`, `/api/rejestruj`, `/api/korekta` zwracały 500 na JSON nie będący obiektem lub z polami nie-tekstowymi; teraz 400/403.
+
 ### Security
 - Obraz Dockera bez `pip` po instalacji zależności — jego dołączone biblioteki (urllib3, certifi, msgpack,
   setuptools) Trivy zgłaszał jako HIGH/CRITICAL i blokowały job `image` (m.in. Dependabot #34, Python 3.14).
