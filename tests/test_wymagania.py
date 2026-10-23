@@ -45,6 +45,13 @@ class Wymagania(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
 
+    def test_publiczne_api_zle_json_nie_daje_500(self):
+        """Lista/null/liczba zamiast obiektu JSON albo pole nie-tekstowe -> 400/403, nigdy 500."""
+        for url in ("/api/scan", "/api/rejestruj", "/api/korekta"):
+            for body in ([], None, 5, {"kod": None, "pracownik": None, "strefa": 7}, {"kod": 1, "pracownik": ["x"]}):
+                r = self.c.post(url, json=body)
+                self.assertIn(r.status_code, (400, 403), (url, body, r.status_code))
+
     def csrf(self):
         """Token CSRF z formularza logowania (ustawia też ciasteczko sesji)."""
         html = self.c.get("/admin/login").get_data(as_text=True)

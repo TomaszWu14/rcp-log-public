@@ -407,6 +407,14 @@ def _login_failed(ip):
     now = time_module.time()
     _login_fail[ip] = [t for t in _login_fail.get(ip, []) if now - t < LOGIN_WINDOW_MIN * 60] + [now]
 
+def _body():
+    """Treść JSON jako słownik; lista, liczba lub null dają {} (publiczne endpointy nie mogą kończyć się 500)."""
+    d = request.get_json(silent=True)
+    return d if isinstance(d, dict) else {}
+
+def _txt(v):
+    return v.strip() if isinstance(v, str) else ""
+
 def csrf_token():
     if "csrf" not in session:
         session["csrf"] = secrets.token_hex(16)
@@ -673,7 +681,7 @@ def index():
 
 @app.route("/api/scan", methods=["POST"])
 def api_scan():
-    kod = (request.json or {}).get("kod","").strip().upper()
+    kod = _txt(_body().get("kod")).upper()
     if not kod:
         return jsonify({"ok":False,"error":"Pusty kod QR"}), 400
 
@@ -723,10 +731,10 @@ def api_scan():
 
 @app.route("/api/rejestruj", methods=["POST"])
 def api_rejestruj():
-    d         = request.json or {}
-    kod       = d.get("pracownik","").strip().upper()
-    nowa_str  = (d.get("strefa") or "").strip().upper()
-    podstrefa = (d.get("podstrefa") or "").strip().upper()
+    d         = _body()
+    kod       = _txt(d.get("pracownik")).upper()
+    nowa_str  = _txt(d.get("strefa")).upper()
+    podstrefa = _txt(d.get("podstrefa")).upper()
     korekta   = d.get("korekta_info","")
     force     = d.get("force", False)
 
@@ -828,8 +836,8 @@ def api_new_alerts():
 # Korekta zgłoszenie od pracownika (po skanie)
 @app.route("/api/korekta", methods=["POST"])
 def api_korekta():
-    d   = request.json or {}
-    kod = d.get("pracownik","").strip().upper()
+    d   = _body()
+    kod = _txt(d.get("pracownik")).upper()
     workers = load_workers()
     if kod not in workers:
         return jsonify({"ok":False,"error":"Nieznany pracownik"}), 403
