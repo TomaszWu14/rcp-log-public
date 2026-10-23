@@ -52,6 +52,29 @@ class Wymagania(unittest.TestCase):
                 r = self.c.post(url, json=body)
                 self.assertIn(r.status_code, (400, 403), (url, body, r.status_code))
 
+    def test_limit_zadan_skanera_i_brak_zalewu_alertow(self):
+        """Nieznane kody ponad limit -> 429 i bez nowych NIEZNANY_KOD; poprawny kod i inny adres nadal działają."""
+        A = self.A
+        kod = next(iter(A.load_workers()))
+        alerty = lambda: sum(1 for a in A.read_alerts(1000) if a.get("typ") == "NIEZNANY_KOD")
+        for i in range(A.SCAN_FAIL_MAX):
+            self.assertEqual(self.c.post("/api/scan", json={"kod": f"HU_ZLY{i}"}).status_code, 403)
+        przed = alerty()
+        self.assertEqual(przed, A.SCAN_FAIL_MAX)
+        for url, body in (("/api/scan", {"kod": "HU_ZLY"}), ("/api/rejestruj", {"pracownik": kod, "strefa": "X"}),
+                          ("/api/korekta", {"pracownik": kod})):
+            self.assertEqual(self.c.post(url, json=body).status_code, 429, url)
+        self.assertEqual(alerty(), przed)
+        inny = self.c.post("/api/scan", json={"kod": kod}, environ_overrides={"REMOTE_ADDR": "10.9.9.9"})
+        self.assertEqual(inny.status_code, 200)
+
+    def test_limit_ogolny_skanera(self):
+        A = self.A
+        kod = next(iter(A.load_workers()))
+        A.SCAN_RATE_MAX = 5
+        kody = [self.c.post("/api/korekta", json={"pracownik": kod}).status_code for _ in range(7)]
+        self.assertEqual(kody, [200] * 5 + [429] * 2)
+
     def csrf(self):
         """Token CSRF z formularza logowania (ustawia też ciasteczko sesji)."""
         html = self.c.get("/admin/login").get_data(as_text=True)
