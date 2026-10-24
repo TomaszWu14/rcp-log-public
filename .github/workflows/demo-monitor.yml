@@ -1,7 +1,9 @@
 name: Monitor demo
 
-# Co 6 h sprawdza publiczne demo (rcp.log.twapp.pl) tak, jak widzi je rekruter: strona skanera
-# i panel administratora (w trybie demo /admin/login przekierowuje do panelu bez logowania).
+# Co 6 h sprawdza publiczne demo (rcp.log.twapp.pl) tak, jak widzi je rekruter. Bramka gości
+# (GATED_ENDPOINTS: /, /admin, /admin/login) bez sesji przekierowuje na /wejscie, więc monitor
+# sprawdza właśnie /wejscie (tytuł „RCP Log — Demo”), a / i /admin/login tylko po statusie 200
+# po przekierowaniach (bez sprawdzania treści).
 # Aplikacja nie ma osobnego /health — healthcheck obrazu też sprawdza `/` (Dockerfile).
 # Awaria → issue „Demo nie odpowiada” z etykietą `demo` (jedno, kolejne awarie jako komentarze);
 # powrót do normy → issue zamknięte.
@@ -36,17 +38,18 @@ jobs:
           problems=()
           # status HTTP po przekierowaniach + treść strony; ponowienia na błędach sieci i 5xx
           check() {
-            local path="$1" expect="$2" code
+            local path="$1" expect="${2:-}" code
             code=$(curl -sS -L -o page.html -w '%{http_code}' --max-time 30 \
               --retry 3 --retry-delay 20 --retry-all-errors "$DEMO_URL$path") || code="${code:-000}"
             if [ "$code" != 200 ]; then
               problems+=("$path → HTTP $code")
-            elif ! grep -q "$expect" page.html; then
+            elif [ -n "$expect" ] && ! grep -q "$expect" page.html; then
               problems+=("$path → 200, ale brak „$expect” w treści")
             fi
           }
-          check / '<title>RCP Log</title>'
-          check /admin/login 'RCP Log — Admin'
+          check /wejscie 'RCP Log — Demo'
+          check /
+          check /admin/login
 
           if [ ${#problems[@]} -eq 0 ]; then
             echo "Demo działa ($DEMO_URL)." | tee -a "$GITHUB_STEP_SUMMARY"
