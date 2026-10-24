@@ -5,6 +5,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie 
 ## [Unreleased]
 
 ### Added
+- Monitor demo (`demo-monitor.yml`): push ntfy przy otwarciu zgłoszenia „Demo nie odpowiada” i po powrocie do normy (opcjonalny sekret `NTFY_URL`).
 - Bramka gości wersji demonstracyjnej (`DEMO_VISITOR_GATE`, domyślnie włączona w trybie demo): pierwsza wizyta na stronie
   skanera i w panelu `/admin` wymaga podania imienia, nazwiska i firmy oraz zgody na informację RODO (honeypot, CSRF,
   bezpieczny `next`). `/api/*`, pliki statyczne i `/login` nie są blokowane. Dane w `goscie.csv` (bez IP i user-agenta),
