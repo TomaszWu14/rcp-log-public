@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RCP Log — Goście</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f1923; color: #e8edf3; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+.card { background: #1a2535; border: 1px solid #2d3f56; border-radius: 14px; padding: 40px 36px; width: 100%; max-width: 960px; box-shadow: 0 8px 40px rgba(0,0,0,.5); }
+.logo { font-size: 2rem; margin-bottom: 6px; }
+h1 { font-size: 1.1rem; font-weight: 700; }
+.sub { font-size: .8rem; color: #7a90a8; margin-bottom: 28px; }
+label { display: block; font-size: .75rem; color: #7a90a8; margin-bottom: 5px; }
+input { width: 100%; padding: 11px 14px; background: #212f42; border: 1.5px solid #2d3f56; border-radius: 8px; color: #e8edf3; font-size: .9rem; outline: none; margin-bottom: 16px; }
+input:focus { border-color: #185FA5; }
+button[type=submit] { width: 100%; padding: 12px; background: #185FA5; border: none; border-radius: 8px; color: #fff; font-size: .95rem; font-weight: 700; cursor: pointer; }
+.error { background: rgba(192,57,43,.15); border: 1px solid rgba(192,57,43,.4); color: #e88; padding: 9px 12px; border-radius: 6px; font-size: .8rem; margin-bottom: 16px; }
+.back { display: block; text-align: center; margin-top: 14px; font-size: .78rem; color: #7a90a8; text-decoration: none; }
+table { width: 100%; border-collapse: collapse; font-size: .85rem; margin: 12px 0; }
+th, td { text-align: left; padding: 8px; border-bottom: 1px solid #2d3f56; }
+th { color: #7a90a8; font-weight: 600; }
+.btn { display: inline-block; padding: 8px 14px; background: #185FA5; color: #fff; border-radius: 8px; text-decoration: none; font-size: .85rem; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Goście wersji demonstracyjnej</h1>
+  <p class="sub">Dane przechowywane {{ dni }} dni, potem usuwane automatycznie. Wpisów: {{ goscie|length }}.</p>
+  <a class="btn" href="/admin/goscie.csv">⬇ CSV</a>
+  <table>
+    <tr><th>Data</th><th>Imię</th><th>Nazwisko</th><th>Firma</th><th>Ekrany</th><th>Czas</th><th>Najczęściej</th></tr>
+    {% for g in goscie %}<tr><td>{{ g.created_at }}</td><td>{{ g.imie }}</td><td>{{ g.nazwisko }}</td><td>{{ g.firma }}</td><td>{{ g.ekrany }}</td><td>{{ g.czas }}</td><td>{{ g.najczesciej or "—" }}</td></tr>
+    {% else %}<tr><td colspan="7">Brak wpisów.</td></tr>{% endfor %}
+  </table>
+  <a href="/admin" class="back">← Panel</a>
+</div>
+<img src="https://portfolio.twapp.pl/px/rcp-log" alt="" width="1" height="1" hidden>
+</body>
+</html>

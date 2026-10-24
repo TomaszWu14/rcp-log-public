@@ -25,8 +25,12 @@ NOWE_HASLO = "Nowe-haslo-testowe-1"
 
 
 def load_app():
+    if str(REPO) not in sys.path:   # moduły obok app.py (np. visitor_notify) importowane z katalogu repo
+        sys.path.insert(0, str(REPO))
     tmp = Path(tempfile.mkdtemp())
     shutil.copy(REPO / "app.py", tmp / "app.py")
+    shutil.copy(REPO / "visitor_notify.py", tmp / "visitor_notify.py")
+    shutil.copy(REPO / "visitor_activity.py", tmp / "visitor_activity.py")
     shutil.copytree(REPO / "templates", tmp / "templates")
     spec = importlib.util.spec_from_file_location(f"rcp_{tmp.name}", tmp / "app.py")
     mod = importlib.util.module_from_spec(spec)
@@ -44,6 +48,36 @@ class Wymagania(unittest.TestCase):
 
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_publiczne_api_zle_json_nie_daje_500(self):
+        """Lista/null/liczba zamiast obiektu JSON albo pole nie-tekstowe -> 400/403, nigdy 500."""
+        for url in ("/api/scan", "/api/rejestruj", "/api/korekta"):
+            for body in ([], None, 5, {"kod": None, "pracownik": None, "strefa": 7}, {"kod": 1, "pracownik": ["x"]}):
+                r = self.c.post(url, json=body)
+                self.assertIn(r.status_code, (400, 403), (url, body, r.status_code))
+
+    def test_limit_zadan_skanera_i_brak_zalewu_alertow(self):
+        """Nieznane kody ponad limit -> 429 i bez nowych NIEZNANY_KOD; poprawny kod i inny adres nadal działają."""
+        A = self.A
+        kod = next(iter(A.load_workers()))
+        alerty = lambda: sum(1 for a in A.read_alerts(1000) if a.get("typ") == "NIEZNANY_KOD")
+        for i in range(A.SCAN_FAIL_MAX):
+            self.assertEqual(self.c.post("/api/scan", json={"kod": f"HU_ZLY{i}"}).status_code, 403)
+        przed = alerty()
+        self.assertEqual(przed, A.SCAN_FAIL_MAX)
+        for url, body in (("/api/scan", {"kod": "HU_ZLY"}), ("/api/rejestruj", {"pracownik": kod, "strefa": "X"}),
+                          ("/api/korekta", {"pracownik": kod})):
+            self.assertEqual(self.c.post(url, json=body).status_code, 429, url)
+        self.assertEqual(alerty(), przed)
+        inny = self.c.post("/api/scan", json={"kod": kod}, environ_overrides={"REMOTE_ADDR": "10.9.9.9"})
+        self.assertEqual(inny.status_code, 200)
+
+    def test_limit_ogolny_skanera(self):
+        A = self.A
+        kod = next(iter(A.load_workers()))
+        A.SCAN_RATE_MAX = 5
+        kody = [self.c.post("/api/korekta", json={"pracownik": kod}).status_code for _ in range(7)]
+        self.assertEqual(kody, [200] * 5 + [429] * 2)
 
     def csrf(self):
         """Token CSRF z formularza logowania (ustawia też ciasteczko sesji)."""
@@ -328,6 +362,19 @@ class Wymagania(unittest.TestCase):
         self.assertEqual(api["Content-Type"], "application/json")
         self.assertEqual(api["Cache-Control"], "no-store")
         self.assertEqual(api["Cross-Origin-Opener-Policy"], "same-origin")
+
+    def test_piksel_statystyk_portfolio_na_kazdym_ekranie(self):
+        """Piksel portfolio.twapp.pl obecny na każdym ekranie (w tym logowanie/start) i dopuszczony w CSP."""
+        piksel = '<img src="https://portfolio.twapp.pl/px/rcp-log" alt="" width="1" height="1" hidden>'
+        self.assertIn("https://portfolio.twapp.pl", self.c.get("/").headers["Content-Security-Policy"])
+        self.assertIn(piksel, self.c.get("/").get_data(as_text=True))
+        self.assertIn(piksel, self.c.get("/admin/login").get_data(as_text=True))
+        self.A.VISITOR_GATE = True
+        self.assertIn(piksel, self.c.get("/wejscie").get_data(as_text=True))
+        self.A.VISITOR_GATE = False
+        self.login()
+        self.assertIn(piksel, self.c.get("/admin").get_data(as_text=True))
+        self.assertIn(piksel, self.c.get("/admin/haslo").get_data(as_text=True))
 
     def test_GRF_05_import_odrzuca_zly_plik_i_za_duzy(self):
         self.login()

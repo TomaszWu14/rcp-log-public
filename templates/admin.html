@@ -176,6 +176,7 @@ select option{background:var(--card2);}
     <a href="/admin/export/miesiac" class="btn btn-grey">⬇ CSV mies.</a>
     <a href="/admin/export/alerty"  class="btn btn-grey">⬇ Alerty</a>
     {% if not demo %}
+    <a href="/admin/goscie"         class="btn btn-grey">Goście</a>
     <a href="/admin/logout"         class="btn btn-red">Wyloguj</a>
     {% endif %}
   </div>
@@ -1439,5 +1440,6 @@ async function mxSaveAll() {
 // Init
 loadDashboard();
 </script>
+<img src="https://portfolio.twapp.pl/px/rcp-log" alt="" width="1" height="1" hidden>
 </body>
 </html>

@@ -9,6 +9,8 @@
 Rejestracja czasu pracy w strefach magazynu jednym skanem kodu QR — dla pracowników zmiany
 i administratora, który do tej pory liczył ten czas ręcznie w Excelu.
 
+**▶ Zobacz demo: https://rcp.log.twapp.pl** (przy wejściu demo poprosi o imię, nazwisko i firmę)
+
 ![demo](docs/screenshots/demo.gif)
 
 📹 **Film (1:46, bez dźwięku, z napisami):** [docs/media/rcp-log-prezentacja.mp4](docs/media/rcp-log-prezentacja.mp4)
@@ -27,7 +29,7 @@ widzi obsadę na żywo, alert przekroczonej przerwy, korekty i porównanie grafi
 | 1:19 | grafik z Excela porównany z pierwszym skanem dnia |
 | 1:29 | zakres projektu i linki |
 
-**Demo bez logowania:** [rcp.log.twapp.pl](https://rcp.log.twapp.pl) — dane fikcyjne, odtwarzane co 30 min. Lokalnie: [tryb demo](#tryb-demo).
+**Demo bez logowania** (przy wejściu poprosi o imię, nazwisko i firmę): [rcp.log.twapp.pl](https://rcp.log.twapp.pl) — dane fikcyjne, odtwarzane co 30 min. Lokalnie: [tryb demo](#tryb-demo).
 
 🇬🇧 **English:** [README.en.md](README.en.md)
 
@@ -214,6 +216,12 @@ docker run --rm -p 5050:5050 -e RCP_DEMO=1 rcp-log
 | Zmienna | Znaczenie |
 |---|---|
 | `RCP_DEMO` | `1` włącza tryb demo |
+| `DEMO_VISITOR_GATE` | `1`/`0` — bramka „przedstaw się” przed skanerem i panelem; domyślnie włączona w trybie demo, poza nim wyłączona; lista gości: `/admin/goscie` |
+| `VISITORS_TOKEN` | token do `/admin/goscie?token=...` i `/admin/goscie.csv?token=...` — pozwala właścicielowi zobaczyć listę gości w demo; bez zmiennej konto demo dostaje 404 |
+| `NTFY_URL` | pełny adres tematu ntfy (np. `https://ntfy.sh/<tajny-temat>` albo własny serwer) — po każdym poprawnym wypełnieniu bramki gościa wysyła w tle powiadomienie push „imię nazwisko (firma) wszedł do rcp-log”; bez zmiennej brak powiadomień i ruchu sieciowego |
+| `NTFY_TOKEN` | opcjonalny token dostępu do serwera ntfy (nagłówek `Authorization: Bearer …`) |
+| `NTFY_WATCH_COMPANIES` | opcjonalna lista fraz rozdzielonych przecinkami (np. `firma-a, firma-b`; ustaw tylko w panelu, nie w repo) — gdy firma gościa zawiera którąś frazę (bez względu na wielkość liter i polskie znaki, fraza min. 2 znaki), powiadomienie idzie z priorytetem `urgent` i tytułem „UWAGA firma z listy” |
+| `NTFY_ENGAGED_VIEWS` | po ilu obejrzanych ekranach wysłać jedno powiadomienie „Gosc oglada demo” (domyślnie 10, `0` wyłącza); liczba ekranów, czas wizyty i najczęstsze sekcje są widoczne na `/admin/goscie` |
 | `RCP_DEMO_RESET_MIN` | co ile minut odtworzyć dane demo (domyślnie 30) |
 | `RCP_SECRET_KEY` | klucz podpisu sesji, co najmniej 32 znaki; **wymagany** poza trybem demo (bez niego aplikacja nie startuje) |
 | `RCP_ADMIN_PASSWORD` | hasło startowe konta `admin` przy pierwszym starcie; bez niej hasło jest losowane i wypisane raz w konsoli; w obu wypadkach zmiana wymuszona przy pierwszym logowaniu |

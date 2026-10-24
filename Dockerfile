@@ -23,7 +23,7 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt \
     && pip uninstall -y pip
 
-COPY app.py run.py demo_data.py ./
+COPY app.py run.py demo_data.py visitor_notify.py visitor_activity.py ./
 COPY templates/ templates/
 
 # Katalogi data/, data_demo/ i backup/ tworzy aplikacja przy starcie — muszą być zapisywalne
