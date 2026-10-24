@@ -363,6 +363,19 @@ class Wymagania(unittest.TestCase):
         self.assertEqual(api["Cache-Control"], "no-store")
         self.assertEqual(api["Cross-Origin-Opener-Policy"], "same-origin")
 
+    def test_piksel_statystyk_portfolio_na_kazdym_ekranie(self):
+        """Piksel portfolio.twapp.pl obecny na każdym ekranie (w tym logowanie/start) i dopuszczony w CSP."""
+        piksel = '<img src="https://portfolio.twapp.pl/px/rcp-log" alt="" width="1" height="1" hidden>'
+        self.assertIn("https://portfolio.twapp.pl", self.c.get("/").headers["Content-Security-Policy"])
+        self.assertIn(piksel, self.c.get("/").get_data(as_text=True))
+        self.assertIn(piksel, self.c.get("/admin/login").get_data(as_text=True))
+        self.A.VISITOR_GATE = True
+        self.assertIn(piksel, self.c.get("/wejscie").get_data(as_text=True))
+        self.A.VISITOR_GATE = False
+        self.login()
+        self.assertIn(piksel, self.c.get("/admin").get_data(as_text=True))
+        self.assertIn(piksel, self.c.get("/admin/haslo").get_data(as_text=True))
+
     def test_GRF_05_import_odrzuca_zly_plik_i_za_duzy(self):
         self.login()
         def wyslij(nazwa, dane):
