@@ -83,6 +83,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie 
   `docs/architektura/` (C4 kontenery, ADR 0012), `docs/testy/`, `docs/operacje/`.
 
 ### Changed
+- CI: testy akceptacyjne także na Pythonie 3.14 (osobny job `test-py314`; wymagany check `lint-test` bez zmian, 3.11).
 - Zależności przypięte do dokładnych wersji (`requirements.txt`); narzędzia deweloperskie w `requirements-dev.txt`.
 - `demo_data.py`: usunięty nieużywany import i zmienna (lint).
 
