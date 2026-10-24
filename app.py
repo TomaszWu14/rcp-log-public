@@ -53,7 +53,8 @@ def naglowki_bezpieczenstwa(resp):
     # Szablony mają skrypty i style inline (D1: brak builda frontendu), stąd 'unsafe-inline' — ryzyko R13 (US-011)
     resp.headers.setdefault("Content-Security-Policy",
         "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; "
-        "img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'")
+        "img-src 'self' data: https://portfolio.twapp.pl; frame-ancestors 'none'; base-uri 'self'; "
+        "form-action 'self'")
     resp.headers.setdefault("X-Content-Type-Options", "nosniff")
     resp.headers.setdefault("Referrer-Policy", "same-origin")
     resp.headers.setdefault("X-Frame-Options", "DENY")
