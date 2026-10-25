@@ -4,6 +4,8 @@ name: Monitor demo
 # (GATED_ENDPOINTS: /, /admin, /admin/login) bez sesji przekierowuje na /wejscie, więc monitor
 # sprawdza właśnie /wejscie (tytuł „RCP Log — Demo”), a / i /admin/login tylko po statusie 200
 # po przekierowaniach (bez sprawdzania treści).
+# Za bramką portfolio (ForwardAuth, od 24.10) każda z tych stron daje 401 z formularzem
+# portfolio.twapp.pl/wejscie — to też wynik poprawny (wtedy bez sprawdzania treści).
 # Aplikacja nie ma osobnego /health — healthcheck obrazu też sprawdza `/` (Dockerfile).
 # Awaria → issue „Demo nie odpowiada” z etykietą `demo` (jedno, kolejne awarie jako komentarze);
 # powrót do normy → issue zamknięte.
@@ -37,12 +39,19 @@ jobs:
           set -uo pipefail
           problems=()
           # status HTTP po przekierowaniach + treść strony; ponowienia na błędach sieci i 5xx
+          # Od 24.10 demo stoi za ForwardAuth portfolio: bez ciasteczka `gosc` strony dają 401
+          # z formularzem bramki (link do portfolio.twapp.pl/wejscie) — to znaczy, że bramka działa;
+          # treści aplikacji wtedy nie widać, więc jej nie sprawdzamy.
+          za_bramka=''
           check() {
             local path="$1" expect="${2:-}" code
+            rm -f page.html   # curl nie tworzy pliku przy pustej treści — bez starej strony
             code=$(curl -sS -L -o page.html -w '%{http_code}' --max-time 30 \
               --retry 3 --retry-delay 20 --retry-all-errors "$DEMO_URL$path") || code="${code:-000}"
-            if [ "$code" != 200 ]; then
-              problems+=("$path → HTTP $code")
+            if [ "$code" = 401 ] && grep -qF 'portfolio.twapp.pl/wejscie' page.html 2>/dev/null; then
+              za_bramka=1
+            elif [ "$code" != 200 ]; then
+              problems+=("$path → HTTP $code (oczekiwane 200 albo 401 z bramką portfolio)")
             elif [ -n "$expect" ] && ! grep -q "$expect" page.html; then
               problems+=("$path → 200, ale brak „$expect” w treści")
             fi
@@ -50,14 +59,19 @@ jobs:
           check /wejscie 'RCP Log — Demo'
           check /
           check /admin/login
+          # Aplikacja nie ma endpointu zdrowia (przepuszczanego przez ForwardAuth), więc za bramką
+          # monitor widzi tylko bramkę portfolio — nie potwierdza, że sama aplikacja żyje.
+          note=''
+          [ -n "$za_bramka" ] && note=' Za bramką portfolio – aplikacja nie ma endpointu zdrowia, sprawdzono tylko bramkę.'
 
           if [ ${#problems[@]} -eq 0 ]; then
-            echo "Demo działa ($DEMO_URL)." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "Demo działa ($DEMO_URL).$note" | tee -a "$GITHUB_STEP_SUMMARY"
             echo "ok=true" >> "$GITHUB_OUTPUT"
           else
             {
               echo "Demo $DEMO_URL — problemy ($(date -u '+%Y-%m-%d %H:%M UTC')):"
               for p in "${problems[@]}"; do echo "- $p"; done
+              [ -z "$note" ] || echo "-$note"
               echo
               echo "Przebieg: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
             } > report.md
