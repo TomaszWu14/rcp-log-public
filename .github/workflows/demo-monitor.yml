@@ -6,7 +6,7 @@ name: Monitor demo
 # po przekierowaniach (bez sprawdzania treści).
 # Za bramką portfolio (ForwardAuth, od 24.10) każda z tych stron daje 401 z formularzem
 # portfolio.twapp.pl/wejscie — to też wynik poprawny (wtedy bez sprawdzania treści).
-# Aplikacja nie ma osobnego /health — healthcheck obrazu też sprawdza `/` (Dockerfile).
+# Dowodem życia aplikacji jest /health (200 + {"status": "ok"}) — ForwardAuth przepuszcza go bez ciasteczka.
 # Awaria → issue „Demo nie odpowiada” z etykietą `demo` (jedno, kolejne awarie jako komentarze);
 # powrót do normy → issue zamknięte.
 on:
@@ -59,10 +59,15 @@ jobs:
           check /wejscie 'RCP Log — Demo'
           check /
           check /admin/login
-          # Aplikacja nie ma endpointu zdrowia (przepuszczanego przez ForwardAuth), więc za bramką
-          # monitor widzi tylko bramkę portfolio — nie potwierdza, że sama aplikacja żyje.
+          health=$(curl -sS --max-time 30 --retry 3 --retry-delay 20 --retry-all-errors \
+            -w '\n%{http_code}' "$DEMO_URL/health") || health=$'\n000'
+          hcode=$(tail -n1 <<<"$health"); hbody=$(sed '$d' <<<"$health")
+          if [ "$hcode" != 200 ] || [ "$(jq -r '.status // empty' <<<"$hbody" 2>/dev/null)" != ok ]; then
+            problems+=("/health → HTTP $hcode: ${hbody:0:200}")
+          fi
+
           note=''
-          [ -n "$za_bramka" ] && note=' Za bramką portfolio – aplikacja nie ma endpointu zdrowia, sprawdzono tylko bramkę.'
+          [ -n "$za_bramka" ] && note=' Za bramką portfolio – sprawdzono tylko zdrowie.'
 
           if [ ${#problems[@]} -eq 0 ]; then
             echo "Demo działa ($DEMO_URL).$note" | tee -a "$GITHUB_STEP_SUMMARY"
