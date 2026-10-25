@@ -1658,6 +1658,14 @@ def _gosc_wpuszczony():
     except (TypeError, ValueError):
         return False
 
+@app.route("/health")
+def health():
+    """Żywotność procesu dla monitora demo (ForwardAuth portfolio przepuszcza tę ścieżkę bez ciasteczka).
+    Bez sesji, logowania, bramki gości i statystyk; nie sprawdza zależności zewnętrznych."""
+    resp = jsonify({"status": "ok"})
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
 @app.before_request
 def bramka_gosci():
     if not VISITOR_GATE or request.method not in ("GET", "HEAD") or request.endpoint not in GATED_ENDPOINTS:
@@ -1784,7 +1792,7 @@ def demo_reset_job():
 
 @app.before_request
 def demo_guard():
-    if not DEMO: return
+    if not DEMO or request.endpoint == "health": return   # /health bez sesji (nie ustawia ciasteczka demo)
     if not is_admin():
         session["admin_logged"] = True
         session["admin_user"]   = "demo"

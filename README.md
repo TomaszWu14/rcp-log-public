@@ -196,7 +196,7 @@ z plików [`Dockerfile`](Dockerfile) i [`docker-compose.yaml`](docker-compose.ya
 3. **Domena:** w ustawieniach zasobu wpisz `https://rcp.log.twapp.pl` — certyfikat Let's Encrypt wystawi
    proxy Coolify. Zmienne `RCP_DEMO`, `RCP_DEMO_RESET_MIN`, `TZ` i losowany `RCP_SECRET_KEY` są już
    w pliku compose.
-4. **Deploy.** Obraz ma healthcheck na `/`; Coolify pokaże status *healthy*, gdy dane demo się wygenerują.
+4. **Deploy.** Obraz ma healthcheck na `/`; `GET /health` (200 `{"status": "ok"}`, bez sesji i bramki gości) służy monitorowi demo (`demo-monitor.yml`) także za bramką portfolio; Coolify pokaże status *healthy*, gdy dane demo się wygenerują.
    Każdy push do `main` wdraża nową wersję, jeśli w zasobie włączysz **Auto Deploy** (webhook GitHub).
 
 Build Pack **Dockerfile** też zadziała — wtedy port `5050` i zmienne z tabeli poniżej ustaw ręcznie
