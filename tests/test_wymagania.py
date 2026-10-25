@@ -31,6 +31,7 @@ def load_app():
     shutil.copy(REPO / "app.py", tmp / "app.py")
     shutil.copy(REPO / "visitor_notify.py", tmp / "visitor_notify.py")
     shutil.copy(REPO / "visitor_activity.py", tmp / "visitor_activity.py")
+    shutil.copy(REPO / "visitor_pass.py", tmp / "visitor_pass.py")
     shutil.copytree(REPO / "templates", tmp / "templates")
     spec = importlib.util.spec_from_file_location(f"rcp_{tmp.name}", tmp / "app.py")
     mod = importlib.util.module_from_spec(spec)
@@ -370,7 +371,7 @@ class Wymagania(unittest.TestCase):
         self.assertIn(piksel, self.c.get("/").get_data(as_text=True))
         self.assertIn(piksel, self.c.get("/admin/login").get_data(as_text=True))
         self.A.VISITOR_GATE = True
-        self.assertIn(piksel, self.c.get("/wejscie").get_data(as_text=True))
+        self.assertNotIn(piksel, self.c.get("/wejscie").get_data(as_text=True))   # strona bramki bez piksela: sam widok formularza nie daje pusha
         self.A.VISITOR_GATE = False
         self.login()
         self.assertIn(piksel, self.c.get("/admin").get_data(as_text=True))

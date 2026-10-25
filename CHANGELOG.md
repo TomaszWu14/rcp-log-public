@@ -5,6 +5,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.1.0/), wersjonowanie 
 ## [Unreleased]
 
 ### Added
+- Przepustka z portfolio (`visitor_pass.py`, `PORTFOLIO_URL`, `PORTFOLIO_PASS`): gość z ważnym ciasteczkiem `gosc` (potwierdzonym przez `GET /api/gosc` w portfolio, timeout 2 s, cache ok. 10 min) wchodzi bez formularza bramki, bez zapisu gościa i bez własnego pusha. Błąd lub timeout = formularz jak dotąd. Strona bramki nie ładuje już piksela portfolio.
 - Monitor demo (`demo-monitor.yml`): push ntfy przy otwarciu zgłoszenia „Demo nie odpowiada” i po powrocie do normy (opcjonalny sekret `NTFY_URL`).
 - Bramka gości wersji demonstracyjnej (`DEMO_VISITOR_GATE`, domyślnie włączona w trybie demo): pierwsza wizyta na stronie
   skanera i w panelu `/admin` wymaga podania imienia, nazwiska i firmy oraz zgody na informację RODO (honeypot, CSRF,
