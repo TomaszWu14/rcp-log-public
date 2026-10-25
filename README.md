@@ -222,6 +222,8 @@ docker run --rm -p 5050:5050 -e RCP_DEMO=1 rcp-log
 | `NTFY_TOKEN` | opcjonalny token dostępu do serwera ntfy (nagłówek `Authorization: Bearer …`) |
 | `NTFY_WATCH_COMPANIES` | opcjonalna lista fraz rozdzielonych przecinkami (np. `firma-a, firma-b`; ustaw tylko w panelu, nie w repo) — gdy firma gościa zawiera którąś frazę (bez względu na wielkość liter i polskie znaki, fraza min. 2 znaki), powiadomienie idzie z priorytetem `urgent` i tytułem „UWAGA firma z listy” |
 | `NTFY_ENGAGED_VIEWS` | po ilu obejrzanych ekranach wysłać jedno powiadomienie „Gosc oglada demo” (domyślnie 10, `0` wyłącza); liczba ekranów, czas wizyty i najczęstsze sekcje są widoczne na `/admin/goscie` |
+| `PORTFOLIO_URL` | adres portfolio do sprawdzania przepustki (domyślnie `https://portfolio.twapp.pl`, musi zaczynać się od `https://`) — gość, który przedstawił się w portfolio (ciasteczko `gosc`), wchodzi bez formularza bramki; demo pyta `GET /api/gosc` (timeout 2 s, wynik pamiętany ok. 10 min) |
+| `PORTFOLIO_PASS` | `0` wyłącza sprawdzanie przepustki z portfolio (domyślnie włączone, gdy działa bramka gości) |
 | `RCP_DEMO_RESET_MIN` | co ile minut odtworzyć dane demo (domyślnie 30) |
 | `RCP_SECRET_KEY` | klucz podpisu sesji, co najmniej 32 znaki; **wymagany** poza trybem demo (bez niego aplikacja nie startuje) |
 | `RCP_ADMIN_PASSWORD` | hasło startowe konta `admin` przy pierwszym starcie; bez niej hasło jest losowane i wypisane raz w konsoli; w obu wypadkach zmiana wymuszona przy pierwszym logowaniu |

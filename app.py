@@ -24,6 +24,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 import visitor_activity
 import visitor_notify
+import visitor_pass
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("rcp")   # błędy w tle i odczytach trafiają tu, nie w `except: pass` (US-010)
@@ -1638,6 +1639,19 @@ def zarejestruj_aktywnosc(gid, sciezka, now=None):
         visitor_notify.powiadom_o_zaangazowaniu(
             *(_bez_apostrofu(wiersz.get(k)) for k in ("imie", "nazwisko", "firma")), ekrany)
 
+def _wpusc_gosc(gid=None):
+    session.permanent = True
+    session["gosc_ts"] = time_module.time()
+    if gid: session["gosc_id"] = gid   # podpisane ciasteczko sesji — id wpisu do liczenia aktywności
+
+def _przepustka_z_portfolio():
+    """Ważne ciasteczko `gosc` z portfolio → wpuszcza jak gościa po bramce, bez zapisu gościa i bez własnego pusha
+    (powiadomienie z danymi wysyła portfolio). Bez ciasteczka nie ma ruchu sieciowego."""
+    token = request.cookies.get("gosc")
+    if not token or not visitor_pass.przepustka_wazna(token): return False
+    _wpusc_gosc()
+    return True
+
 def _gosc_wpuszczony():
     try:
         return time_module.time() - float(session.get("gosc_ts", 0)) < GOSCIE_SESSION_DAYS * 86400
@@ -1650,6 +1664,7 @@ def bramka_gosci():
         return
     if _gosc_wpuszczony() or (is_admin() and not DEMO):   # w demo każdy jest "adminem", więc nie zwalnia z bramki
         return
+    if _przepustka_z_portfolio(): return
     return redirect(url_for("wejscie", next=request.full_path.rstrip("?")))
 
 @app.route("/wejscie", methods=["GET", "POST"])
@@ -1657,6 +1672,8 @@ def wejscie():
     nast, err = _bezpieczny_next(request.values.get("next")), None
     if not VISITOR_GATE:
         return redirect(nast)
+    if request.method == "GET" and _przepustka_z_portfolio():
+        return redirect(nast)   # przepustka z portfolio: bez formularza
     if request.method == "POST":
         pola = [_pole_goscia(request.form.get(k)) for k in ("imie", "nazwisko", "firma")]
         if request.form.get("www"):   # pułapka na boty (honeypot) — człowiek tego pola nie widzi
@@ -1668,9 +1685,7 @@ def wejscie():
         else:
             gid = zapisz_goscia(*pola)
             visitor_notify.powiadom_o_gosciu(*pola)
-            session.permanent = True
-            session["gosc_ts"] = time_module.time()
-            session["gosc_id"] = gid   # podpisane ciasteczko sesji — id wpisu do liczenia aktywności
+            _wpusc_gosc(gid)
             return redirect(nast)
     return render_template("wejscie.html", error=err, next=nast, form=request.form), (400 if err else 200)
 
